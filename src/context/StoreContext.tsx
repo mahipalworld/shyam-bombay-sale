@@ -734,19 +734,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsLoaded(true);
   }, []);
 
-  // --- Supabase: Load products & categories from DB on mount ---
+  // --- Supabase: Load products, categories, coupons, and store settings on mount ---
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
-    const loadCatalog = async () => {
+
+    const loadRemoteCatalog = async () => {
       try {
-        const [{ data: cats }, { data: prods }] = await Promise.all([
+        const [
+          { data: cats },
+          { data: prods },
+          { data: coups },
+          { data: settings },
+          { data: allOrders }
+        ] = await Promise.all([
           supabase.from('categories').select('*').order('name'),
           supabase.from('products').select('*').order('name'),
+          supabase.from('coupons').select('*').order('created_at'),
+          supabase.from('store_settings').select('*'),
+          supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(50),
         ]);
 
         if (cats && cats.length > 0) {
           const mappedCats = cats.map((c: any) => {
-            const initMatch = INITIAL_CATEGORIES.find(ic => ic.id === c.id);
+            const initMatch = INITIAL_CATEGORIES.find((ic) => ic.id === c.id);
             return {
               id: c.id,
               name: c.name,
@@ -754,28 +764,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               image: c.image,
               bgColor: c.bg_color || initMatch?.bgColor,
               accentColor: c.accent_color || initMatch?.accentColor,
-              itemCount: c.item_count || initMatch?.itemCount,
+              itemCount: c.item_count || initMatch?.itemCount || 0,
               subcategories: c.subcategories || initMatch?.subcategories || [],
-              showOnHome: c.show_on_home !== undefined ? c.show_on_home : initMatch?.showOnHome,
+              showOnHome: c.show_on_home !== undefined ? c.show_on_home : (initMatch?.showOnHome ?? true),
             };
           });
-          const remoteCatIds = new Set(mappedCats.map(c => c.id));
-          const missingInitialCats = INITIAL_CATEGORIES.filter(c => !remoteCatIds.has(c.id));
+          const remoteCatIds = new Set(mappedCats.map((c) => c.id));
+          const missingInitialCats = INITIAL_CATEGORIES.filter((c) => !remoteCatIds.has(c.id));
           setCategories([...mappedCats, ...missingInitialCats]);
         }
 
         if (prods && prods.length > 0) {
           const mappedRemote: Product[] = prods.map((p: any) => {
-            const initMatch = INITIAL_PRODUCTS.find(ip => ip.id === p.id);
+            const initMatch = INITIAL_PRODUCTS.find((ip) => ip.id === p.id);
             return {
               id: p.id,
               name: p.name,
               category: p.category,
               subcategory: p.subcategory || initMatch?.subcategory,
-              price: p.price,
-              originalPrice: p.original_price,
+              price: Number(p.price),
+              originalPrice: Number(p.original_price),
               discountPercentage: p.discount_percentage,
-              rating: p.rating,
+              rating: Number(p.rating),
               reviewCount: p.review_count,
               image: p.image,
               images: (p.images && p.images.length > 0) ? p.images : (initMatch?.images || [p.image]),
@@ -784,22 +794,248 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               description: p.description,
               descriptionBlocks: p.description_blocks || initMatch?.descriptionBlocks,
               features: p.features || initMatch?.features || [],
-              isTrending: p.is_trending,
-              isBestSeller: p.is_best_seller,
-              isDealOfDay: p.is_deal_of_day,
+              isTrending: Boolean(p.is_trending),
+              isBestSeller: Boolean(p.is_best_seller),
+              isDealOfDay: Boolean(p.is_deal_of_day),
+              isFeatured: Boolean(p.is_featured),
+              isSuperDeal: Boolean(p.is_super_deal),
+              isTopRated: Boolean(p.is_top_rated),
             };
           });
 
-          // Merge remote products with missing initial products
-          const remoteIds = new Set(mappedRemote.map(p => p.id));
-          const missingInitial = INITIAL_PRODUCTS.filter(p => !remoteIds.has(p.id));
+          const remoteIds = new Set(mappedRemote.map((p) => p.id));
+          const missingInitial = INITIAL_PRODUCTS.filter((p) => !remoteIds.has(p.id));
           setProducts([...mappedRemote, ...missingInitial]);
         }
+
+        if (coups && coups.length > 0) {
+          const mappedCoupons: Coupon[] = coups.map((c: any) => ({
+            id: c.id,
+            code: c.code,
+            title: c.title,
+            discountType: c.discount_type,
+            value: Number(c.value),
+            minOrderValue: Number(c.min_order_value),
+            maxDiscount: c.max_discount ? Number(c.max_discount) : undefined,
+            expiresAt: c.expires_at,
+            description: c.description,
+            isActive: true,
+          }));
+          setCoupons(mappedCoupons);
+        }
+
+        if (settings && settings.length > 0) {
+          settings.forEach((s: any) => {
+            if (s.id === 'stories' && Array.isArray(s.data)) setStories(s.data);
+            if (s.id === 'scratch_config' && s.data) setScratchConfig(s.data);
+            if (s.id === 'flash_deal_config' && s.data) setFlashDealConfig(s.data);
+            if (s.id === 'hero_banners' && Array.isArray(s.data)) setHeroBanners(s.data);
+            if (s.id === 'store_settings' && s.data) setStoreSettings(s.data);
+          });
+        }
+
+        if (allOrders && allOrders.length > 0) {
+          setOrders(allOrders.map((o: any) => ({
+            id: o.id,
+            orderNumber: o.order_number,
+            createdAt: o.created_at,
+            status: o.status,
+            items: o.items,
+            subtotal: Number(o.subtotal),
+            discount: Number(o.discount),
+            deliveryCharge: Number(o.delivery_charge),
+            total: Number(o.total),
+            shippingAddress: o.shipping_address,
+            paymentMethod: o.payment_method,
+            trackingNumber: o.tracking_number,
+            estimatedDelivery: o.estimated_delivery,
+          })));
+        }
       } catch (err) {
-        console.error('Failed to load from Supabase', err);
+        console.error('Failed to load catalog from Supabase:', err);
       }
     };
-    loadCatalog();
+
+    loadRemoteCatalog();
+
+    // Real-Time Cross-Device Synchronization Channel for Catalog, Orders, & Coupons
+    const catalogChannel = supabase
+      .channel('sbs_catalog_realtime')
+      // Products Realtime Sync
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'products' }, (payload) => {
+        const p = payload.new as any;
+        if (!p || !p.id) return;
+        const newProd: Product = {
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          subcategory: p.subcategory,
+          price: Number(p.price),
+          originalPrice: Number(p.original_price),
+          discountPercentage: p.discount_percentage,
+          rating: Number(p.rating),
+          reviewCount: p.review_count,
+          image: p.image,
+          images: p.images || [p.image],
+          inStock: p.in_stock,
+          stockCount: p.stock_count,
+          description: p.description,
+          descriptionBlocks: p.description_blocks || [],
+          features: p.features || [],
+          isTrending: Boolean(p.is_trending),
+          isBestSeller: Boolean(p.is_best_seller),
+          isDealOfDay: Boolean(p.is_deal_of_day),
+          isFeatured: Boolean(p.is_featured),
+          isSuperDeal: Boolean(p.is_super_deal),
+          isTopRated: Boolean(p.is_top_rated),
+        };
+        setProducts((prev) => (prev.some((x) => x.id === newProd.id) ? prev : [newProd, ...prev]));
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products' }, (payload) => {
+        const p = payload.new as any;
+        if (!p || !p.id) return;
+        setProducts((prev) =>
+          prev.map((item) =>
+            item.id === p.id
+              ? {
+                  ...item,
+                  name: p.name ?? item.name,
+                  category: p.category ?? item.category,
+                  subcategory: p.subcategory ?? item.subcategory,
+                  price: p.price !== undefined ? Number(p.price) : item.price,
+                  originalPrice: p.original_price !== undefined ? Number(p.original_price) : item.originalPrice,
+                  discountPercentage: p.discount_percentage ?? item.discountPercentage,
+                  rating: p.rating !== undefined ? Number(p.rating) : item.rating,
+                  reviewCount: p.review_count ?? item.reviewCount,
+                  image: p.image ?? item.image,
+                  images: p.images ?? item.images,
+                  inStock: p.in_stock ?? item.inStock,
+                  stockCount: p.stock_count ?? item.stockCount,
+                  description: p.description ?? item.description,
+                  descriptionBlocks: p.description_blocks ?? item.descriptionBlocks,
+                  features: p.features ?? item.features,
+                  isTrending: p.is_trending !== undefined ? Boolean(p.is_trending) : item.isTrending,
+                  isBestSeller: p.is_best_seller !== undefined ? Boolean(p.is_best_seller) : item.isBestSeller,
+                  isDealOfDay: p.is_deal_of_day !== undefined ? Boolean(p.is_deal_of_day) : item.isDealOfDay,
+                  isFeatured: p.is_featured !== undefined ? Boolean(p.is_featured) : item.isFeatured,
+                  isSuperDeal: p.is_super_deal !== undefined ? Boolean(p.is_super_deal) : item.isSuperDeal,
+                  isTopRated: p.is_top_rated !== undefined ? Boolean(p.is_top_rated) : item.isTopRated,
+                }
+              : item
+          )
+        );
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'products' }, (payload) => {
+        const old = payload.old as any;
+        if (old?.id) setProducts((prev) => prev.filter((p) => p.id !== old.id));
+      })
+      // Categories Realtime Sync
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'categories' }, (payload) => {
+        const c = payload.new as any;
+        if (!c || !c.id) return;
+        const newCat: Category = {
+          id: c.id,
+          name: c.name,
+          subtitle: c.subtitle,
+          image: c.image,
+          bgColor: c.bg_color || '#FFF0E6',
+          accentColor: c.accent_color || '#F95721',
+          itemCount: c.item_count || 0,
+          subcategories: c.subcategories || [],
+          showOnHome: c.show_on_home !== undefined ? c.show_on_home : true,
+        };
+        setCategories((prev) => (prev.some((x) => x.id === newCat.id) ? prev : [...prev, newCat]));
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'categories' }, (payload) => {
+        const c = payload.new as any;
+        if (!c || !c.id) return;
+        setCategories((prev) =>
+          prev.map((item) =>
+            item.id === c.id
+              ? {
+                  ...item,
+                  name: c.name ?? item.name,
+                  subtitle: c.subtitle ?? item.subtitle,
+                  image: c.image ?? item.image,
+                  bgColor: c.bg_color ?? item.bgColor,
+                  accentColor: c.accent_color ?? item.accentColor,
+                  itemCount: c.item_count ?? item.itemCount,
+                  subcategories: c.subcategories ?? item.subcategories,
+                  showOnHome: c.show_on_home !== undefined ? c.show_on_home : item.showOnHome,
+                }
+              : item
+          )
+        );
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'categories' }, (payload) => {
+        const old = payload.old as any;
+        if (old?.id) setCategories((prev) => prev.filter((c) => c.id !== old.id));
+      })
+      // Orders Realtime Sync
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+        const o = payload.new as any;
+        if (!o || !o.id) return;
+        const newOrd: Order = {
+          id: o.id,
+          orderNumber: o.order_number,
+          createdAt: o.created_at,
+          status: o.status,
+          items: o.items,
+          subtotal: Number(o.subtotal),
+          discount: Number(o.discount),
+          deliveryCharge: Number(o.delivery_charge),
+          total: Number(o.total),
+          shippingAddress: o.shipping_address,
+          paymentMethod: o.payment_method,
+          trackingNumber: o.tracking_number,
+          estimatedDelivery: o.estimated_delivery,
+        };
+        setOrders((prev) => (prev.some((x) => x.id === newOrd.id) ? prev : [newOrd, ...prev]));
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
+        const o = payload.new as any;
+        if (!o || !o.id) return;
+        setOrders((prev) =>
+          prev.map((ord) => (ord.id === o.id ? { ...ord, status: o.status, trackingNumber: o.tracking_number } : ord))
+        );
+      })
+      // Coupons Realtime Sync
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'coupons' }, (payload) => {
+        const c = payload.new as any;
+        if (!c || !c.id) return;
+        const newCoup: Coupon = {
+          id: c.id,
+          code: c.code,
+          title: c.title,
+          discountType: c.discount_type,
+          value: Number(c.value),
+          minOrderValue: Number(c.min_order_value),
+          maxDiscount: c.max_discount ? Number(c.max_discount) : undefined,
+          expiresAt: c.expires_at,
+          description: c.description,
+          isActive: true,
+        };
+        setCoupons((prev) => (prev.some((x) => x.id === newCoup.id) ? prev : [newCoup, ...prev]));
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'coupons' }, (payload) => {
+        const old = payload.old as any;
+        if (old?.id) setCoupons((prev) => prev.filter((c) => c.id !== old.id));
+      })
+      // Store Settings Realtime Sync (Stories, Flash Deals, Scratch Cards, Banners)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'store_settings' }, (payload) => {
+        const s = (payload.new || payload.old) as any;
+        if (!s || !s.id) return;
+        if (s.id === 'stories' && Array.isArray(s.data)) setStories(s.data);
+        if (s.id === 'scratch_config' && s.data) setScratchConfig(s.data);
+        if (s.id === 'flash_deal_config' && s.data) setFlashDealConfig(s.data);
+        if (s.id === 'hero_banners' && Array.isArray(s.data)) setHeroBanners(s.data);
+        if (s.id === 'store_settings' && s.data) setStoreSettings(s.data);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(catalogChannel);
+    };
   }, []);
 
   // --- Supabase: Sync cart/wishlist/orders when auth user changes ---
@@ -1433,10 +1669,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
     showToast(`Order status updated to ${status}`);
 
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('orders').update({ status }).eq('id', orderId).then(({ error }) => {
+        if (error) console.error('Supabase update order status error:', error);
+      });
+    }
+
     // Update COD payment status to success if order becomes delivered
     if (status === 'Delivered') {
       setPaymentRecords((prevPays) =>
-        prevPays.map((p) => p.orderId === orderId && p.status === 'Pending' ? { ...p, status: 'Success' } : p)
+        prevPays.map((p) => (p.orderId === orderId && p.status === 'Pending' ? { ...p, status: 'Success' } : p))
       );
     }
   };
@@ -1482,6 +1724,36 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setProducts((prev) => [newProduct, ...prev]);
     addInventoryLog(newId, prod.stockCount, 'add', 'Initial stock on creation');
     showToast(`Product "${newProduct.name}" added to store!`);
+
+    // Sync to Supabase Cloud Database for all devices
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('products').insert({
+        id: newId,
+        name: newProduct.name,
+        category: newProduct.category,
+        subcategory: newProduct.subcategory || null,
+        price: newProduct.price,
+        original_price: newProduct.originalPrice,
+        discount_percentage: newProduct.discountPercentage,
+        rating: newProduct.rating,
+        review_count: newProduct.reviewCount,
+        image: newProduct.image,
+        images: newProduct.images || [newProduct.image],
+        in_stock: newProduct.inStock,
+        stock_count: newProduct.stockCount,
+        description: newProduct.description,
+        description_blocks: newProduct.descriptionBlocks || [],
+        features: newProduct.features || [],
+        is_trending: Boolean(newProduct.isTrending),
+        is_best_seller: Boolean(newProduct.isBestSeller),
+        is_deal_of_day: Boolean(newProduct.isDealOfDay),
+        is_featured: Boolean(newProduct.isFeatured),
+        is_super_deal: Boolean(newProduct.isSuperDeal),
+        is_top_rated: Boolean(newProduct.isTopRated),
+      }).then(({ error }) => {
+        if (error) console.error('Supabase add product error:', error);
+      });
+    }
   };
 
   const updateProduct = (id: string, updates: Partial<Product>) => {
@@ -1499,6 +1771,36 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       })
     );
     showToast('Product updated successfully');
+
+    // Sync updates to Supabase Cloud Database for all devices
+    if (isSupabaseConfigured && supabase) {
+      const dbUpdates: any = {};
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.category !== undefined) dbUpdates.category = updates.category;
+      if (updates.subcategory !== undefined) dbUpdates.subcategory = updates.subcategory;
+      if (updates.price !== undefined) dbUpdates.price = updates.price;
+      if (updates.originalPrice !== undefined) dbUpdates.original_price = updates.originalPrice;
+      if (updates.discountPercentage !== undefined) dbUpdates.discount_percentage = updates.discountPercentage;
+      if (updates.rating !== undefined) dbUpdates.rating = updates.rating;
+      if (updates.reviewCount !== undefined) dbUpdates.review_count = updates.reviewCount;
+      if (updates.image !== undefined) dbUpdates.image = updates.image;
+      if (updates.images !== undefined) dbUpdates.images = updates.images;
+      if (updates.inStock !== undefined) dbUpdates.in_stock = updates.inStock;
+      if (updates.stockCount !== undefined) dbUpdates.stock_count = updates.stockCount;
+      if (updates.description !== undefined) dbUpdates.description = updates.description;
+      if (updates.descriptionBlocks !== undefined) dbUpdates.description_blocks = updates.descriptionBlocks;
+      if (updates.features !== undefined) dbUpdates.features = updates.features;
+      if (updates.isTrending !== undefined) dbUpdates.is_trending = updates.isTrending;
+      if (updates.isBestSeller !== undefined) dbUpdates.is_best_seller = updates.isBestSeller;
+      if (updates.isDealOfDay !== undefined) dbUpdates.is_deal_of_day = updates.isDealOfDay;
+      if (updates.isFeatured !== undefined) dbUpdates.is_featured = updates.isFeatured;
+      if (updates.isSuperDeal !== undefined) dbUpdates.is_super_deal = updates.isSuperDeal;
+      if (updates.isTopRated !== undefined) dbUpdates.is_top_rated = updates.isTopRated;
+
+      supabase.from('products').update(dbUpdates).eq('id', id).then(({ error }) => {
+        if (error) console.error('Supabase update product error:', error);
+      });
+    }
   };
 
   const deleteProduct = (id: string) => {
@@ -1508,6 +1810,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       addInventoryLog(id, -p.stockCount, 'remove', 'Product catalog deletion');
     }
     showToast('Product removed');
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('products').delete().eq('id', id).then(({ error }) => {
+        if (error) console.error('Supabase delete product error:', error);
+      });
+    }
   };
 
   const resetCatalogToDefault = () => {
@@ -1723,9 +2031,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
     setCategories((prev) => [...prev, newCategory]);
     if (newCategory.showOnHome) {
-      setHomepageCategories((prev) => prev.includes(newId) ? prev : [...prev, newId]);
+      setHomepageCategories((prev) => (prev.includes(newId) ? prev : [...prev, newId]));
     }
     showToast(`Category "${newCategory.name}" added`);
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('categories').insert({
+        id: newId,
+        name: newCategory.name,
+        subtitle: newCategory.subtitle,
+        image: newCategory.image,
+        bg_color: newCategory.bgColor,
+        accent_color: newCategory.accentColor,
+        item_count: newCategory.itemCount,
+        subcategories: newCategory.subcategories || [],
+      }).then(({ error }) => {
+        if (error) console.error('Supabase add category error:', error);
+      });
+    }
   };
 
   const updateCategory = (id: string, updates: Partial<Category>) => {
@@ -1737,21 +2060,41 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (updates.showOnHome) {
           return prev.includes(id) ? prev : [...prev, id];
         } else {
-          return prev.filter(cId => cId !== id);
+          return prev.filter((cId) => cId !== id);
         }
       });
     }
     showToast('Category updated successfully');
+
+    if (isSupabaseConfigured && supabase) {
+      const dbUpdates: any = {};
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.subtitle !== undefined) dbUpdates.subtitle = updates.subtitle;
+      if (updates.image !== undefined) dbUpdates.image = updates.image;
+      if (updates.bgColor !== undefined) dbUpdates.bg_color = updates.bgColor;
+      if (updates.accentColor !== undefined) dbUpdates.accent_color = updates.accentColor;
+      if (updates.itemCount !== undefined) dbUpdates.item_count = updates.itemCount;
+      if (updates.subcategories !== undefined) dbUpdates.subcategories = updates.subcategories;
+
+      supabase.from('categories').update(dbUpdates).eq('id', id).then(({ error }) => {
+        if (error) console.error('Supabase update category error:', error);
+      });
+    }
   };
 
   const deleteCategory = (id: string) => {
     setCategories((prev) => prev.filter((c) => c.id !== id));
     setHomepageCategories((prev) => prev.filter((cId) => cId !== id));
     showToast('Category removed');
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('categories').delete().eq('id', id).then(({ error }) => {
+        if (error) console.error('Supabase delete category error:', error);
+      });
+    }
   };
 
   const reorderCategories = (ids: string[]) => {
-    // Sort based on list of IDs
     setCategories((prev) => {
       const sorted = [...prev].sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
       return sorted;
@@ -1763,10 +2106,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const newCoupon: Coupon = {
       ...coup,
       id: `coup_${Date.now()}`,
-      isActive: coup.isActive !== false
+      isActive: coup.isActive !== false,
     };
     setCoupons((prev) => [newCoupon, ...prev]);
     showToast(`Coupon code ${newCoupon.code} created`);
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('coupons').insert({
+        id: newCoupon.id,
+        code: newCoupon.code,
+        title: newCoupon.title,
+        discount_type: newCoupon.discountType,
+        value: newCoupon.value,
+        min_order_value: newCoupon.minOrderValue,
+        max_discount: newCoupon.maxDiscount || null,
+        expires_at: newCoupon.expiresAt,
+        description: newCoupon.description,
+      }).then(({ error }) => {
+        if (error) console.error('Supabase add coupon error:', error);
+      });
+    }
   };
 
   const updateCoupon = (id: string, updates: Partial<Coupon>) => {
@@ -1774,11 +2133,33 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
     );
     showToast('Coupon details updated');
+
+    if (isSupabaseConfigured && supabase) {
+      const dbUpdates: any = {};
+      if (updates.code !== undefined) dbUpdates.code = updates.code;
+      if (updates.title !== undefined) dbUpdates.title = updates.title;
+      if (updates.discountType !== undefined) dbUpdates.discount_type = updates.discountType;
+      if (updates.value !== undefined) dbUpdates.value = updates.value;
+      if (updates.minOrderValue !== undefined) dbUpdates.min_order_value = updates.minOrderValue;
+      if (updates.maxDiscount !== undefined) dbUpdates.max_discount = updates.maxDiscount;
+      if (updates.expiresAt !== undefined) dbUpdates.expires_at = updates.expiresAt;
+      if (updates.description !== undefined) dbUpdates.description = updates.description;
+
+      supabase.from('coupons').update(dbUpdates).eq('id', id).then(({ error }) => {
+        if (error) console.error('Supabase update coupon error:', error);
+      });
+    }
   };
 
   const deleteCoupon = (id: string) => {
     setCoupons((prev) => prev.filter((c) => c.id !== id));
     showToast('Coupon deleted');
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('coupons').delete().eq('id', id).then(({ error }) => {
+        if (error) console.error('Supabase delete coupon error:', error);
+      });
+    }
   };
 
   // Stories Management Actions
@@ -1787,33 +2168,63 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...story,
       id: `story_${Date.now()}`,
     };
-    setStories((prev) => [newStory, ...prev]);
+    const nextStories = [newStory, ...stories];
+    setStories(nextStories);
     showToast(`Story "${newStory.title}" created successfully! 🎉`);
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('store_settings').upsert({ id: 'stories', data: nextStories }).then();
+    }
   };
 
   const updateStory = (id: string, updates: Partial<ProductStory>) => {
-    setStories((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+    const nextStories = stories.map((s) => (s.id === id ? { ...s, ...updates } : s));
+    setStories(nextStories);
     showToast('Story updated successfully!');
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('store_settings').upsert({ id: 'stories', data: nextStories }).then();
+    }
   };
 
   const deleteStory = (id: string) => {
-    setStories((prev) => prev.filter((s) => s.id !== id));
+    const nextStories = stories.filter((s) => s.id !== id);
+    setStories(nextStories);
     showToast('Story deleted');
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('store_settings').upsert({ id: 'stories', data: nextStories }).then();
+    }
   };
 
   const toggleStory = (id: string) => {
-    setStories((prev) => prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)));
+    const nextStories = stories.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s));
+    setStories(nextStories);
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('store_settings').upsert({ id: 'stories', data: nextStories }).then();
+    }
   };
 
   // Scratch Card & Flash Deal Config Updaters
   const updateScratchConfig = (updates: Partial<ScratchCardConfig>) => {
-    setScratchConfig((prev) => ({ ...prev, ...updates }));
+    const nextConfig = { ...scratchConfig, ...updates };
+    setScratchConfig(nextConfig);
     showToast('Scratch card settings saved! 🎁');
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('store_settings').upsert({ id: 'scratch_config', data: nextConfig }).then();
+    }
   };
 
   const updateFlashDealConfig = (updates: Partial<FlashDealConfig>) => {
-    setFlashDealConfig((prev) => ({ ...prev, ...updates }));
+    const nextConfig = { ...flashDealConfig, ...updates };
+    setFlashDealConfig(nextConfig);
     showToast('Flash deals settings saved! ⚡');
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('store_settings').upsert({ id: 'flash_deal_config', data: nextConfig }).then();
+    }
   };
 
   // Inventory actions
