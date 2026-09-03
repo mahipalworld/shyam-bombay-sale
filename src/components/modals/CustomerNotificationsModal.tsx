@@ -16,7 +16,11 @@ import {
   Volume2
 } from 'lucide-react';
 import { UserBroadcastNotification } from '@/types';
-import { requestNotificationPermission, getNotificationPermissionState } from '@/utils/pushNotifications';
+import { 
+  requestNotificationPermission, 
+  getNotificationPermissionState, 
+  triggerBrowserPushNotification 
+} from '@/utils/pushNotifications';
 
 export const CustomerNotificationsModal: React.FC = () => {
   const { 
@@ -149,14 +153,14 @@ export const CustomerNotificationsModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Push Permission Prompt Banner (if not granted yet) */}
+        {/* Push Permission Prompt Banner */}
         {permissionState === 'default' && (
           <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 border-b border-orange-100 p-3 px-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
               <BellRing className="w-5 h-5 text-[#F95721] flex-shrink-0 animate-bounce" />
               <div className="min-w-0">
-                <p className="text-xs font-bold text-gray-900 leading-tight">Get Instant Deal Alerts</p>
-                <p className="text-[10px] text-gray-600 leading-tight truncate">Never miss flash price drops</p>
+                <p className="text-xs font-bold text-gray-900 leading-tight">Get Instant On-Device Alerts</p>
+                <p className="text-[10px] text-gray-600 leading-tight truncate">Receive lock screen & flash sale popups</p>
               </div>
             </div>
             <button
@@ -165,6 +169,34 @@ export const CustomerNotificationsModal: React.FC = () => {
             >
               Turn On
             </button>
+          </div>
+        )}
+
+        {permissionState === 'granted' && (
+          <div className="bg-emerald-50/70 border-b border-emerald-100 px-4 py-2 flex items-center justify-between text-[11px]">
+            <span className="font-bold text-emerald-800 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>On-Device Notifications Active</span>
+            </span>
+            <button
+              onClick={() => {
+                triggerBrowserPushNotification({
+                  title: '🔥 SBS Store Test Alert',
+                  body: 'On-device notifications are working perfectly on this device!',
+                  data: { url: '/' }
+                });
+                showToast('🔔 Test notification sent to this device!', 'success');
+              }}
+              className="text-[10px] font-black text-emerald-700 bg-white border border-emerald-200 px-2 py-0.5 rounded-lg hover:bg-emerald-100 active:scale-95 transition-all"
+            >
+              Test On Device
+            </button>
+          </div>
+        )}
+
+        {permissionState === 'denied' && (
+          <div className="bg-red-50 border-b border-red-100 px-4 py-2 flex items-center justify-between text-[10px] text-red-700">
+            <span>⚠️ On-device alerts blocked in browser. Tap URL padlock to Allow.</span>
           </div>
         )}
 

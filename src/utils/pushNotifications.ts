@@ -25,6 +25,33 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
   }
 }
 
+// Optional audio notification chime for device feedback
+export function playNotificationChime() {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.1); // A5
+
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+  } catch {
+    // Audio autoplay restrictions ignored
+  }
+}
+
 export interface PushNotificationPayload {
   title: string;
   body: string;
@@ -52,6 +79,9 @@ export async function triggerBrowserPushNotification(
     return { success: false, permission: 'unsupported', error: 'Window undefined' };
   }
 
+  // Play audio chime
+  playNotificationChime();
+
   if (!('Notification' in window)) {
     console.warn('SBS Notifications: Notification API not supported in this browser.');
     return { success: false, permission: 'unsupported', error: 'Notification API unsupported' };
@@ -73,31 +103,38 @@ export async function triggerBrowserPushNotification(
     return { success: false, permission: currentPermission, error: `Permission is ${currentPermission}` };
   }
 
-  const defaultIcon = '/icon-192x192.png';
-  const defaultBadge = '/icon.svg';
+  // Use absolute URLs for icons so Android and Windows notification centers can render them properly
+  const origin = window.location.origin;
+  const defaultIcon = `${origin}/icon-192x192.png`;
+  const defaultBadge = `${origin}/icon.svg`;
 
   const notificationOptions: any = {
     body: payload.body,
-    icon: payload.icon || defaultIcon,
-    badge: payload.badge || defaultBadge,
+    icon: payload.icon ? (payload.icon.startsWith('http') ? payload.icon : `${origin}${payload.icon}`) : defaultIcon,
+    badge: payload.badge ? (payload.badge.startsWith('http') ? payload.badge : `${origin}${payload.badge}`) : defaultBadge,
     tag: payload.tag || `sbs-notif-${Date.now()}`,
     data: payload.data || { url: '/' },
-    vibrate: [200, 100, 200],
+    vibrate: [300, 100, 300],
+    renotify: true,
     requireInteraction: false,
     silent: false,
   };
 
   if (payload.image) {
-    notificationOptions.image = payload.image;
+    notificationOptions.image = payload.image.startsWith('http') ? payload.image : `${origin}${payload.image}`;
   }
 
   // 1. Attempt Service Worker showNotification (Best for PWAs, Android Chrome & Background tabs)
   if ('serviceWorker' in navigator) {
     try {
-      // Use timeout race so we don't hang if SW is installing or not ready
-      const swReadyPromise = navigator.serviceWorker.ready;
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500));
-      const registration = await Promise.race([swReadyPromise, timeoutPromise]);
+      // First check active registration
+      let registration = await navigator.serviceWorker.getRegistration();
+      
+      if (!registration) {
+        const swReadyPromise = navigator.serviceWorker.ready;
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500));
+        registration = (await Promise.race([swReadyPromise, timeoutPromise])) as ServiceWorkerRegistration;
+      }
 
       if (registration && typeof registration.showNotification === 'function') {
         await registration.showNotification(payload.title, notificationOptions);
