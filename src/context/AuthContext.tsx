@@ -1,0 +1,275 @@
+'use client';
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+
+interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  phone: string;
+  avatar_url?: string;
+  reward_points: number;
+}
+
+interface AuthContextType {
+  supabaseUser: User | null;
+  authUser: AuthUser | null;
+  loading: boolean;
+  isAuthModalOpen: boolean;
+  authModalTab: 'login' | 'signup';
+  isPhonePromptOpen: boolean;
+  openAuthModal: (tab?: 'login' | 'signup') => void;
+  closeAuthModal: () => void;
+  openPhonePrompt: () => void;
+  closePhonePrompt: () => void;
+  dismissPhonePrompt: () => void;
+  savePhoneNumber: (phone: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, name: string, phone?: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signInWithGoogle: () => Promise<{ error: string | null }>;
+  signOut: () => Promise<void>;
+  updateProfile: (updates: Partial<AuthUser>) => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  return ctx;
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<'login' | 'signup'>('login');
+  const [isPhonePromptOpen, setIsPhonePromptOpen] = useState(false);
+
+  // Helper to check if phone prompt should be shown
+  const checkShouldPromptPhone = (phone?: string | null) => {
+    if (typeof window === 'undefined') return;
+    const isDismissed = sessionStorage.getItem('sbs_phone_prompt_dismissed') === 'true';
+    const hasPhone = phone && phone.trim().length >= 10;
+    if (!hasPhone && !isDismissed) {
+      setIsPhonePromptOpen(true);
+    }
+  };
+
+  // Load profile from Supabase
+  const loadProfile = async (user: User) => {
+    if (!supabase) return;
+    const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    if (data) {
+      const profileUser: AuthUser = {
+        id: data.id,
+        email: data.email || user.email || '',
+        name: data.name || user.user_metadata?.full_name || user.user_metadata?.name || 'User',
+        phone: data.phone || '',
+        avatar_url: data.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture,
+        reward_points: data.reward_points ?? 250,
+      };
+      setAuthUser(profileUser);
+      checkShouldPromptPhone(data.phone);
+    } else {
+      // Auto-create profile for Google / OAuth login
+      const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+      const avatar_url = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+      const phone = user.user_metadata?.phone || '';
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        name,
+        email: user.email || '',
+        phone,
+        avatar_url,
+        reward_points: 250,
+      });
+      const newAuthUser: AuthUser = {
+        id: user.id,
+        email: user.email || '',
+        name,
+        phone,
+        avatar_url,
+        reward_points: 250,
+      };
+      setAuthUser(newAuthUser);
+      // Automatically prompt new OAuth user for mobile number with default +91
+      checkShouldPromptPhone(phone);
+    }
+  };
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) {
+      setLoading(false);
+      return;
+    }
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSupabaseUser(session?.user ?? null);
+      if (session?.user) {
+        loadProfile(session.user).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Listen to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSupabaseUser(session?.user ?? null);
+      if (session?.user) {
+        await loadProfile(session.user);
+      } else {
+        setAuthUser(null);
+        setIsPhonePromptOpen(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const openAuthModal = (tab: 'login' | 'signup' = 'login') => {
+    setAuthModalTab(tab);
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => setIsAuthModalOpen(false);
+
+  const openPhonePrompt = () => setIsPhonePromptOpen(true);
+  const closePhonePrompt = () => setIsPhonePromptOpen(false);
+  const dismissPhonePrompt = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('sbs_phone_prompt_dismissed', 'true');
+    }
+    setIsPhonePromptOpen(false);
+  };
+
+  const savePhoneNumber = async (phoneNumber: string) => {
+    if (!supabase || !supabaseUser) return { error: 'Not authenticated' };
+
+    // Clean and validate number
+    const cleanedDigits = phoneNumber.replace(/\D/g, '');
+    let finalPhone = phoneNumber.trim();
+
+    // Ensure +91 prefix
+    if (cleanedDigits.length === 10) {
+      finalPhone = `+91 ${cleanedDigits}`;
+    } else if (cleanedDigits.length === 12 && cleanedDigits.startsWith('91')) {
+      finalPhone = `+91 ${cleanedDigits.slice(2)}`;
+    } else if (cleanedDigits.length === 11 && cleanedDigits.startsWith('0')) {
+      finalPhone = `+91 ${cleanedDigits.slice(1)}`;
+    } else if (!finalPhone.startsWith('+91')) {
+      finalPhone = `+91 ${finalPhone}`;
+    }
+
+    const { error } = await supabase.from('profiles').update({ phone: finalPhone }).eq('id', supabaseUser.id);
+    if (error) {
+      return { error: error.message };
+    }
+
+    setAuthUser(prev => prev ? { ...prev, phone: finalPhone } : null);
+    setIsPhonePromptOpen(false);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('sbs_phone_prompt_dismissed', 'true');
+    }
+    return { error: null };
+  };
+
+  const signUp = async (email: string, password: string, name: string, phone?: string) => {
+    if (!supabase) return { error: 'Supabase not configured' };
+
+    let formattedPhone = phone?.trim() || '';
+    if (formattedPhone) {
+      const digits = formattedPhone.replace(/\D/g, '');
+      if (digits.length === 10) {
+        formattedPhone = `+91 ${digits}`;
+      } else if (!formattedPhone.startsWith('+91')) {
+        formattedPhone = `+91 ${formattedPhone}`;
+      }
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name, phone: formattedPhone } },
+    });
+    if (error) return { error: error.message };
+
+    // Create profile row
+    if (data.user) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        name,
+        email,
+        phone: formattedPhone,
+        reward_points: 250,
+      });
+    }
+    return { error: null };
+  };
+
+  const signIn = async (email: string, password: string) => {
+    if (!supabase) return { error: 'Supabase not configured' };
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+    return { error: null };
+  };
+
+  const signInWithGoogle = async () => {
+    if (!supabase) return { error: 'Supabase not configured' };
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: typeof window !== 'undefined' ? `${window.location.origin}` : undefined,
+      },
+    });
+    if (error) return { error: error.message };
+    return { error: null };
+  };
+
+  const signOut = async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setAuthUser(null);
+    setSupabaseUser(null);
+    setIsPhonePromptOpen(false);
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('sbs_phone_prompt_dismissed');
+    }
+  };
+
+  const updateProfile = async (updates: Partial<AuthUser>) => {
+    if (!supabase || !supabaseUser) return;
+    await supabase.from('profiles').update(updates).eq('id', supabaseUser.id);
+    setAuthUser(prev => prev ? { ...prev, ...updates } : null);
+  };
+
+  return (
+    <AuthContext.Provider value={{
+      supabaseUser,
+      authUser,
+      loading,
+      isAuthModalOpen,
+      authModalTab,
+      isPhonePromptOpen,
+      openAuthModal,
+      closeAuthModal,
+      openPhonePrompt,
+      closePhonePrompt,
+      dismissPhonePrompt,
+      savePhoneNumber,
+      signUp,
+      signIn,
+      signInWithGoogle,
+      signOut,
+      updateProfile,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+
