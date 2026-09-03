@@ -112,7 +112,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
           {/* Add Product Primary Button */}
           <button
             onClick={onOpenAddModal}
-            className="px-3.5 py-2 bg-[#F35C16] hover:bg-[#E04F0E] text-white text-xs font-bold rounded-2xl flex items-center gap-1.5 shadow-sm shadow-orange-500/20 active:scale-95 transition-all"
+            className="px-3.5 py-2 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-2xl flex items-center gap-1.5 shadow-sm shadow-orange-500/20 active:scale-95 transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Add Product</span>
@@ -128,7 +128,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
           placeholder="Search by title, keyword, or category..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white border border-gray-200 rounded-2xl pl-9 pr-4 py-2.5 text-xs font-medium outline-none focus:border-[#F35C16] shadow-2xs"
+          className="w-full bg-white border border-gray-200 rounded-2xl pl-9 pr-4 py-2.5 text-xs font-medium outline-none focus:border-[#F95721] shadow-2xs"
         />
       </div>
 
@@ -157,7 +157,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
               }}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap capitalize transition-all ${
                 selectedCategory === c.id
-                  ? 'bg-[#F35C16] text-white shadow-xs'
+                  ? 'bg-[#F95721] text-white shadow-xs'
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
               }`}
             >
@@ -194,7 +194,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   onClick={() => setSelectedSubcategory(sub.id)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${
                     selectedSubcategory === sub.id
-                      ? 'bg-[#F35C16] text-white'
+                      ? 'bg-[#F95721] text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
@@ -241,7 +241,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
             </div>
             <button
               onClick={onOpenAddModal}
-              className="px-4 py-2 bg-[#F35C16] text-white text-xs font-bold rounded-2xl inline-flex items-center gap-1.5"
+              className="px-4 py-2 bg-[#F95721] text-white text-xs font-bold rounded-2xl inline-flex items-center gap-1.5"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create Product</span>
@@ -278,7 +278,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                           {p.category}
                         </span>
                         {p.subcategory && (
-                          <span className="text-[10px] font-bold text-[#F35C16] bg-orange-50 px-2 py-0.5 rounded-md truncate border border-orange-200/60 capitalize">
+                          <span className="text-[10px] font-bold text-[#F95721] bg-orange-50 px-2 py-0.5 rounded-md truncate border border-orange-200/60 capitalize">
                             {p.subcategory}
                           </span>
                         )}
@@ -299,7 +299,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
 
                     {/* Pricing */}
                     <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-black text-[#F35C16]">₹{p.price}</span>
+                      <span className="text-sm font-black text-[#F95721]">₹{p.price}</span>
                       <span className="text-xs text-gray-400 line-through">₹{p.originalPrice}</span>
                       <span className="text-[10px] font-bold text-green-600">
                         {p.discountPercentage}% OFF

@@ -205,7 +205,7 @@ export const CategoriesView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-gray-100 p-4 sm:p-5 rounded-3xl shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-orange-100 text-[#F35C16] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-orange-100 text-[#F95721] flex items-center justify-center">
               <Layers className="w-4 h-4" />
             </div>
             <h1 className="text-lg sm:text-xl font-black text-gray-900 leading-tight">
@@ -219,7 +219,7 @@ export const CategoriesView: React.FC = () => {
 
         <button
           onClick={handleOpenAdd}
-          className="px-4 py-2.5 bg-[#F35C16] hover:bg-[#E04F0E] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-2 shadow-sm shadow-orange-500/20 active:scale-95 transition-all flex-shrink-0"
+          className="px-4 py-2.5 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-2 shadow-sm shadow-orange-500/20 active:scale-95 transition-all flex-shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Category</span>
@@ -236,7 +236,7 @@ export const CategoriesView: React.FC = () => {
 
         <div className="bg-white border border-gray-100 rounded-2xl p-3.5 shadow-2xs">
           <span className="text-[11px] font-bold text-gray-400">Homepage Active</span>
-          <p className="text-xl font-black text-[#F35C16] mt-0.5">{homeCategoriesCount}</p>
+          <p className="text-xl font-black text-[#F95721] mt-0.5">{homeCategoriesCount}</p>
           <span className="text-[10px] text-emerald-600 font-bold">Featured on Home</span>
         </div>
 
@@ -256,12 +256,12 @@ export const CategoriesView: React.FC = () => {
             placeholder="Search categories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3.5 py-2 bg-white border border-gray-200 rounded-2xl text-xs font-semibold text-gray-900 placeholder:text-gray-400 outline-none focus:border-[#F35C16] shadow-2xs"
+            className="w-full pl-9 pr-3.5 py-2 bg-white border border-gray-200 rounded-2xl text-xs font-semibold text-gray-900 placeholder:text-gray-400 outline-none focus:border-[#F95721] shadow-2xs"
           />
         </div>
 
         <div className="w-full sm:w-auto bg-orange-50/80 border border-orange-200/70 rounded-2xl px-3.5 py-2 text-xs text-orange-950 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#F35C16] flex-shrink-0" />
+          <Sparkles className="w-4 h-4 text-[#F95721] flex-shrink-0" />
           <span className="text-[11px]">
             Use the <strong>🏠 Homepage Switch</strong> or <strong>Edit</strong> button to customize images and storefront appearance.
           </span>
@@ -347,7 +347,7 @@ export const CategoriesView: React.FC = () => {
                   onClick={(e) => handleToggleHomepageVisibility(c, e)}
                   className={`px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all ${
                     isHomeVisible 
-                      ? 'bg-orange-50 text-[#F35C16] hover:bg-orange-100 border border-orange-200/60' 
+                      ? 'bg-orange-50 text-[#F95721] hover:bg-orange-100 border border-orange-200/60' 
                       : 'bg-gray-100 text-gray-400 hover:bg-gray-200 border border-transparent'
                   }`}
                   title="Click to toggle display on homepage"
@@ -381,7 +381,7 @@ export const CategoriesView: React.FC = () => {
                   {/* Edit Button */}
                   <button
                     onClick={() => handleOpenEdit(c)}
-                    className="p-1.5 bg-orange-50 hover:bg-orange-100 text-[#F35C16] rounded-xl transition-colors font-bold text-xs flex items-center gap-1"
+                    className="p-1.5 bg-orange-50 hover:bg-orange-100 text-[#F95721] rounded-xl transition-colors font-bold text-xs flex items-center gap-1"
                     title="Edit Category"
                   >
                     <Edit className="w-3.5 h-3.5" />
@@ -414,7 +414,7 @@ export const CategoriesView: React.FC = () => {
             {/* Modal Header */}
             <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div>
-                <span className="text-[10px] font-black text-[#F35C16] uppercase tracking-wider">
+                <span className="text-[10px] font-black text-[#F95721] uppercase tracking-wider">
                   {editingCategory ? 'Edit Mode' : 'New Taxonomy Item'}
                 </span>
                 <h2 className="text-sm font-black text-gray-900">
@@ -442,7 +442,7 @@ export const CategoriesView: React.FC = () => {
                   placeholder="e.g. Kitchen Utilities"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F35C16] text-xs font-bold text-gray-900"
+                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-bold text-gray-900"
                 />
               </div>
 
@@ -456,7 +456,7 @@ export const CategoriesView: React.FC = () => {
                   placeholder="e.g. Storage, Bottles, Tools & more"
                   value={formSubtitle}
                   onChange={(e) => setFormSubtitle(e.target.value)}
-                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F35C16] text-xs text-gray-800"
+                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs text-gray-800"
                 />
               </div>
 
@@ -464,7 +464,7 @@ export const CategoriesView: React.FC = () => {
               <div className="bg-orange-50/60 border border-orange-200/80 rounded-2xl p-3.5 flex items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-1.5">
-                    <Home className="w-4 h-4 text-[#F35C16]" />
+                    <Home className="w-4 h-4 text-[#F95721]" />
                     <span className="font-extrabold text-xs text-gray-900">Show on Homepage Carousel</span>
                   </div>
                   <p className="text-[10px] text-gray-500">
@@ -479,7 +479,7 @@ export const CategoriesView: React.FC = () => {
                     onChange={(e) => setFormShowOnHome(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F35C16]" />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F95721]" />
                 </label>
               </div>
 
@@ -490,7 +490,7 @@ export const CategoriesView: React.FC = () => {
                 </label>
 
                 {/* File Upload Button */}
-                <label className="border-2 border-dashed border-orange-300 hover:border-[#F35C16] bg-orange-50/40 hover:bg-orange-50 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all text-center group">
+                <label className="border-2 border-dashed border-orange-300 hover:border-[#F95721] bg-orange-50/40 hover:bg-orange-50 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all text-center group">
                   <input
                     type="file"
                     accept="image/*"
@@ -513,14 +513,14 @@ export const CategoriesView: React.FC = () => {
                       }
                     }}
                   />
-                  <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#F35C16] group-hover:scale-110 flex items-center justify-center transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#F95721] group-hover:scale-110 flex items-center justify-center transition-transform">
                     <Upload className="w-5 h-5" />
                   </div>
                   <div>
                     <p className="text-xs font-bold text-gray-900">Upload Image from Device / Phone</p>
                     <p className="text-[10px] text-gray-500">Supports JPG, PNG, WEBP, SVG</p>
                   </div>
-                  <span className="px-3 py-1 bg-[#F35C16] text-white text-[10px] font-bold rounded-xl shadow-xs">
+                  <span className="px-3 py-1 bg-[#F95721] text-white text-[10px] font-bold rounded-xl shadow-xs">
                     Choose Photo
                   </span>
                 </label>
@@ -567,7 +567,7 @@ export const CategoriesView: React.FC = () => {
                     placeholder="https://images.unsplash.com/..."
                     value={formImage.startsWith('data:') ? '' : formImage}
                     onChange={(e) => setFormImage(e.target.value)}
-                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F35C16] text-xs"
+                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F95721] text-xs"
                   />
                 </div>
 
@@ -584,7 +584,7 @@ export const CategoriesView: React.FC = () => {
                         onClick={() => setFormImage(preset.url)}
                         className={`p-1.5 rounded-xl border flex flex-col items-center gap-1 transition-all ${
                           formImage === preset.url 
-                            ? 'border-[#F35C16] bg-orange-50/80 shadow-xs' 
+                            ? 'border-[#F95721] bg-orange-50/80 shadow-xs' 
                             : 'border-gray-200 bg-white hover:border-gray-300'
                         }`}
                       >
@@ -617,7 +617,7 @@ export const CategoriesView: React.FC = () => {
                       }}
                       className={`h-9 rounded-xl border-2 transition-all flex items-center justify-center ${
                         formBgColor === pal.bg 
-                          ? 'border-[#F35C16] scale-110 shadow-xs ring-2 ring-orange-200' 
+                          ? 'border-[#F95721] scale-110 shadow-xs ring-2 ring-orange-200' 
                           : 'border-transparent hover:scale-105'
                       }`}
                       style={{ backgroundColor: pal.bg }}
@@ -651,7 +651,7 @@ export const CategoriesView: React.FC = () => {
               <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-3.5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Layers className="w-4 h-4 text-[#F35C16]" />
+                    <Layers className="w-4 h-4 text-[#F95721]" />
                     <span className="font-extrabold text-xs text-gray-900">Sub-Categories / Sub-Sections</span>
                   </div>
                   <span className="text-[10px] font-bold text-gray-500 bg-white px-2 py-0.5 rounded-full border border-gray-200">
@@ -699,14 +699,14 @@ export const CategoriesView: React.FC = () => {
                       placeholder="Subcategory Name (e.g. Decor)"
                       value={newSubName}
                       onChange={(e) => setNewSubName(e.target.value)}
-                      className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-[#F35C16]"
+                      className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-[#F95721]"
                     />
                     <input
                       type="text"
                       placeholder="Subtitle (e.g. Vases, accents)"
                       value={newSubSubtitle}
                       onChange={(e) => setNewSubSubtitle(e.target.value)}
-                      className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-[#F35C16]"
+                      className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-[#F95721]"
                     />
                   </div>
                   <button
@@ -732,7 +732,7 @@ export const CategoriesView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 bg-[#F35C16] hover:bg-[#E04F0E] text-white font-black rounded-2xl shadow-md shadow-orange-500/20 active:scale-95 transition-all"
+                  className="flex-1 py-3 bg-[#F95721] hover:bg-[#E44813] text-white font-black rounded-2xl shadow-md shadow-orange-500/20 active:scale-95 transition-all"
                 >
                   {editingCategory ? 'Save Changes' : 'Create Category'}
                 </button>

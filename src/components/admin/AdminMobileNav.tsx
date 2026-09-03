@@ -36,6 +36,7 @@ export type AdminActiveTab =
   | 'payments'
   | 'analytics'
   | 'notifications'
+  | 'roles'
   | 'settings';
 
 interface AdminMobileNavProps {
@@ -92,7 +93,8 @@ export const AdminMobileNav: React.FC<AdminMobileNavProps> = ({
     { tab: 'customers', label: 'Customer Directory', category: 'CRM', icon: Users },
     { tab: 'payments', label: 'Payments Ledger', category: 'Finance', icon: CreditCard },
     { tab: 'analytics', label: 'Analytics & Insights', category: 'Intelligence', icon: BarChart3 },
-    { tab: 'notifications', label: 'Notifications Center', category: 'System', icon: Bell, badge: unreadNotifs > 0 ? unreadNotifs : undefined, badgeColor: 'bg-[#F35C16]' },
+    { tab: 'notifications', label: 'Notifications Center', category: 'System', icon: Bell, badge: unreadNotifs > 0 ? unreadNotifs : undefined, badgeColor: 'bg-[#F95721]' },
+    { tab: 'roles', label: 'Roles & Access Control', category: 'Security', icon: ShieldCheck },
     { tab: 'settings', label: 'Store & Business Settings', category: 'System', icon: Settings },
   ];
 
@@ -133,11 +135,11 @@ export const AdminMobileNav: React.FC<AdminMobileNavProps> = ({
                 onClick={() => handleSelect(item.tab)}
                 className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all ${
                   active 
-                    ? 'text-[#F35C16] font-bold scale-105' 
+                    ? 'text-[#F95721] font-bold scale-105' 
                     : 'text-gray-500 hover:text-gray-900 font-medium'
                 }`}
               >
-                <div className={`p-1 rounded-xl transition-all ${active ? 'bg-orange-50 text-[#F35C16]' : ''}`}>
+                <div className={`p-1 rounded-xl transition-all ${active ? 'bg-orange-50 text-[#F95721]' : ''}`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] tracking-tight">{item.label}</span>
@@ -150,16 +152,16 @@ export const AdminMobileNav: React.FC<AdminMobileNavProps> = ({
             onClick={() => setIsMoreOpen(true)}
             className={`relative flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all ${
               isCurrentTabInMore 
-                ? 'text-[#F35C16] font-bold scale-105' 
+                ? 'text-[#F95721] font-bold scale-105' 
                 : 'text-gray-500 hover:text-gray-900 font-medium'
             }`}
           >
-            <div className={`p-1 rounded-xl transition-all ${isCurrentTabInMore ? 'bg-orange-50 text-[#F35C16]' : ''}`}>
+            <div className={`p-1 rounded-xl transition-all ${isCurrentTabInMore ? 'bg-orange-50 text-[#F95721]' : ''}`}>
               <Menu className="w-5 h-5" />
             </div>
             <span className="text-[10px] tracking-tight">More</span>
             {(unreadNotifs > 0 || pendingReturns > 0 || lowStockCount > 0) && (
-              <span className="absolute top-1 right-2 w-2.5 h-2.5 bg-[#F35C16] rounded-full ring-2 ring-white" />
+              <span className="absolute top-1 right-2 w-2.5 h-2.5 bg-[#F95721] rounded-full ring-2 ring-white" />
             )}
           </button>
         </div>
@@ -176,7 +178,7 @@ export const AdminMobileNav: React.FC<AdminMobileNavProps> = ({
             {/* Sheet Header */}
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-100 text-[#F35C16] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-orange-100 text-[#F95721] flex items-center justify-center">
                   <Menu className="w-4 h-4" />
                 </div>
                 <div>
@@ -195,7 +197,7 @@ export const AdminMobileNav: React.FC<AdminMobileNavProps> = ({
             {/* Role indicator alert */}
             <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-3 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#F35C16]" />
+                <ShieldCheck className="w-4 h-4 text-[#F95721]" />
                 <span className="font-bold text-gray-800">Active Role: {adminRole}</span>
               </div>
               <span className="text-[10px] text-gray-500">RBAC Active</span>
@@ -217,13 +219,13 @@ export const AdminMobileNav: React.FC<AdminMobileNavProps> = ({
                       !allowed
                         ? 'opacity-40 bg-gray-50 border-gray-100 cursor-not-allowed text-gray-400'
                         : active
-                        ? 'bg-orange-50/80 border-orange-200 text-[#F35C16] shadow-xs'
+                        ? 'bg-orange-50/80 border-orange-200 text-[#F95721] shadow-xs'
                         : 'bg-white border-gray-100 hover:border-gray-200 text-gray-800 hover:bg-gray-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        active ? 'bg-[#F35C16] text-white' : 'bg-gray-100 text-gray-600'
+                        active ? 'bg-[#F95721] text-white' : 'bg-gray-100 text-gray-600'
                       }`}>
                         <Icon className="w-5 h-5" />
                       </div>

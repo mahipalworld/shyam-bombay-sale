@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useStore } from '@/context/StoreContext';
+import { triggerConfetti } from '@/utils/confetti';
 import { 
   X, 
   MapPin, 
@@ -72,6 +73,7 @@ export const CheckoutModal: React.FC = () => {
       const order = placeOrder(selectedPayment, currentAddress);
       setIsProcessingOrder(false);
       setIsCheckoutOpen(false);
+      triggerConfetti({ particleCount: 150, duration: 3500 });
       setSelectedOrderForModal(order);
       setActiveTab('profile');
     }, 900);
@@ -96,12 +98,12 @@ export const CheckoutModal: React.FC = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-[#F35C16]" />
+                <MapPin className="w-4 h-4 text-[#F95721]" />
                 Delivery Address
               </span>
               <button
                 onClick={() => setIsAddingNewAddress(!isAddingNewAddress)}
-                className="text-[11px] font-bold text-[#F35C16] hover:underline"
+                className="text-[11px] font-bold text-[#F95721] hover:underline"
               >
                 {isAddingNewAddress ? 'Select Existing' : '+ Add New'}
               </button>
@@ -115,7 +117,7 @@ export const CheckoutModal: React.FC = () => {
                   required
                   value={newAddr.street}
                   onChange={(e) => setNewAddr({ ...newAddr, street: e.target.value })}
-                  className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F35C16]"
+                  className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721]"
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <input
@@ -124,7 +126,7 @@ export const CheckoutModal: React.FC = () => {
                     required
                     value={newAddr.city}
                     onChange={(e) => setNewAddr({ ...newAddr, city: e.target.value })}
-                    className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F35C16]"
+                    className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721]"
                   />
                   <input
                     type="text"
@@ -132,12 +134,12 @@ export const CheckoutModal: React.FC = () => {
                     required
                     value={newAddr.pincode}
                     onChange={(e) => setNewAddr({ ...newAddr, pincode: e.target.value })}
-                    className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F35C16]"
+                    className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721]"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="w-full py-2 bg-[#F35C16] text-white font-bold rounded-xl text-xs"
+                  className="w-full py-2 bg-[#F95721] text-white font-bold rounded-xl text-xs"
                 >
                   Save Address
                 </button>
@@ -149,7 +151,7 @@ export const CheckoutModal: React.FC = () => {
                     key={addr.id}
                     className={`block p-3 rounded-2xl border cursor-pointer transition-all ${
                       selectedAddressId === addr.id
-                        ? 'border-[#F35C16] bg-[#FFF8F4]'
+                        ? 'border-[#F95721] bg-[#FFF8F4]'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
@@ -159,7 +161,7 @@ export const CheckoutModal: React.FC = () => {
                         name="address"
                         checked={selectedAddressId === addr.id}
                         onChange={() => setSelectedAddressId(addr.id)}
-                        className="mt-0.5 text-[#F35C16]"
+                        className="mt-0.5 text-[#F95721]"
                       />
                       <div className="text-xs">
                         <div className="flex items-center gap-1.5 font-bold text-gray-900">
@@ -181,7 +183,7 @@ export const CheckoutModal: React.FC = () => {
           {/* Step 2: Payment Method */}
           <div className="space-y-2 pt-2 border-t border-gray-100">
             <span className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-              <CreditCard className="w-4 h-4 text-[#F35C16]" />
+              <CreditCard className="w-4 h-4 text-[#F95721]" />
               Select Payment Mode
             </span>
 
@@ -189,7 +191,7 @@ export const CheckoutModal: React.FC = () => {
               {/* UPI */}
               <label
                 className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${
-                  selectedPayment === 'UPI' ? 'border-[#F35C16] bg-[#FFF8F4]' : 'border-gray-200'
+                  selectedPayment === 'UPI' ? 'border-[#F95721] bg-[#FFF8F4]' : 'border-gray-200'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -198,7 +200,7 @@ export const CheckoutModal: React.FC = () => {
                     name="payment"
                     checked={selectedPayment === 'UPI'}
                     onChange={() => setSelectedPayment('UPI')}
-                    className="text-[#F35C16]"
+                    className="text-[#F95721]"
                   />
                   <div className="flex items-center gap-2">
                     <Smartphone className="w-4 h-4 text-[#00A859]" />
@@ -213,7 +215,7 @@ export const CheckoutModal: React.FC = () => {
               {/* Cards / Netbanking */}
               <label
                 className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${
-                  selectedPayment === 'Card' ? 'border-[#F35C16] bg-[#FFF8F4]' : 'border-gray-200'
+                  selectedPayment === 'Card' ? 'border-[#F95721] bg-[#FFF8F4]' : 'border-gray-200'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -222,7 +224,7 @@ export const CheckoutModal: React.FC = () => {
                     name="payment"
                     checked={selectedPayment === 'Card'}
                     onChange={() => setSelectedPayment('Card')}
-                    className="text-[#F35C16]"
+                    className="text-[#F95721]"
                   />
                   <div className="flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-[#0284C7]" />
@@ -234,7 +236,7 @@ export const CheckoutModal: React.FC = () => {
               {/* Cash on Delivery */}
               <label
                 className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${
-                  selectedPayment === 'COD' ? 'border-[#F35C16] bg-[#FFF8F4]' : 'border-gray-200'
+                  selectedPayment === 'COD' ? 'border-[#F95721] bg-[#FFF8F4]' : 'border-gray-200'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -243,7 +245,7 @@ export const CheckoutModal: React.FC = () => {
                     name="payment"
                     checked={selectedPayment === 'COD'}
                     onChange={() => setSelectedPayment('COD')}
-                    className="text-[#F35C16]"
+                    className="text-[#F95721]"
                   />
                   <div className="flex items-center gap-2">
                     <Banknote className="w-4 h-4 text-[#D97706]" />
@@ -281,7 +283,7 @@ export const CheckoutModal: React.FC = () => {
             </div>
             <div className="flex justify-between items-baseline pt-2 border-t font-bold text-sm text-gray-900">
               <span>Total Payable</span>
-              <span className="text-lg text-[#F35C16]">₹{cartTotal.toLocaleString('en-IN')}</span>
+              <span className="text-lg text-[#F95721]">₹{cartTotal.toLocaleString('en-IN')}</span>
             </div>
           </div>
         </div>
@@ -291,7 +293,7 @@ export const CheckoutModal: React.FC = () => {
           <button
             disabled={isProcessingOrder}
             onClick={handleCompleteOrder}
-            className="w-full py-3.5 bg-[#F35C16] hover:bg-[#E04F0E] disabled:bg-gray-400 text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
+            className="w-full py-3.5 bg-[#F95721] hover:bg-[#E44813] disabled:bg-gray-400 text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
           >
             {isProcessingOrder ? (
               <span className="animate-pulse">Processing Order...</span>

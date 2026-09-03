@@ -82,18 +82,21 @@ export const AuthModal: React.FC = () => {
       <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
 
         {/* Header Gradient */}
-        <div className="bg-gradient-to-br from-[#F35C16] to-[#e04a08] px-6 pt-8 pb-10">
+        <div className="bg-gradient-to-br from-[#F95721] to-[#E44813] px-6 pt-8 pb-10">
           <button
             onClick={() => { resetForm(); closeAuthModal(); }}
             className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-              <ShoppingBag className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-white font-black text-xl tracking-tight">SBS Store</span>
+          <div className="flex items-center gap-2 mb-3 bg-white/90 px-3 py-1.5 rounded-2xl w-fit">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.png"
+              alt="SBS Logo"
+              className="h-7 object-contain"
+            />
+            <span className="text-gray-900 font-black text-sm tracking-tight">STORE</span>
           </div>
           <h2 className="text-white font-bold text-2xl leading-tight">
             {isLogin ? 'Welcome back!' : 'Create account'}
@@ -134,7 +137,7 @@ export const AuthModal: React.FC = () => {
             className="w-full py-2.5 px-4 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-xs border border-gray-200 rounded-xl flex items-center justify-center gap-2.5 shadow-xs hover:border-gray-300 active:scale-[0.98] transition-all disabled:opacity-60"
           >
             {googleLoading ? (
-              <span className="w-4 h-4 border-2 border-gray-400 border-t-[#F35C16] rounded-full animate-spin" />
+              <span className="w-4 h-4 border-2 border-gray-400 border-t-[#F95721] rounded-full animate-spin" />
             ) : (
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -180,14 +183,14 @@ export const AuthModal: React.FC = () => {
                 value={name}
                 onChange={e => setName(e.target.value)}
                 required={!isLogin}
-                className="w-full pl-10 pr-4 py-3 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#F35C16]/30 focus:border-[#F35C16] transition-all placeholder:text-gray-400"
+                className="w-full pl-10 pr-4 py-3 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#F95721]/30 focus:border-[#F95721] transition-all placeholder:text-gray-400"
               />
             </div>
           )}
 
           {/* Phone (sign-up only) */}
           {!isLogin && (
-            <div className="relative flex items-center border border-gray-200 rounded-xl bg-gray-50 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#F35C16]/30 focus-within:border-[#F35C16] transition-all overflow-hidden">
+            <div className="relative flex items-center border border-gray-200 rounded-xl bg-gray-50 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#F95721]/30 focus-within:border-[#F95721] transition-all overflow-hidden">
               <div className="flex items-center gap-1 px-3 py-2.5 bg-gray-100/80 border-r border-gray-200 select-none shrink-0">
                 <span className="text-xs" role="img" aria-label="India">🇮🇳</span>
                 <span className="text-xs font-bold text-gray-700">+91</span>
@@ -218,7 +221,7 @@ export const AuthModal: React.FC = () => {
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className="w-full pl-10 pr-4 py-3 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#F35C16]/30 focus:border-[#F35C16] transition-all placeholder:text-gray-400"
+              className="w-full pl-10 pr-4 py-3 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#F95721]/30 focus:border-[#F95721] transition-all placeholder:text-gray-400"
             />
           </div>
 
@@ -232,7 +235,7 @@ export const AuthModal: React.FC = () => {
               onChange={e => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full pl-10 pr-10 py-3 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#F35C16]/30 focus:border-[#F35C16] transition-all placeholder:text-gray-400"
+              className="w-full pl-10 pr-10 py-3 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#F95721]/30 focus:border-[#F95721] transition-all placeholder:text-gray-400"
             />
             <button
               type="button"
@@ -247,7 +250,7 @@ export const AuthModal: React.FC = () => {
           <button
             type="submit"
             disabled={loading || !!success}
-            className="w-full py-3.5 bg-gradient-to-r from-[#F35C16] to-[#e04a08] text-white font-bold text-sm rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+            className="w-full py-3.5 bg-gradient-to-r from-[#F95721] to-[#E44813] text-white font-bold text-sm rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-1"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

@@ -130,6 +130,28 @@ export interface Coupon {
 
 export type AdminRole = 'OWNER' | 'MANAGER' | 'MARKETING' | 'STAFF';
 
+export interface AdminTeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: AdminRole;
+  status: 'ACTIVE' | 'SUSPENDED';
+  department?: string;
+  avatarUrl?: string;
+  isSuperAdmin?: boolean;
+  addedAt: string;
+  lastActive?: string;
+}
+
+export interface RoleAuditLog {
+  id: string;
+  actorEmail: string;
+  action: 'MEMBER_ADDED' | 'ROLE_UPDATED' | 'STATUS_CHANGED' | 'MEMBER_REMOVED';
+  targetEmail: string;
+  details: string;
+  timestamp: string;
+}
+
 export interface AdminNotification {
   id: string;
   title: string;
@@ -220,6 +242,48 @@ export interface HomepageSection {
   enabled: boolean;
 }
 
+export interface ProductStory {
+  id: string;
+  title: string;
+  subtitle: string;
+  tag: string;
+  media: string;
+  type: 'image' | 'video';
+  productId: string;
+  productName: string;
+  price: number;
+  originalPrice: number;
+  discount: string;
+  accentColor: string;
+  bgGradient: string;
+  enabled: boolean;
+  order: number;
+}
+
+export interface ScratchCardConfig {
+  enabled: boolean;
+  code: string;
+  title: string;
+  description: string;
+  discountAmount: number;
+  minOrderValue: number;
+  expiresAt: string;
+  scratchThresholdPercent: number;
+}
+
+export interface FlashDealConfig {
+  enabled: boolean;
+  title: string;
+  badgeText: string;
+  discountText: string;
+  productId: string;
+  productName: string;
+  dealPrice: number;
+  originalPrice: number;
+  productImage: string;
+  hoursRemaining: number;
+}
+
 export interface StoreSettings {
   storeName: string;
   logo: string;
@@ -236,5 +300,9 @@ export interface StoreSettings {
   orderNotification: boolean;
   lowStockNotification: boolean;
   customerNotification: boolean;
+  enableStories?: boolean;
+  enableScratchCard?: boolean;
+  enableFlashDeals?: boolean;
+  enableConfetti?: boolean;
 }
 

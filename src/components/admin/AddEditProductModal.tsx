@@ -319,7 +319,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         {/* Header */}
         <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
           <div>
-            <span className="text-[10px] font-black text-[#F35C16] uppercase tracking-wider">
+            <span className="text-[10px] font-black text-[#F95721] uppercase tracking-wider">
               Step {currentStep} of {totalSteps}
             </span>
             <h2 className="text-sm font-black text-gray-900">
@@ -342,9 +342,9 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
               onClick={() => setCurrentStep(st.num)}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all ${
                 currentStep === st.num
-                  ? 'bg-[#F35C16] text-white shadow-xs'
+                  ? 'bg-[#F95721] text-white shadow-xs'
                   : currentStep > st.num
-                  ? 'bg-orange-100/70 text-[#F35C16]'
+                  ? 'bg-orange-100/70 text-[#F95721]'
                   : 'bg-white text-gray-400 border border-gray-100'
               }`}
             >
@@ -367,7 +367,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                   placeholder="e.g. Smart Stainless Steel Vegetable Cutter"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F35C16] text-xs font-semibold"
+                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-semibold"
                 />
               </div>
 
@@ -380,7 +380,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                       const newCat = e.target.value;
                       setFormData({ ...formData, category: newCat, subcategory: '' });
                     }}
-                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F35C16] text-xs font-semibold capitalize bg-white"
+                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-semibold capitalize bg-white"
                   >
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
@@ -398,7 +398,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                       <select
                         value={formData.subcategory}
                         onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-                        className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F35C16] text-xs font-semibold capitalize bg-white"
+                        className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-semibold capitalize bg-white"
                       >
                         <option value="">General / None</option>
                         {availableSubs.map((sub) => (
@@ -417,7 +417,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                   placeholder="Brief 1-liner summary for listings"
                   value={formData.shortDescription}
                   onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
-                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F35C16] text-xs"
+                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs"
                 />
               </div>
 
@@ -428,7 +428,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                   placeholder="Write clear product highlights, usage instructions, and benefits..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F35C16] text-xs"
+                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs"
                 />
               </div>
             </div>
@@ -443,7 +443,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                 </label>
 
                 {/* File Upload Dropzone */}
-                <label className="border-2 border-dashed border-orange-300 hover:border-[#F35C16] bg-orange-50/40 hover:bg-orange-50 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all text-center group">
+                <label className="border-2 border-dashed border-orange-300 hover:border-[#F95721] bg-orange-50/40 hover:bg-orange-50 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all text-center group">
                   <input
                     type="file"
                     accept="image/*"
@@ -465,7 +465,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                       }
                     }}
                   />
-                  <div className="w-11 h-11 rounded-2xl bg-orange-100 text-[#F35C16] group-hover:scale-110 flex items-center justify-center transition-transform shadow-xs">
+                  <div className="w-11 h-11 rounded-2xl bg-orange-100 text-[#F95721] group-hover:scale-110 flex items-center justify-center transition-transform shadow-xs">
                     <Upload className="w-5 h-5" />
                   </div>
                   <div>
@@ -476,7 +476,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                       Add angle shots, lifestyle photos, packaging (Max 10MB each)
                     </p>
                   </div>
-                  <span className="px-3 py-1 bg-[#F35C16] text-white text-[10px] font-bold rounded-xl shadow-xs">
+                  <span className="px-3 py-1 bg-[#F95721] text-white text-[10px] font-bold rounded-xl shadow-xs">
                     Browse & Add Photos
                   </span>
                 </label>
@@ -489,7 +489,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                   placeholder="Or paste external image URL..."
                   value={newImageUrl}
                   onChange={(e) => setNewImageUrl(e.target.value)}
-                  className="flex-1 border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F35C16] text-xs"
+                  className="flex-1 border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F95721] text-xs"
                 />
                 <button
                   type="button"
@@ -523,7 +523,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                         <div
                           key={idx}
                           className={`relative aspect-square rounded-2xl bg-white p-1.5 border-2 overflow-hidden flex flex-col justify-between group shadow-2xs ${
-                            isPrimary ? 'border-[#F35C16] ring-2 ring-orange-200' : 'border-gray-200'
+                            isPrimary ? 'border-[#F95721] ring-2 ring-orange-200' : 'border-gray-200'
                           }`}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -535,7 +535,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
 
                           {/* Primary Badge */}
                           {isPrimary && (
-                            <span className="absolute top-1 left-1 text-[8px] font-black uppercase text-white bg-[#F35C16] px-1.5 py-0.5 rounded-md shadow-xs">
+                            <span className="absolute top-1 left-1 text-[8px] font-black uppercase text-white bg-[#F95721] px-1.5 py-0.5 rounded-md shadow-xs">
                               Cover
                             </span>
                           )}
@@ -546,7 +546,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleSetPrimaryImage(imgUrl)}
-                                className="p-1 rounded-lg bg-white text-[#F35C16] hover:bg-orange-50"
+                                className="p-1 rounded-lg bg-white text-[#F95721] hover:bg-orange-50"
                                 title="Set as cover image"
                               >
                                 <Star className="w-3.5 h-3.5" />
@@ -583,7 +583,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAddBlockForm(true)}
-                  className="px-3 py-1.5 bg-[#F35C16] hover:bg-[#e04a08] text-white text-[11px] font-bold rounded-xl flex items-center gap-1 shadow-xs flex-shrink-0"
+                  className="px-3 py-1.5 bg-[#F95721] hover:bg-[#E44813] text-white text-[11px] font-bold rounded-xl flex items-center gap-1 shadow-xs flex-shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Add Section</span>
@@ -612,7 +612,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                         placeholder="e.g. Ultrasonic Deep Cleansing"
                         value={newBlock.title}
                         onChange={(e) => setNewBlock({ ...newBlock, title: e.target.value })}
-                        className="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F35C16] text-xs font-semibold"
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F95721] text-xs font-semibold"
                       />
                     </div>
                     <div>
@@ -622,7 +622,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                         placeholder="e.g. Feature Highlight / Step 1"
                         value={newBlock.badge}
                         onChange={(e) => setNewBlock({ ...newBlock, badge: e.target.value })}
-                        className="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F35C16] text-xs"
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
                       />
                     </div>
                   </div>
@@ -637,9 +637,9 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                         placeholder="https://images.unsplash.com/..."
                         value={newBlock.image}
                         onChange={(e) => setNewBlock({ ...newBlock, image: e.target.value })}
-                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F35C16] text-xs"
+                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
                       />
-                      <label className="px-3 py-2 bg-orange-100 text-[#F35C16] hover:bg-orange-200 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1 flex-shrink-0">
+                      <label className="px-3 py-2 bg-orange-100 text-[#F95721] hover:bg-orange-200 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1 flex-shrink-0">
                         <Upload className="w-3.5 h-3.5" />
                         <span>Upload</span>
                         <input
@@ -673,7 +673,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                       placeholder="Explain how this feature works, benefits, or step-by-step instructions..."
                       value={newBlock.text}
                       onChange={(e) => setNewBlock({ ...newBlock, text: e.target.value })}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F35C16] text-xs"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
                     />
                   </div>
 
@@ -708,7 +708,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowAddBlockForm(true)}
-                      className="px-4 py-1.5 bg-[#F35C16] text-white text-xs font-bold rounded-xl inline-flex items-center gap-1 shadow-xs"
+                      className="px-4 py-1.5 bg-[#F95721] text-white text-xs font-bold rounded-xl inline-flex items-center gap-1 shadow-xs"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add First Block</span>
@@ -718,11 +718,11 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                   formData.descriptionBlocks.map((block, idx) => (
                     <div
                       key={block.id || idx}
-                      className="bg-white border border-gray-200 rounded-2xl p-3.5 shadow-xs space-y-2.5 relative group hover:border-[#F35C16] transition-all"
+                      className="bg-white border border-gray-200 rounded-2xl p-3.5 shadow-xs space-y-2.5 relative group hover:border-[#F95721] transition-all"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-orange-100 text-[#F35C16] text-[10px] font-black flex items-center justify-center">
+                          <span className="w-5 h-5 rounded-full bg-orange-100 text-[#F95721] text-[10px] font-black flex items-center justify-center">
                             {idx + 1}
                           </span>
                           {block.badge && (
@@ -773,7 +773,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     placeholder="999"
                     value={formData.mrp}
                     onChange={(e) => setFormData({ ...formData, mrp: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F35C16] text-xs font-bold"
+                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-bold"
                   />
                   <p className="text-[10px] text-gray-400 mt-1">Crossed-out original price</p>
                 </div>
@@ -785,7 +785,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     placeholder="599"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F35C16] text-xs font-bold text-[#F35C16]"
+                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-bold text-[#F95721]"
                   />
                   <p className="text-[10px] text-gray-400 mt-1">Actual customer price</p>
                 </div>
@@ -798,7 +798,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                   <p className="text-[10px] text-gray-500">Customer savings on SBS Store</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-lg font-black text-[#F35C16]">
+                  <span className="text-lg font-black text-[#F95721]">
                     {formData.discountPercentage}% OFF
                   </span>
                   <p className="text-[10px] font-semibold text-[#00A859]">
@@ -818,7 +818,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                   type="text"
                   value={formData.sku}
                   onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F35C16] text-xs font-mono"
+                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-mono"
                 />
               </div>
 
@@ -829,7 +829,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     type="number"
                     value={formData.stockCount}
                     onChange={(e) => setFormData({ ...formData, stockCount: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F35C16] text-xs font-bold"
+                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-bold"
                   />
                 </div>
 
@@ -839,7 +839,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     type="number"
                     value={formData.lowStockThreshold}
                     onChange={(e) => setFormData({ ...formData, lowStockThreshold: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F35C16] text-xs font-bold text-amber-600"
+                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-bold text-amber-600"
                   />
                 </div>
               </div>
@@ -868,7 +868,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
           {currentStep === 6 && (
             <div className="space-y-3.5">
               <div className="bg-gray-50 border border-gray-200 rounded-2xl p-2.5 text-[11px] text-gray-600">
-                💡 Attribute fields adapted for <span className="font-bold text-[#F35C16] capitalize">{formData.category}</span>
+                💡 Attribute fields adapted for <span className="font-bold text-[#F95721] capitalize">{formData.category}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -879,7 +879,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     placeholder="e.g. 500ml / 20L / 1.5L"
                     value={formData.capacity}
                     onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3 py-2 outline-none focus:border-[#F35C16] text-xs"
+                    className="w-full border border-gray-200 rounded-2xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
                   />
                 </div>
 
@@ -890,7 +890,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     placeholder="e.g. 350g"
                     value={formData.weight}
                     onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3 py-2 outline-none focus:border-[#F35C16] text-xs"
+                    className="w-full border border-gray-200 rounded-2xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
                   />
                 </div>
               </div>
@@ -903,7 +903,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     placeholder="e.g. 20 x 15 x 10 cm"
                     value={formData.dimensions}
                     onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3 py-2 outline-none focus:border-[#F35C16] text-xs"
+                    className="w-full border border-gray-200 rounded-2xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
                   />
                 </div>
 
@@ -914,7 +914,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     placeholder="e.g. Pastel Green"
                     value={formData.color}
                     onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3 py-2 outline-none focus:border-[#F35C16] text-xs"
+                    className="w-full border border-gray-200 rounded-2xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
                   />
                 </div>
               </div>
@@ -926,7 +926,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                   placeholder="e.g. Food Grade Stainless Steel & BPA Free Plastic"
                   value={formData.material}
                   onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F35C16] text-xs"
+                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F95721] text-xs"
                 />
               </div>
 
@@ -937,7 +937,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                   placeholder="e.g. 6 Months Replacement Warranty"
                   value={formData.warranty}
                   onChange={(e) => setFormData({ ...formData, warranty: e.target.value })}
-                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F35C16] text-xs"
+                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F95721] text-xs"
                 />
               </div>
             </div>
@@ -986,7 +986,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     type="checkbox"
                     checked={formData.isTrending}
                     onChange={(e) => setFormData({ ...formData, isTrending: e.target.checked })}
-                    className="w-4 h-4 rounded text-[#F35C16] accent-[#F35C16]"
+                    className="w-4 h-4 rounded text-[#F95721] accent-[#F95721]"
                   />
                 </label>
 
@@ -1002,7 +1002,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     type="checkbox"
                     checked={formData.isBestSeller}
                     onChange={(e) => setFormData({ ...formData, isBestSeller: e.target.checked })}
-                    className="w-4 h-4 rounded text-[#F35C16] accent-[#F35C16]"
+                    className="w-4 h-4 rounded text-[#F95721] accent-[#F95721]"
                   />
                 </label>
 
@@ -1018,7 +1018,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     type="checkbox"
                     checked={formData.isDealOfDay}
                     onChange={(e) => setFormData({ ...formData, isDealOfDay: e.target.checked })}
-                    className="w-4 h-4 rounded text-[#F35C16] accent-[#F35C16]"
+                    className="w-4 h-4 rounded text-[#F95721] accent-[#F95721]"
                   />
                 </label>
               </div>
@@ -1051,7 +1051,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
             <button
               type="button"
               onClick={() => setCurrentStep(currentStep + 1)}
-              className="flex-1 py-2.5 bg-[#F35C16] hover:bg-[#E04F0E] text-white font-bold rounded-2xl flex items-center justify-center gap-1 text-xs shadow-sm shadow-orange-500/20"
+              className="flex-1 py-2.5 bg-[#F95721] hover:bg-[#E44813] text-white font-bold rounded-2xl flex items-center justify-center gap-1 text-xs shadow-sm shadow-orange-500/20"
             >
               <span>Next: {stepsList[currentStep]?.title}</span>
               <ChevronRight className="w-4 h-4" />

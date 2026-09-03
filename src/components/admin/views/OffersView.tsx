@@ -14,15 +14,46 @@ import {
   Check, 
   Clock, 
   Sparkles,
-  ShoppingBag
+  ShoppingBag,
+  Gift,
+  Save
 } from 'lucide-react';
 import { Coupon } from '@/types';
 
 export const OffersView: React.FC = () => {
-  const { coupons, addCoupon, updateCoupon, deleteCoupon, categories, products, showToast } = useStore();
+  const { 
+    coupons, 
+    addCoupon, 
+    updateCoupon, 
+    deleteCoupon, 
+    scratchConfig, 
+    updateScratchConfig, 
+    categories, 
+    products, 
+    showToast 
+  } = useStore();
 
+  const [activeTab, setActiveTab] = useState<'coupons' | 'scratch'>('coupons');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
+
+  // Scratch config local form
+  const [scratchForm, setScratchForm] = useState({
+    enabled: scratchConfig?.enabled !== false,
+    code: scratchConfig?.code || 'SBS150',
+    title: scratchConfig?.title || 'Flat ₹150 OFF',
+    description: scratchConfig?.description || 'Valid on all orders above ₹499',
+    discountAmount: scratchConfig?.discountAmount || 150,
+    minOrderValue: scratchConfig?.minOrderValue || 499,
+    expiresAt: scratchConfig?.expiresAt || '2026-12-31',
+    scratchThresholdPercent: scratchConfig?.scratchThresholdPercent || 35,
+  });
+
+  const handleSaveScratch = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateScratchConfig(scratchForm);
+    showToast('Scratch card settings updated!');
+  };
 
   const [formData, setFormData] = useState({
     code: '',
@@ -73,21 +104,21 @@ export const OffersView: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.code.trim() || !formData.value) {
-      showToast('Please provide coupon code & discount', 'error');
+    if (!formData.code.trim()) {
+      showToast('Enter valid coupon code', 'error');
       return;
     }
 
     const payload = {
-      code: formData.code.toUpperCase(),
-      title: formData.title || `${formData.discountType === 'FLAT' ? '₹' : ''}${formData.value}${formData.discountType === 'PERCENT' ? '%' : ''} Off`,
+      code: formData.code.toUpperCase().trim(),
+      title: formData.title.trim(),
       discountType: formData.discountType,
-      value: parseFloat(formData.value) || 10,
-      minOrderValue: parseFloat(formData.minOrderValue) || 499,
+      value: parseFloat(formData.value) || 0,
+      minOrderValue: parseFloat(formData.minOrderValue) || 0,
       maxDiscount: parseFloat(formData.maxDiscount) || undefined,
       expiresAt: formData.expiresAt,
-      description: formData.description || `Special coupon on orders above ₹${formData.minOrderValue}`,
-      eligibleCategory: formData.eligibleCategory !== 'ALL' ? formData.eligibleCategory : undefined,
+      description: formData.description,
+      eligibleCategory: formData.eligibleCategory === 'ALL' ? undefined : formData.eligibleCategory,
       isActive: formData.isActive,
     };
 
@@ -119,20 +150,45 @@ export const OffersView: React.FC = () => {
         <div>
           <h1 className="text-lg font-black text-gray-900 leading-tight">Offers & Discounts</h1>
           <p className="text-[11px] text-gray-500">
-            {coupons.length} promotional campaigns available
+            Promotions, coupon codes, and mystery scratch rewards
           </p>
         </div>
 
+        {activeTab === 'coupons' && (
+          <button
+            onClick={handleOpenAdd}
+            className="px-3.5 py-2 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-2xl flex items-center gap-1.5 shadow-sm shadow-orange-500/20"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Coupon</span>
+          </button>
+        )}
+      </div>
+
+      {/* Tabs Switcher */}
+      <div className="flex bg-gray-100 p-1 rounded-2xl gap-1">
         <button
-          onClick={handleOpenAdd}
-          className="px-3.5 py-2 bg-[#F35C16] hover:bg-[#E04F0E] text-white text-xs font-bold rounded-2xl flex items-center gap-1.5 shadow-sm shadow-orange-500/20"
+          onClick={() => setActiveTab('coupons')}
+          className={`flex-1 py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+            activeTab === 'coupons' ? 'bg-white text-[#F95721] shadow-xs' : 'text-gray-600'
+          }`}
         >
-          <Plus className="w-4 h-4" />
-          <span>New Coupon</span>
+          <Tag className="w-3.5 h-3.5" />
+          <span>Promo Coupons ({coupons.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('scratch')}
+          className={`flex-1 py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+            activeTab === 'scratch' ? 'bg-white text-[#F95721] shadow-xs' : 'text-gray-600'
+          }`}
+        >
+          <Gift className="w-3.5 h-3.5" />
+          <span>Scratch & Win Reward</span>
         </button>
       </div>
 
-      {/* Coupons List Cards */}
+      {/* TAB 1: Coupons List */}
+      {activeTab === 'coupons' && (
       <div className="space-y-3">
         {coupons.map((c) => {
           const isExpired = new Date(c.expiresAt).getTime() < new Date().getTime();
@@ -149,7 +205,7 @@ export const OffersView: React.FC = () => {
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-base font-black text-[#F35C16]">
+                    <span className="text-base font-black text-[#F95721]">
                       {c.discountType === 'FLAT' ? `₹${c.value} FLAT OFF` : `${c.value}% OFF`}
                     </span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -168,7 +224,7 @@ export const OffersView: React.FC = () => {
                 {/* Coupon Code Pill */}
                 <button
                   onClick={() => handleCopyCode(c.code)}
-                  className="px-3 py-1.5 bg-orange-50 hover:bg-orange-100 text-[#F35C16] border border-dashed border-orange-300 rounded-xl font-mono text-xs font-black flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-orange-50 hover:bg-orange-100 text-[#F95721] border border-dashed border-orange-300 rounded-xl font-mono text-xs font-black flex items-center gap-1.5"
                   title="Copy code"
                 >
                   <span>{c.code}</span>
@@ -219,6 +275,140 @@ export const OffersView: React.FC = () => {
           );
         })}
       </div>
+      )}
+
+      {/* TAB 2: Scratch & Win Surprise Mystery Card Manager */}
+      {activeTab === 'scratch' && (
+        <form onSubmit={handleSaveScratch} className="bg-white border border-gray-100 rounded-3xl p-5 shadow-2xs space-y-4 text-xs">
+          <div className="flex items-center justify-between border-b pb-3">
+            <div>
+              <h3 className="text-sm font-black text-gray-900 flex items-center gap-1.5">
+                <Gift className="w-4 h-4 text-[#F95721]" />
+                <span>Scratch & Win Reward Settings</span>
+              </h3>
+              <p className="text-[10px] text-gray-500">
+                Configure the mystery prize revealed on customer scratch cards
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setScratchForm({ ...scratchForm, enabled: !scratchForm.enabled })}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                scratchForm.enabled ? 'bg-[#00A859] text-white' : 'bg-gray-200 text-gray-700'
+              }`}
+            >
+              {scratchForm.enabled ? 'Enabled' : 'Disabled'}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-gray-800 mb-1">Coupon Code Granted *</label>
+              <input
+                type="text"
+                value={scratchForm.code}
+                onChange={(e) => setScratchForm({ ...scratchForm, code: e.target.value.toUpperCase() })}
+                className="w-full border rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] font-mono font-black text-[#F95721]"
+                placeholder="SBS150"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-gray-800 mb-1">Discount Amount (₹) *</label>
+              <input
+                type="number"
+                value={scratchForm.discountAmount}
+                onChange={(e) => setScratchForm({ ...scratchForm, discountAmount: parseFloat(e.target.value) || 0 })}
+                className="w-full border rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] font-bold"
+                placeholder="150"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-gray-800 mb-1">Reward Title</label>
+              <input
+                type="text"
+                value={scratchForm.title}
+                onChange={(e) => setScratchForm({ ...scratchForm, title: e.target.value })}
+                className="w-full border rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721]"
+                placeholder="Flat ₹150 OFF"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-gray-800 mb-1">Min Order Total (₹)</label>
+              <input
+                type="number"
+                value={scratchForm.minOrderValue}
+                onChange={(e) => setScratchForm({ ...scratchForm, minOrderValue: parseFloat(e.target.value) || 0 })}
+                className="w-full border rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721]"
+                placeholder="499"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-gray-800 mb-1">Terms / Subtitle Description</label>
+            <input
+              type="text"
+              value={scratchForm.description}
+              onChange={(e) => setScratchForm({ ...scratchForm, description: e.target.value })}
+              className="w-full border rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721]"
+              placeholder="Valid on all orders above ₹499"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-gray-800 mb-1">Expires On</label>
+              <input
+                type="date"
+                value={scratchForm.expiresAt}
+                onChange={(e) => setScratchForm({ ...scratchForm, expiresAt: e.target.value })}
+                className="w-full border rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721]"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-gray-800 mb-1">Scratch Trigger Area (%)</label>
+              <input
+                type="number"
+                min={15}
+                max={70}
+                value={scratchForm.scratchThresholdPercent}
+                onChange={(e) => setScratchForm({ ...scratchForm, scratchThresholdPercent: parseInt(e.target.value) || 35 })}
+                className="w-full border rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721]"
+                placeholder="35"
+              />
+            </div>
+          </div>
+
+          {/* Live Preview Card */}
+          <div className="bg-orange-50/70 border border-orange-200/80 rounded-2xl p-3 flex items-center justify-between">
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold text-orange-800 uppercase tracking-wider">Preview Reward</span>
+              <p className="font-black text-sm text-[#F95721]">{scratchForm.title}</p>
+              <p className="text-[10px] text-gray-600">{scratchForm.description}</p>
+            </div>
+            <span className="font-mono font-black text-xs px-3 py-1.5 bg-white border border-dashed border-[#F95721] text-[#F95721] rounded-xl">
+              {scratchForm.code}
+            </span>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-3 bg-[#F95721] hover:bg-[#E44813] text-white font-bold rounded-2xl shadow-sm shadow-orange-500/20 flex items-center justify-center gap-1.5 text-xs active:scale-98 transition-all"
+          >
+            <Save className="w-4 h-4" />
+            <span>Save Scratch Card Reward Settings</span>
+          </button>
+        </form>
+      )}
 
       {/* Add / Edit Offer Modal */}
       {isModalOpen && (
@@ -246,7 +436,7 @@ export const OffersView: React.FC = () => {
                     placeholder="e.g. FLASH30"
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                    className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F35C16] font-mono font-bold uppercase"
+                    className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721] font-mono font-bold uppercase"
                   />
                 </div>
                 <div>
@@ -254,7 +444,7 @@ export const OffersView: React.FC = () => {
                   <select
                     value={formData.discountType}
                     onChange={(e) => setFormData({ ...formData, discountType: e.target.value as any })}
-                    className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F35C16] font-bold"
+                    className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721] font-bold"
                   >
                     <option value="PERCENT">% Percentage</option>
                     <option value="FLAT">₹ Flat Off</option>
@@ -272,7 +462,7 @@ export const OffersView: React.FC = () => {
                     required
                     value={formData.value}
                     onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                    className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F35C16] font-bold text-[#F35C16]"
+                    className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721] font-bold text-[#F95721]"
                   />
                 </div>
                 <div>
@@ -281,7 +471,7 @@ export const OffersView: React.FC = () => {
                     type="number"
                     value={formData.minOrderValue}
                     onChange={(e) => setFormData({ ...formData, minOrderValue: e.target.value })}
-                    className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F35C16]"
+                    className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721]"
                   />
                 </div>
               </div>
@@ -293,7 +483,7 @@ export const OffersView: React.FC = () => {
                   placeholder="e.g. Monsoon Super Saver"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F35C16]"
+                  className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721]"
                 />
               </div>
 
@@ -303,7 +493,7 @@ export const OffersView: React.FC = () => {
                   type="date"
                   value={formData.expiresAt}
                   onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-                  className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F35C16]"
+                  className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721]"
                 />
               </div>
 
@@ -312,7 +502,7 @@ export const OffersView: React.FC = () => {
                 <select
                   value={formData.eligibleCategory}
                   onChange={(e) => setFormData({ ...formData, eligibleCategory: e.target.value })}
-                  className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F35C16]"
+                  className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721]"
                 >
                   <option value="ALL">Applicable to all categories</option>
                   {categories.map(c => (
@@ -331,7 +521,7 @@ export const OffersView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-[#F35C16] text-white font-bold rounded-xl shadow-xs"
+                  className="flex-1 py-2.5 bg-[#F95721] text-white font-bold rounded-xl shadow-xs"
                 >
                   Save Coupon
                 </button>

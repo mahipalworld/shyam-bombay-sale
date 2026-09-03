@@ -71,7 +71,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
             onClick={() => setActiveTab(t.key)}
             className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all ${
               activeTab === t.key
-                ? 'bg-white text-[#F35C16] shadow-xs'
+                ? 'bg-white text-[#F95721] shadow-xs'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -88,7 +88,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
           placeholder="Search by order # (e.g. SBS-98231), customer name, or phone..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white border border-gray-200 rounded-2xl pl-9 pr-3 py-2 text-xs outline-none focus:border-[#F35C16]"
+          className="w-full bg-white border border-gray-200 rounded-2xl pl-9 pr-3 py-2 text-xs outline-none focus:border-[#F95721]"
         />
       </div>
 
@@ -126,7 +126,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
                           ? 'bg-blue-100 text-blue-700' 
                           : isReturn
                           ? 'bg-red-100 text-red-700'
-                          : 'bg-orange-100 text-[#F35C16]'
+                          : 'bg-orange-100 text-[#F95721]'
                       }`}>
                         {ord.status}
                       </span>
@@ -137,7 +137,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
                   </div>
 
                   <div className="text-right">
-                    <span className="text-sm font-black text-[#F35C16]">₹{ord.total}</span>
+                    <span className="text-sm font-black text-[#F95721]">₹{ord.total}</span>
                     <p className="text-[10px] text-gray-500 font-medium">{ord.paymentMethod}</p>
                   </div>
                 </div>

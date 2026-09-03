@@ -136,7 +136,7 @@ export const InventoryView: React.FC = () => {
           placeholder="Filter inventory by product name or category..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white border border-gray-200 rounded-2xl pl-9 pr-3 py-2 text-xs outline-none focus:border-[#F35C16]"
+          className="w-full bg-white border border-gray-200 rounded-2xl pl-9 pr-3 py-2 text-xs outline-none focus:border-[#F95721]"
         />
       </div>
 
@@ -202,7 +202,7 @@ export const InventoryView: React.FC = () => {
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => handleStockChange(p, 5)}
-                    className="px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-[#F35C16] text-[11px] font-bold rounded-xl border border-orange-200/60"
+                    className="px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-[#F95721] text-[11px] font-bold rounded-xl border border-orange-200/60"
                   >
                     +5 Units
                   </button>
@@ -225,7 +225,7 @@ export const InventoryView: React.FC = () => {
           <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full mx-auto p-5 space-y-3 shadow-2xl max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between border-b pb-2">
               <div className="flex items-center gap-2">
-                <History className="w-4 h-4 text-[#F35C16]" />
+                <History className="w-4 h-4 text-[#F95721]" />
                 <h3 className="text-sm font-black text-gray-900">Inventory Change Audit Log</h3>
               </div>
               <button

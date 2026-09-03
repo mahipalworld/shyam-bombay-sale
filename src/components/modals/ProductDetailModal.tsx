@@ -102,7 +102,7 @@ export const ProductDetailModal: React.FC = () => {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={handleShare}
-                className="p-2 text-gray-600 hover:text-[#F35C16] hover:bg-orange-50 rounded-full transition-colors"
+                className="p-2 text-gray-600 hover:text-[#F95721] hover:bg-orange-50 rounded-full transition-colors"
                 aria-label="Share product"
               >
                 <Share2 className="w-4 h-4" />
@@ -156,14 +156,14 @@ export const ProductDetailModal: React.FC = () => {
                   <>
                     <button
                       onClick={handlePrevImage}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F35C16] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F95721] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all"
                       aria-label="Previous image"
                     >
                       <ChevronLeft className="w-4 h-4 stroke-[2.5px]" />
                     </button>
                     <button
                       onClick={handleNextImage}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F35C16] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F95721] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all"
                       aria-label="Next image"
                     >
                       <ChevronRight className="w-4 h-4 stroke-[2.5px]" />
@@ -181,7 +181,7 @@ export const ProductDetailModal: React.FC = () => {
                       onClick={() => setActiveImageIndex(idx)}
                       className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gray-50 p-1 flex-shrink-0 border-2 overflow-hidden transition-all ${
                         activeImageIndex === idx
-                          ? 'border-[#F35C16] ring-2 ring-orange-200 scale-105 shadow-xs'
+                          ? 'border-[#F95721] ring-2 ring-orange-200 scale-105 shadow-xs'
                           : 'border-gray-200 hover:border-gray-300 opacity-70 hover:opacity-100'
                       }`}
                     >
@@ -199,7 +199,7 @@ export const ProductDetailModal: React.FC = () => {
 
             {/* Title & Brand */}
             <div>
-              <span className="text-[10px] font-extrabold tracking-wider text-[#F35C16] uppercase bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100">
+              <span className="text-[10px] font-extrabold tracking-wider text-[#F95721] uppercase bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100">
                 SBS Certified Quality
               </span>
               <h2 className="text-lg sm:text-xl font-black text-gray-900 mt-1.5 leading-snug">
@@ -225,7 +225,7 @@ export const ProductDetailModal: React.FC = () => {
             {/* Pricing Row */}
             <div className="bg-[#FFF8F4] border border-[#FEDDC7] rounded-2xl p-3.5 flex items-center justify-between shadow-xs">
               <div>
-                <span className="text-2xl font-black text-[#F35C16]">
+                <span className="text-2xl font-black text-[#F95721]">
                   ₹{p.price.toLocaleString('en-IN')}
                 </span>
                 <div className="flex items-center gap-2 mt-0.5">
@@ -261,7 +261,7 @@ export const ProductDetailModal: React.FC = () => {
             {/* Product Highlights & Features */}
             <div className="space-y-2.5 text-xs bg-gray-50/70 border border-gray-100 rounded-2xl p-3.5">
               <div className="flex items-center gap-1.5 font-bold text-gray-900 text-sm">
-                <Sparkles className="w-4 h-4 text-[#F35C16]" />
+                <Sparkles className="w-4 h-4 text-[#F95721]" />
                 <h4>Product Highlights</h4>
               </div>
               <p className="text-gray-600 leading-relaxed font-medium">{p.description}</p>
@@ -281,7 +281,7 @@ export const ProductDetailModal: React.FC = () => {
             {p.descriptionBlocks && p.descriptionBlocks.length > 0 && (
               <div className="space-y-4 pt-2">
                 <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-                  <div className="w-6 h-6 rounded-lg bg-orange-100 text-[#F35C16] flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-lg bg-orange-100 text-[#F95721] flex items-center justify-center">
                     <Layers className="w-3.5 h-3.5" />
                   </div>
                   <div>
@@ -339,17 +339,17 @@ export const ProductDetailModal: React.FC = () => {
             {/* Trust Badges */}
             <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100 text-center">
               <div className="p-2.5 rounded-xl bg-gray-50 flex flex-col items-center">
-                <Truck className="w-4 h-4 text-[#F35C16] mb-1" />
+                <Truck className="w-4 h-4 text-[#F95721] mb-1" />
                 <span className="text-[10px] font-bold text-gray-800">Fast Shipping</span>
                 <span className="text-[9px] text-gray-400">2-4 Days</span>
               </div>
               <div className="p-2.5 rounded-xl bg-gray-50 flex flex-col items-center">
-                <RotateCcw className="w-4 h-4 text-[#F35C16] mb-1" />
+                <RotateCcw className="w-4 h-4 text-[#F95721] mb-1" />
                 <span className="text-[10px] font-bold text-gray-800">7 Days Return</span>
                 <span className="text-[9px] text-gray-400">Easy Replacement</span>
               </div>
               <div className="p-2.5 rounded-xl bg-gray-50 flex flex-col items-center">
-                <ShieldCheck className="w-4 h-4 text-[#F35C16] mb-1" />
+                <ShieldCheck className="w-4 h-4 text-[#F95721] mb-1" />
                 <span className="text-[10px] font-bold text-gray-800">100% Genuine</span>
                 <span className="text-[9px] text-gray-400">Quality Assured</span>
               </div>
@@ -360,7 +360,7 @@ export const ProductDetailModal: React.FC = () => {
           <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-md border-t border-gray-100 p-3 sm:p-4 grid grid-cols-2 gap-2.5 shadow-lg">
             <button
               onClick={handleAddToCart}
-              className="py-3.5 px-3 border-2 border-[#F35C16] bg-orange-50/60 hover:bg-orange-100/80 active:scale-98 text-[#F35C16] font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-1.5 transition-all"
+              className="py-3.5 px-3 border-2 border-[#F95721] bg-orange-50/60 hover:bg-orange-100/80 active:scale-98 text-[#F95721] font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-1.5 transition-all"
             >
               <ShoppingCart className="w-4 h-4 flex-shrink-0" />
               <span>Add to Cart</span>
@@ -368,7 +368,7 @@ export const ProductDetailModal: React.FC = () => {
 
             <button
               onClick={handleBuyNow}
-              className="py-3.5 px-3 bg-gradient-to-r from-[#F35C16] to-[#FA7035] hover:from-[#E04F0E] hover:to-[#F35C16] active:scale-98 text-white font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-1.5 shadow-float transition-all"
+              className="py-3.5 px-3 bg-gradient-to-r from-[#F95721] to-[#FA7035] hover:from-[#E44813] hover:to-[#F95721] active:scale-98 text-white font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-1.5 shadow-float transition-all"
             >
               <Zap className="w-4 h-4 fill-white flex-shrink-0" />
               <span>Buy Now</span>

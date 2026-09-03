@@ -74,7 +74,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* 1. Header Greeting & Range Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-gray-100 p-4 sm:p-5 rounded-3xl shadow-xs">
         <div>
-          <span className="text-[11px] font-black text-[#F35C16] uppercase tracking-wider">SBS Executive Suite</span>
+          <span className="text-[11px] font-black text-[#F95721] uppercase tracking-wider">SBS Executive Suite</span>
           <h1 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight">
             {greeting}, Store Admin 👋
           </h1>
@@ -89,7 +89,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               onClick={() => setDateRange(rng)}
               className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all uppercase ${
                 dateRange === rng
-                  ? 'bg-white text-[#F35C16] shadow-xs'
+                  ? 'bg-white text-[#F95721] shadow-xs'
                   : 'text-gray-500 hover:text-gray-900'
               }`}
             >
@@ -102,7 +102,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* 2. Key Metrics 4-Column Responsive Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Metric 1: Total Sales */}
-        <div className="bg-gradient-to-br from-[#F35C16] to-[#E04F0E] text-white p-4 sm:p-5 rounded-3xl shadow-sm space-y-1.5 relative overflow-hidden group">
+        <div className="bg-gradient-to-br from-[#F95721] to-[#E44813] text-white p-4 sm:p-5 rounded-3xl shadow-sm space-y-1.5 relative overflow-hidden group">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform" />
           <div className="flex items-center justify-between text-white/80">
             <span className="text-xs font-bold uppercase tracking-wider">Today&apos;s Sales</span>
@@ -198,7 +198,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <p className="text-xs text-gray-400">Past performance and sales trends</p>
             </div>
             <div className="text-right">
-              <span className="text-sm font-extrabold text-[#F35C16]">₹{displayRevenue}</span>
+              <span className="text-sm font-extrabold text-[#F95721]">₹{displayRevenue}</span>
               <p className="text-[10px] text-gray-400">Period Total</p>
             </div>
           </div>
@@ -208,8 +208,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <svg className="w-full h-full overflow-visible" viewBox="0 0 500 120" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#F35C16" stopOpacity="0.30" />
-                  <stop offset="100%" stopColor="#F35C16" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="#F95721" stopOpacity="0.30" />
+                  <stop offset="100%" stopColor="#F95721" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
               {/* Area Fill */}
@@ -221,15 +221,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <path
                 d="M 0 100 Q 80 40 160 75 T 340 30 T 500 20"
                 fill="none"
-                stroke="#F35C16"
+                stroke="#F95721"
                 strokeWidth="4"
                 strokeLinecap="round"
               />
               {/* Data Dots */}
-              <circle cx="0" cy="100" r="4" fill="#F35C16" stroke="#FFFFFF" strokeWidth="2" />
-              <circle cx="160" cy="75" r="4" fill="#F35C16" stroke="#FFFFFF" strokeWidth="2" />
-              <circle cx="340" cy="30" r="4" fill="#F35C16" stroke="#FFFFFF" strokeWidth="2" />
-              <circle cx="500" cy="20" r="5" fill="#F35C16" stroke="#FFFFFF" strokeWidth="2.5" />
+              <circle cx="0" cy="100" r="4" fill="#F95721" stroke="#FFFFFF" strokeWidth="2" />
+              <circle cx="160" cy="75" r="4" fill="#F95721" stroke="#FFFFFF" strokeWidth="2" />
+              <circle cx="340" cy="30" r="4" fill="#F95721" stroke="#FFFFFF" strokeWidth="2" />
+              <circle cx="500" cy="20" r="5" fill="#F95721" stroke="#FFFFFF" strokeWidth="2.5" />
             </svg>
           </div>
           <div className="flex justify-between text-xs font-bold text-gray-400 pt-2 border-t border-gray-100">
@@ -250,9 +250,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="grid grid-cols-2 gap-2.5">
             <button
               onClick={onOpenAddProduct}
-              className="flex flex-col items-center justify-center p-3 rounded-2xl bg-orange-50 hover:bg-orange-100/80 border border-orange-200/60 text-[#F35C16] transition-all group"
+              className="flex flex-col items-center justify-center p-3 rounded-2xl bg-orange-50 hover:bg-orange-100/80 border border-orange-200/60 text-[#F95721] transition-all group"
             >
-              <div className="w-9 h-9 rounded-xl bg-[#F35C16] text-white flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-110 transition-transform">
+              <div className="w-9 h-9 rounded-xl bg-[#F95721] text-white flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-110 transition-transform">
                 <Plus className="w-4 h-4" />
               </div>
               <span className="text-xs font-bold text-gray-900">Add Product</span>
@@ -302,7 +302,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
             <button
               onClick={() => onNavigateToTab('orders')}
-              className="text-xs font-bold text-[#F35C16] hover:underline flex items-center gap-0.5"
+              className="text-xs font-bold text-[#F95721] hover:underline flex items-center gap-0.5"
             >
               <span>View All ({orders.length})</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -317,14 +317,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 className="bg-gray-50/60 hover:bg-gray-50 border border-gray-100 rounded-2xl p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all hover:border-gray-200"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-orange-100/70 text-[#F35C16] flex items-center justify-center flex-shrink-0 font-bold">
+                  <div className="w-10 h-10 rounded-xl bg-orange-100/70 text-[#F95721] flex items-center justify-center flex-shrink-0 font-bold">
                     <ShoppingBag className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-xs font-bold text-gray-900">{o.orderNumber}</p>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        o.status === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-[#F35C16]'
+                        o.status === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-[#F95721]'
                       }`}>
                         {o.status}
                       </span>
@@ -355,7 +355,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
             <button
               onClick={() => onNavigateToTab('products')}
-              className="text-xs font-bold text-[#F35C16] hover:underline flex items-center gap-0.5"
+              className="text-xs font-bold text-[#F95721] hover:underline flex items-center gap-0.5"
             >
               <span>Catalog</span>
               <ChevronRight className="w-3.5 h-3.5" />

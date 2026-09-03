@@ -180,14 +180,14 @@ export const CategoriesView: React.FC = () => {
               >
                 {/* Active Left Indicator Bar (Amazon-style) */}
                 {isActive && (
-                  <span className="absolute left-0 top-0 bottom-0 w-1 sm:w-1.5 bg-[#F35C16] rounded-r-full" />
+                  <span className="absolute left-0 top-0 bottom-0 w-1 sm:w-1.5 bg-[#F95721] rounded-r-full" />
                 )}
 
                 {/* Category Icon / Thumbnail */}
                 <div 
                   className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden p-0.5 flex items-center justify-center transition-transform duration-200 border bg-white ${
                     isActive 
-                      ? 'border-[#F35C16] ring-2 ring-[#F35C16]/20 scale-105' 
+                      ? 'border-[#F95721] ring-2 ring-[#F95721]/20 scale-105' 
                       : 'border-gray-200/80 group-hover:scale-105'
                   }`}
                 >
@@ -209,8 +209,8 @@ export const CategoriesView: React.FC = () => {
 
                 {/* Optional Offers/Hot Pill */}
                 {isOffers && (
-                  <span className="mt-0.5 text-[8px] font-black uppercase text-[#F35C16] bg-orange-100/90 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
-                    <Flame className="w-2.5 h-2.5 fill-[#F35C16]" /> Hot
+                  <span className="mt-0.5 text-[8px] font-black uppercase text-[#F95721] bg-orange-100/90 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
+                    <Flame className="w-2.5 h-2.5 fill-[#F95721]" /> Hot
                   </span>
                 )}
               </button>
@@ -256,7 +256,7 @@ export const CategoriesView: React.FC = () => {
 
                 <button
                   onClick={() => handleSubcategoryClick(cat, null)}
-                  className="text-[11px] sm:text-xs font-extrabold text-[#F35C16] hover:text-[#d44808] flex items-center gap-0.5 flex-shrink-0 tap-active"
+                  className="text-[11px] sm:text-xs font-extrabold text-[#F95721] hover:text-[#d44808] flex items-center gap-0.5 flex-shrink-0 tap-active"
                 >
                   <span>Explore All</span>
                   <ChevronRight className="w-3.5 h-3.5 stroke-[2.5px]" />
@@ -264,29 +264,29 @@ export const CategoriesView: React.FC = () => {
               </div>
 
               {/* EXACTLY TWO SUBCATEGORIES PER ROW (2-COLUMN GRID) */}
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                 {/* "All [Category]" Card */}
                 <button
                   onClick={() => handleSubcategoryClick(cat, null)}
-                  className="bg-white rounded-2xl border border-gray-100 p-2 sm:p-2.5 text-center flex flex-col items-center justify-between shadow-2xs hover:shadow-subtle hover:border-orange-200 transition-all duration-200 tap-active group overflow-hidden"
+                  className="bg-gradient-to-b from-orange-50/60 via-white to-white rounded-2xl border border-orange-100/80 p-2.5 sm:p-3 text-center flex flex-col items-center justify-between shadow-2xs hover:shadow-subtle hover:border-orange-300 transition-all duration-200 tap-active group overflow-hidden relative"
                 >
-                  <div className="w-full aspect-square rounded-xl overflow-hidden bg-gray-100/60 mb-2 relative flex items-center justify-center">
+                  <div className="w-full h-24 sm:h-28 rounded-xl bg-white p-2 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform duration-300">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={cat.image}
                       alt={`All ${cat.name}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-contain mix-blend-multiply"
                       loading="lazy"
                     />
                   </div>
 
-                  <div className="w-full text-center">
-                    <h3 className="text-xs font-bold text-gray-900 group-hover:text-[#F35C16] line-clamp-2 leading-snug min-h-[30px] flex items-center justify-center text-center px-0.5">
+                  <div className="w-full text-center mt-2 space-y-1">
+                    <h3 className="text-xs font-black text-gray-900 group-hover:text-[#F95721] line-clamp-2 leading-tight min-h-[28px] flex items-center justify-center text-center px-0.5">
                       All {cat.name}
                     </h3>
-                    <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
-                      {categoryProductCount} Products
-                    </p>
+                    <span className="inline-block text-[10px] text-[#F95721] font-extrabold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200/60">
+                      {categoryProductCount} Products →
+                    </span>
                   </div>
                 </button>
 
@@ -301,25 +301,25 @@ export const CategoriesView: React.FC = () => {
                     <button
                       key={sub.id}
                       onClick={() => handleSubcategoryClick(cat, sub)}
-                      className="bg-white rounded-2xl border border-gray-100 p-2 sm:p-2.5 text-center flex flex-col items-center justify-between shadow-2xs hover:shadow-subtle hover:border-orange-200 transition-all duration-200 tap-active group overflow-hidden"
+                      className="bg-white hover:bg-orange-50/20 rounded-2xl border border-gray-100 hover:border-orange-300 p-2.5 sm:p-3 text-center flex flex-col items-center justify-between shadow-2xs hover:shadow-subtle transition-all duration-200 tap-active group overflow-hidden relative"
                     >
-                      <div className="w-full aspect-square rounded-xl overflow-hidden bg-gray-100/60 mb-2 relative flex items-center justify-center">
+                      <div className="w-full h-24 sm:h-28 rounded-xl bg-gray-50/80 group-hover:bg-white p-2 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-all duration-300">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={sub.image || cat.image}
                           alt={sub.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-contain mix-blend-multiply"
                           loading="lazy"
                         />
                       </div>
 
-                      <div className="w-full text-center">
-                        <h3 className="text-xs font-bold text-gray-900 group-hover:text-[#F35C16] line-clamp-2 leading-snug min-h-[30px] flex items-center justify-center text-center px-0.5">
+                      <div className="w-full text-center mt-2 space-y-1">
+                        <h3 className="text-xs font-bold text-gray-900 group-hover:text-[#F95721] line-clamp-2 leading-tight min-h-[28px] flex items-center justify-center text-center px-0.5">
                           {sub.name}
                         </h3>
-                        <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
+                        <span className="inline-block text-[10px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-full">
                           {subProductCount > 0 ? `${subProductCount} Items` : 'Explore'}
-                        </p>
+                        </span>
                       </div>
                     </button>
                   );
@@ -337,7 +337,7 @@ export const CategoriesView: React.FC = () => {
         {/* Clean End of Categories Indicator (No dark space or overscroll!) */}
         <div className="pt-4 pb-8 text-center">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gray-400 bg-gray-100/80 px-3 py-1.5 rounded-full border border-gray-200/50">
-            <Sparkles className="w-3 h-3 text-[#F35C16]" /> You&apos;ve viewed all categories
+            <Sparkles className="w-3 h-3 text-[#F95721]" /> You&apos;ve viewed all categories
           </span>
         </div>
       </main>
@@ -362,7 +362,7 @@ export const CategoriesView: React.FC = () => {
                   {activeSubcategoryModal.subcategory && (
                     <>
                       <span>&gt;</span>
-                      <span className="text-[#F35C16] font-bold truncate">
+                      <span className="text-[#F95721] font-bold truncate">
                         {activeSubcategoryModal.subcategory.name}
                       </span>
                     </>
@@ -394,7 +394,7 @@ export const CategoriesView: React.FC = () => {
                   placeholder="Search products..."
                   value={modalSearchQuery}
                   onChange={(e) => setModalSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-[#F35C16] focus:bg-white transition-all font-medium text-gray-900"
+                  className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-[#F95721] focus:bg-white transition-all font-medium text-gray-900"
                 />
                 {modalSearchQuery && (
                   <button
@@ -411,7 +411,7 @@ export const CategoriesView: React.FC = () => {
                 <select
                   value={modalSortBy}
                   onChange={(e) => setModalSortBy(e.target.value as any)}
-                  className="text-xs font-bold bg-gray-50 border border-gray-200 text-gray-700 py-1.5 pl-2.5 pr-6 rounded-xl appearance-none focus:outline-none focus:border-[#F35C16] cursor-pointer"
+                  className="text-xs font-bold bg-gray-50 border border-gray-200 text-gray-700 py-1.5 pl-2.5 pr-6 rounded-xl appearance-none focus:outline-none focus:border-[#F95721] cursor-pointer"
                 >
                   <option value="featured">Featured</option>
                   <option value="priceLow">Price: Low to High</option>
@@ -433,7 +433,7 @@ export const CategoriesView: React.FC = () => {
                 </div>
               ) : (
                 <div className="py-12 text-center space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-orange-50 text-[#F35C16] flex items-center justify-center mx-auto">
+                  <div className="w-10 h-10 rounded-full bg-orange-50 text-[#F95721] flex items-center justify-center mx-auto">
                     <Search className="w-5 h-5" />
                   </div>
                   <h4 className="text-xs font-bold text-gray-900">No products found</h4>

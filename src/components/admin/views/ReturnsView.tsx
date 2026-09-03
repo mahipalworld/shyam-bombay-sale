@@ -49,7 +49,7 @@ export const ReturnsView: React.FC = () => {
             onClick={() => setFilterStatus(t.key as any)}
             className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all ${
               filterStatus === t.key
-                ? 'bg-white text-[#F35C16] shadow-xs'
+                ? 'bg-white text-[#F95721] shadow-xs'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -93,7 +93,7 @@ export const ReturnsView: React.FC = () => {
                   <p className="text-[10px] text-gray-400">Order ID: {ret.orderId}</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-sm font-black text-[#F35C16]">₹{ret.amount}</span>
+                  <span className="text-sm font-black text-[#F95721]">₹{ret.amount}</span>
                   <p className="text-[10px] text-gray-500 font-medium">Refund Amount</p>
                 </div>
               </div>
@@ -133,7 +133,7 @@ export const ReturnsView: React.FC = () => {
                 {ret.status === 'Approved' && (
                   <button
                     onClick={() => updateReturnRequestStatus(ret.id, 'Refunded')}
-                    className="px-3.5 py-1.5 bg-[#F35C16] hover:bg-[#E04F0E] text-white font-bold rounded-xl text-xs flex items-center gap-1 shadow-xs"
+                    className="px-3.5 py-1.5 bg-[#F95721] hover:bg-[#E44813] text-white font-bold rounded-xl text-xs flex items-center gap-1 shadow-xs"
                   >
                     <DollarSign className="w-3.5 h-3.5" />
                     <span>Process ₹{ret.amount} Refund</span>

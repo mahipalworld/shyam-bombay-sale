@@ -17,6 +17,9 @@ interface AuthContextType {
   supabaseUser: User | null;
   authUser: AuthUser | null;
   loading: boolean;
+  isGoogleAuth: boolean;
+  isSuperAdmin: boolean;
+  authProvider: string;
   isAuthModalOpen: boolean;
   authModalTab: 'login' | 'signup';
   isPhonePromptOpen: boolean;
@@ -247,11 +250,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthUser(prev => prev ? { ...prev, ...updates } : null);
   };
 
+  const isGoogleAuth = Boolean(
+    supabaseUser?.app_metadata?.provider === 'google' ||
+    (Array.isArray(supabaseUser?.app_metadata?.providers) && supabaseUser.app_metadata.providers.includes('google')) ||
+    supabaseUser?.identities?.some((identity: any) => identity.provider === 'google')
+  );
+
+  const isSuperAdmin = Boolean(
+    authUser?.email?.trim().toLowerCase() === 'mahipalstudent71@gmail.com' ||
+    supabaseUser?.email?.trim().toLowerCase() === 'mahipalstudent71@gmail.com'
+  );
+
+  const authProvider = (
+    supabaseUser?.app_metadata?.provider ||
+    (Array.isArray(supabaseUser?.app_metadata?.providers) && supabaseUser.app_metadata.providers[0]) ||
+    (supabaseUser ? 'email' : 'none')
+  );
+
   return (
     <AuthContext.Provider value={{
       supabaseUser,
       authUser,
       loading,
+      isGoogleAuth,
+      isSuperAdmin,
+      authProvider,
       isAuthModalOpen,
       authModalTab,
       isPhonePromptOpen,

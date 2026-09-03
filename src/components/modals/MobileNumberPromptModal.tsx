@@ -84,7 +84,7 @@ export const MobileNumberPromptModal: React.FC = () => {
         </button>
 
         {/* Top Header */}
-        <div className="bg-gradient-to-br from-[#F35C16] via-[#EA580C] to-[#C2410C] px-6 pt-7 pb-8 text-white relative">
+        <div className="bg-gradient-to-br from-[#F95721] via-[#EA580C] to-[#C2410C] px-6 pt-7 pb-8 text-white relative">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-inner">
               <Phone className="w-5 h-5 text-white" />
@@ -109,7 +109,7 @@ export const MobileNumberPromptModal: React.FC = () => {
           {/* Value Highlights */}
           <div className="grid grid-cols-3 gap-2 py-1">
             <div className="flex flex-col items-center text-center p-2.5 bg-orange-50/60 rounded-2xl border border-orange-100/60">
-              <Truck className="w-4 h-4 text-[#F35C16] mb-1" />
+              <Truck className="w-4 h-4 text-[#F95721] mb-1" />
               <span className="text-[10px] font-bold text-gray-800 leading-tight">Order Tracking</span>
               <span className="text-[9px] text-gray-500">Live SMS status</span>
             </div>
@@ -131,10 +131,10 @@ export const MobileNumberPromptModal: React.FC = () => {
             {/* Phone Input with locked +91 */}
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                Mobile Number <span className="text-[#F35C16]">*</span>
+                Mobile Number <span className="text-[#F95721]">*</span>
               </label>
               
-              <div className="relative flex items-center rounded-2xl border-2 border-gray-200 focus-within:border-[#F35C16] focus-within:ring-4 focus-within:ring-[#F35C16]/10 transition-all bg-gray-50/70 focus-within:bg-white overflow-hidden shadow-xs">
+              <div className="relative flex items-center rounded-2xl border-2 border-gray-200 focus-within:border-[#F95721] focus-within:ring-4 focus-within:ring-[#F95721]/10 transition-all bg-gray-50/70 focus-within:bg-white overflow-hidden shadow-xs">
                 
                 {/* Locked +91 India Badge */}
                 <div className="flex items-center gap-1.5 px-3.5 py-3 bg-gray-100/90 border-r border-gray-200 select-none shrink-0">
@@ -179,7 +179,7 @@ export const MobileNumberPromptModal: React.FC = () => {
             <button
               type="submit"
               disabled={loading || digits.length < 10}
-              className="w-full py-3.5 px-4 bg-gradient-to-r from-[#F35C16] to-[#e04a08] hover:from-[#e04a08] hover:to-[#c83e05] text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+              className="w-full py-3.5 px-4 bg-gradient-to-r from-[#F95721] to-[#E44813] hover:from-[#E44813] hover:to-[#c83e05] text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
             >
               {loading ? (
                 <span className="flex items-center gap-2">

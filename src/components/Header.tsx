@@ -54,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 transition-all">
       {/* Top Banner on Desktop */}
       <div className="hidden md:block bg-gradient-to-r from-[#FFF5EE] via-[#FFF0E6] to-[#FFE8DC] border-b border-orange-100/60 py-1.5 px-4 text-center text-xs font-semibold text-gray-700">
-        <span>✨ Free delivery on orders above ₹1,700 | Use code <strong className="text-[#F35C16] font-bold">SBS100</strong> for Flat ₹100 Off</span>
+        <span>✨ Free delivery on orders above ₹1,700 | Use code <strong className="text-[#F95721] font-bold">SBS100</strong> for Flat ₹100 Off</span>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
@@ -76,19 +76,22 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
               setSelectedCategoryFilter(null);
               setActiveTab('home');
             }} 
-            className="cursor-pointer flex flex-col items-start select-none"
+            className="cursor-pointer flex items-center gap-2 select-none group"
           >
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl md:text-3xl font-black tracking-tight text-[#F35C16]">
-                SBS
-              </span>
-              <span className="text-xs md:text-sm font-extrabold tracking-widest text-gray-900 uppercase">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.png"
+              alt="SBS Logo"
+              className="h-7 sm:h-8 md:h-9 object-contain group-hover:scale-105 transition-transform"
+            />
+            <div className="flex flex-col items-start leading-none">
+              <span className="text-[10px] sm:text-xs font-black tracking-widest text-gray-900 uppercase">
                 STORE
               </span>
+              <span className="hidden sm:block text-[8px] font-semibold text-gray-400 tracking-wider uppercase">
+                Everyday Essentials
+              </span>
             </div>
-            <span className="hidden sm:block text-[9px] font-semibold text-gray-400 -mt-1 tracking-wider uppercase">
-              Smart Products. Better Prices.
-            </span>
           </div>
         </div>
 
@@ -99,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
               setSelectedCategoryFilter(null);
               setActiveTab('home');
             }}
-            className={`hover:text-[#F35C16] transition-colors ${activeTab === 'home' ? 'text-[#F35C16]' : ''}`}
+            className={`hover:text-[#F95721] transition-colors ${activeTab === 'home' ? 'text-[#F95721]' : ''}`}
           >
             Home
           </button>
@@ -108,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
               setSelectedCategoryFilter(null);
               setActiveTab('categories');
             }}
-            className={`flex items-center gap-1 hover:text-[#F35C16] transition-colors ${activeTab === 'categories' ? 'text-[#F35C16]' : ''}`}
+            className={`flex items-center gap-1 hover:text-[#F95721] transition-colors ${activeTab === 'categories' ? 'text-[#F95721]' : ''}`}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
             <span>Categories</span>
@@ -139,7 +142,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           {/* Search Button (Accessible on both Mobile & Desktop) */}
           <button
             onClick={() => setIsSearchOpen(true)}
-            className="p-2 sm:p-2.5 text-gray-700 hover:text-[#F35C16] hover:bg-orange-50 rounded-2xl transition-colors tap-active"
+            className="p-2 sm:p-2.5 text-gray-700 hover:text-[#F95721] hover:bg-orange-50 rounded-2xl transition-colors tap-active"
             aria-label="Search products"
           >
             <Search className="w-5 h-5 stroke-[2.2px]" />
@@ -148,13 +151,13 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           {/* Customer Notifications Bell with unread badge */}
           <button
             onClick={() => setIsUserNotificationsModalOpen(true)}
-            className="p-2 sm:p-2.5 text-gray-700 hover:text-[#F35C16] hover:bg-orange-50 rounded-2xl transition-colors relative flex items-center tap-active"
+            className="p-2 sm:p-2.5 text-gray-700 hover:text-[#F95721] hover:bg-orange-50 rounded-2xl transition-colors relative flex items-center tap-active"
             aria-label="Notifications"
           >
             <div className="relative">
               <Bell className="w-5 h-5 stroke-[2.2px]" />
               {unreadNotifCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-[#F35C16] text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-xs">
+                <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-[#F95721] text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-xs">
                   {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
                 </span>
               )}
@@ -165,15 +168,15 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           <button
             id="header-cart-button"
             onClick={() => setActiveTab('cart')}
-            className={`p-2 sm:p-2.5 rounded-2xl text-gray-700 hover:text-[#F35C16] hover:bg-orange-50 transition-colors relative flex items-center tap-active ${
-              activeTab === 'cart' ? 'text-[#F35C16] bg-orange-50' : ''
+            className={`p-2 sm:p-2.5 rounded-2xl text-gray-700 hover:text-[#F95721] hover:bg-orange-50 transition-colors relative flex items-center tap-active ${
+              activeTab === 'cart' ? 'text-[#F95721] bg-orange-50' : ''
             }`}
             aria-label="Shopping Cart"
           >
             <div className="relative">
               <ShoppingCart className="w-5 h-5 stroke-[2.2px]" />
               {totalCartCount > 0 && (
-                <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 bg-[#F35C16] text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-xs">
+                <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 bg-[#F95721] text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-xs">
                   {totalCartCount}
                 </span>
               )}
@@ -211,12 +214,12 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
                 onClick={() => setActiveTab('profile')}
                 className={`flex items-center gap-2 p-1.5 px-2.5 rounded-xl text-xs font-bold transition-all ${
                   activeTab === 'profile'
-                    ? 'bg-orange-50 text-[#F35C16]'
+                    ? 'bg-orange-50 text-[#F95721]'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
                 aria-label="Profile"
               >
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#F35C16] to-[#e04a08] text-white flex items-center justify-center text-[10px] font-black">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#F95721] to-[#E44813] text-white flex items-center justify-center text-[10px] font-black">
                   {authUser.name.charAt(0).toUpperCase()}
                 </div>
                 <span className="hidden lg:inline">{authUser.name.split(' ')[0]}</span>
@@ -232,7 +235,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           ) : (
             <button
               onClick={() => openAuthModal('login')}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-[#F35C16] text-white text-xs font-bold rounded-xl hover:bg-[#e04a08] active:scale-95 transition-all shadow-sm shadow-orange-200"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-[#F95721] text-white text-xs font-bold rounded-xl hover:bg-[#E44813] active:scale-95 transition-all shadow-sm shadow-orange-200"
             >
               <LogIn className="w-3.5 h-3.5" />
               Sign In

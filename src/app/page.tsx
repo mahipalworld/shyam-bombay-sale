@@ -4,6 +4,7 @@ import React from 'react';
 import { useStore } from '@/context/StoreContext';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
+import { FloatingQuickCart } from '@/components/FloatingQuickCart';
 import { HomeView } from '@/components/views/HomeView';
 import { CategoriesView } from '@/components/views/CategoriesView';
 import { CartView } from '@/components/views/CartView';
@@ -73,7 +74,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col selection:bg-[#F35C16] selection:text-white">
+    <div className="min-h-screen bg-white flex flex-col selection:bg-[#F95721] selection:text-white">
       {/* Top Header */}
       {activeTab !== 'admin' && (
         <Header 
@@ -94,9 +95,14 @@ export default function App() {
           <div className="max-w-6xl mx-auto px-4 md:px-8 space-y-8">
             <div className="grid grid-cols-4 gap-8">
               <div className="space-y-3">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-[#F35C16]">SBS</span>
-                  <span className="text-sm font-extrabold text-white uppercase tracking-widest">STORE</span>
+                <div className="flex items-center gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/logo.png"
+                    alt="SBS Logo"
+                    className="h-8 object-contain brightness-110"
+                  />
+                  <span className="text-xs font-extrabold text-white uppercase tracking-widest">STORE</span>
                 </div>
                 <p className="text-xs text-gray-400 leading-relaxed">
                   Smart Products. Better Prices. Everyday essentials curated for a modern and smarter home.
@@ -106,10 +112,10 @@ export default function App() {
               <div className="space-y-2 text-xs">
                 <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Quick Links</h4>
                 <ul className="space-y-1.5 text-gray-400">
-                  <li><button onClick={() => { setSelectedCategoryFilter(null); setActiveTab('home'); }} className="hover:text-[#F35C16]">Home</button></li>
-                  <li><button onClick={() => { setSelectedCategoryFilter(null); setActiveTab('categories'); }} className="hover:text-[#F35C16]">All Categories</button></li>
-                  <li><button onClick={() => { setSelectedCategoryFilter('offers'); setActiveTab('categories'); }} className="hover:text-[#F35C16]">Today&apos;s Deals</button></li>
-                  <li><button onClick={() => setActiveTab('wishlist')} className="hover:text-[#F35C16]">Wishlist</button></li>
+                  <li><button onClick={() => { setSelectedCategoryFilter(null); setActiveTab('home'); }} className="hover:text-[#F95721]">Home</button></li>
+                  <li><button onClick={() => { setSelectedCategoryFilter(null); setActiveTab('categories'); }} className="hover:text-[#F95721]">All Categories</button></li>
+                  <li><button onClick={() => { setSelectedCategoryFilter('offers'); setActiveTab('categories'); }} className="hover:text-[#F95721]">Today&apos;s Deals</button></li>
+                  <li><button onClick={() => setActiveTab('wishlist')} className="hover:text-[#F95721]">Wishlist</button></li>
                 </ul>
               </div>
 
@@ -137,13 +143,13 @@ export default function App() {
 
             <div className="pt-6 border-t border-gray-800 flex justify-between items-center text-xs text-gray-500">
               <p>© {new Date().getFullYear()} SBS Store. All rights reserved.</p>
-              <p className="flex items-center gap-1">Made with <Heart className="w-3.5 h-3.5 fill-[#F35C16] text-[#F35C16]" /> for Smart Living</p>
+              <p className="flex items-center gap-1">Made with <Heart className="w-3.5 h-3.5 fill-[#F95721] text-[#F95721]" /> for Smart Living</p>
             </div>
           </div>
         </footer>
       )}
 
-      {/* Bottom Floating Navigation (Mobile Only) */}
+      {/* Bottom Floating Navigation with Integrated Docked Quick-Cart (Mobile Only) */}
       {activeTab !== 'admin' && (
         <div className="md:hidden">
           <BottomNav />

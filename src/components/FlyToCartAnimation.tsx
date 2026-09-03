@@ -78,7 +78,7 @@ const FlyingItemElement: React.FC<{
         width: '64px',
         height: '64px',
       }}
-      className="bg-white rounded-2xl p-1 shadow-[0_10px_35px_rgba(243,92,22,0.45)] border-2 border-[#F35C16] flex items-center justify-center pointer-events-none"
+      className="bg-white rounded-2xl p-1 shadow-[0_10px_35px_rgba(243,92,22,0.45)] border-2 border-[#F95721] flex items-center justify-center pointer-events-none"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img

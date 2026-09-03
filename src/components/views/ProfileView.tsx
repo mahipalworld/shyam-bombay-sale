@@ -24,6 +24,7 @@ import {
   Award,
   LogIn,
   Sparkles,
+  ShieldCheck,
   Smartphone,
   Download,
   Check
@@ -43,12 +44,19 @@ export const ProfileView: React.FC = () => {
     setIsAddressesOpen, 
     setIsCouponsOpen, 
     setOrderListFilter,
-    showToast 
+    showToast,
+    isEmailAuthorizedAdmin,
+    getEffectiveAdminRole
   } = useStore();
-  const { authUser, openAuthModal, signOut } = useAuth();
+  const { authUser, supabaseUser, isGoogleAuth, isSuperAdmin, openAuthModal, signOut } = useAuth();
   const { isInstalled, showIOSGuide, setShowIOSGuide, triggerInstall } = usePWA();
 
   const [isLoggedOutModal, setIsLoggedOutModal] = useState(false);
+
+  // Check Google Admin authorization
+  const currentEmail = authUser?.email || supabaseUser?.email;
+  const isAuthorizedAdmin = isGoogleAuth && isEmailAuthorizedAdmin(currentEmail);
+  const activeAdminRole = isAuthorizedAdmin ? getEffectiveAdminRole(currentEmail) : null;
 
   // Display user info: real authUser if logged in, otherwise local profile
   const displayName = authUser?.name || user.name;
@@ -79,7 +87,7 @@ export const ProfileView: React.FC = () => {
       {!authUser && (
         <div className="bg-gradient-to-r from-[#FFF5EE] via-[#FFEADB] to-[#FEDDC7] border border-orange-200 rounded-3xl p-4 md:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-3.5 text-center sm:text-left">
-            <div className="w-12 h-12 rounded-2xl bg-[#F35C16] text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-200">
+            <div className="w-12 h-12 rounded-2xl bg-[#F95721] text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-200">
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
@@ -89,7 +97,7 @@ export const ProfileView: React.FC = () => {
           </div>
           <button
             onClick={() => openAuthModal('login')}
-            className="w-full sm:w-auto px-6 py-2.5 bg-[#F35C16] hover:bg-[#e04a08] text-white font-bold text-xs md:text-sm rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-orange-200 active:scale-95 transition-all"
+            className="w-full sm:w-auto px-6 py-2.5 bg-[#F95721] hover:bg-[#E44813] text-white font-bold text-xs md:text-sm rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-orange-200 active:scale-95 transition-all"
           >
             <LogIn className="w-4 h-4" />
             <span>Sign In / Register</span>
@@ -106,7 +114,7 @@ export const ProfileView: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {/* Avatar */}
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#F35C16] to-[#e04a08] border-2 border-white shadow-xs flex items-center justify-center text-white text-lg font-black">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#F95721] to-[#E44813] border-2 border-white shadow-xs flex items-center justify-center text-white text-lg font-black">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
                 {/* User Details */}
@@ -129,7 +137,7 @@ export const ProfileView: React.FC = () => {
 
               <button
                 onClick={() => authUser ? setIsEditProfileOpen(true) : openAuthModal('login')}
-                className="text-xs font-bold text-[#F35C16] flex items-center gap-0.5 hover:underline"
+                className="text-xs font-bold text-[#F95721] flex items-center gap-0.5 hover:underline"
               >
                 <span>{authUser ? 'Edit' : 'Login'}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -144,7 +152,7 @@ export const ProfileView: React.FC = () => {
                 onClick={() => setOrderListFilter('ALL')}
                 className="bg-white/80 backdrop-blur-xs rounded-2xl p-2 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white transition-colors"
               >
-                <div className="w-6 h-6 rounded-full bg-[#FFF4EC] text-[#F35C16] flex items-center justify-center mb-1">
+                <div className="w-6 h-6 rounded-full bg-[#FFF4EC] text-[#F95721] flex items-center justify-center mb-1">
                   <ShoppingBag className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-xs font-bold text-gray-900">{orders.length}</span>
@@ -195,7 +203,7 @@ export const ProfileView: React.FC = () => {
               <h3 className="text-sm font-bold text-gray-900">My Orders Status</h3>
               <button
                 onClick={() => setOrderListFilter('ALL')}
-                className="text-xs font-bold text-[#F35C16] flex items-center gap-0.5 hover:underline"
+                className="text-xs font-bold text-[#F95721] flex items-center gap-0.5 hover:underline"
               >
                 <span>View All</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -210,11 +218,11 @@ export const ProfileView: React.FC = () => {
                 className="flex flex-col items-center gap-1.5 p-1 relative tap-active group"
               >
                 <div className="relative">
-                  <div className="w-10 h-10 rounded-2xl bg-gray-50 group-hover:bg-orange-50 text-gray-700 group-hover:text-[#F35C16] flex items-center justify-center transition-colors">
+                  <div className="w-10 h-10 rounded-2xl bg-gray-50 group-hover:bg-orange-50 text-gray-700 group-hover:text-[#F95721] flex items-center justify-center transition-colors">
                     <ShoppingBag className="w-5 h-5" />
                   </div>
                   {toPayCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F35C16] text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white">
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F95721] text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white">
                       {toPayCount}
                     </span>
                   )}
@@ -228,11 +236,11 @@ export const ProfileView: React.FC = () => {
                 className="flex flex-col items-center gap-1.5 p-1 relative tap-active group"
               >
                 <div className="relative">
-                  <div className="w-10 h-10 rounded-2xl bg-gray-50 group-hover:bg-orange-50 text-gray-700 group-hover:text-[#F35C16] flex items-center justify-center transition-colors">
+                  <div className="w-10 h-10 rounded-2xl bg-gray-50 group-hover:bg-orange-50 text-gray-700 group-hover:text-[#F95721] flex items-center justify-center transition-colors">
                     <Package className="w-5 h-5" />
                   </div>
                   {processingCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F35C16] text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white">
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F95721] text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white">
                       {processingCount}
                     </span>
                   )}
@@ -246,11 +254,11 @@ export const ProfileView: React.FC = () => {
                 className="flex flex-col items-center gap-1.5 p-1 relative tap-active group"
               >
                 <div className="relative">
-                  <div className="w-10 h-10 rounded-2xl bg-gray-50 group-hover:bg-orange-50 text-gray-700 group-hover:text-[#F35C16] flex items-center justify-center transition-colors">
+                  <div className="w-10 h-10 rounded-2xl bg-gray-50 group-hover:bg-orange-50 text-gray-700 group-hover:text-[#F95721] flex items-center justify-center transition-colors">
                     <Truck className="w-5 h-5" />
                   </div>
                   {shippedCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F35C16] text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white">
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F95721] text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white">
                       {shippedCount}
                     </span>
                   )}
@@ -277,7 +285,7 @@ export const ProfileView: React.FC = () => {
                 className="flex flex-col items-center gap-1.5 p-1 relative tap-active group"
               >
                 <div className="relative">
-                  <div className="w-10 h-10 rounded-2xl bg-gray-50 group-hover:bg-orange-50 text-gray-700 group-hover:text-[#F35C16] flex items-center justify-center transition-colors">
+                  <div className="w-10 h-10 rounded-2xl bg-gray-50 group-hover:bg-orange-50 text-gray-700 group-hover:text-[#F95721] flex items-center justify-center transition-colors">
                     <RotateCcw className="w-5 h-5" />
                   </div>
                 </div>
@@ -298,7 +306,7 @@ export const ProfileView: React.FC = () => {
             <div className="flex items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-xs ${
-                  isInstalled ? 'bg-emerald-100 text-[#00A859]' : 'bg-gradient-to-br from-[#F35C16] to-[#FF7A3D] text-white'
+                  isInstalled ? 'bg-emerald-100 text-[#00A859]' : 'bg-gradient-to-br from-[#F95721] to-[#FF7A3D] text-white'
                 }`}>
                   {isInstalled ? (
                     <Check className="w-6 h-6 stroke-[2.5px]" />
@@ -321,7 +329,7 @@ export const ProfileView: React.FC = () => {
               {!isInstalled ? (
                 <button
                   onClick={() => triggerInstall()}
-                  className="px-3.5 py-2.5 bg-[#F35C16] hover:bg-[#E04F0E] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs hover:shadow-float active:scale-95 transition-all flex-shrink-0 tap-active"
+                  className="px-3.5 py-2.5 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs hover:shadow-float active:scale-95 transition-all flex-shrink-0 tap-active"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span className="whitespace-nowrap">Install</span>
@@ -341,7 +349,7 @@ export const ProfileView: React.FC = () => {
               className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-[#FFF4EC] text-[#F35C16] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#FFF4EC] text-[#F95721] flex items-center justify-center">
                   <ShoppingBag className="w-5 h-5" />
                 </div>
                 <div>
@@ -471,28 +479,36 @@ export const ProfileView: React.FC = () => {
               <ChevronRight className="w-4 h-4 text-gray-400" />
             </div>
 
-            {/* Merchant / Admin Dashboard */}
-            <button
-              type="button"
-              onClick={() => setActiveTab('admin')}
-              className="w-full flex items-center justify-between p-3.5 hover:bg-orange-50/80 rounded-2xl cursor-pointer transition-colors bg-orange-50/30 border border-orange-100/60 text-left"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#F35C16] flex items-center justify-center">
-                  <Sparkles className="w-5 h-5" />
+            {/* Merchant / Admin Dashboard (Only visible for Google-authenticated authorized admins) */}
+            {isAuthorizedAdmin && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('admin')}
+                className="w-full flex items-center justify-between p-3.5 hover:bg-orange-50/80 rounded-2xl cursor-pointer transition-colors bg-gradient-to-r from-orange-50/50 to-amber-50/30 border border-orange-200/70 text-left shadow-2xs group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#F95721] to-[#FF7E47] text-white flex items-center justify-center shadow-xs shadow-orange-500/20 group-hover:scale-105 transition-transform">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h4 className="text-xs md:text-sm font-black text-gray-900">
+                        Admin & Store Manager
+                      </h4>
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[#F95721] text-white">
+                        {activeAdminRole || 'ADMIN'}
+                      </span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-200/60 flex items-center gap-0.5">
+                        <ShieldCheck className="w-2.5 h-2.5" />
+                        Google Auth
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-0.5">Manage catalog, roles, orders & store operations</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-xs md:text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                    <span>Admin & Store Manager</span>
-                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[#F35C16] text-white">
-                      PRO
-                    </span>
-                  </h4>
-                  <p className="text-[11px] text-gray-500">Manage catalog, sub-sections & homepage</p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#F35C16]" />
-            </button>
+                <ChevronRight className="w-4 h-4 text-[#F95721] group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
           </div>
 
           {/* Logout Button matching Screenshot 2 */}

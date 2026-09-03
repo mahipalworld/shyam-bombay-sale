@@ -26,7 +26,7 @@ export const IOSInstallGuideModal: React.FC<IOSInstallGuideModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-gray-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200 text-[#F35C16] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200 text-[#F95721] flex items-center justify-center">
               <Smartphone className="w-5 h-5" />
             </div>
             <div>
@@ -46,7 +46,7 @@ export const IOSInstallGuideModal: React.FC<IOSInstallGuideModalProps> = ({
         <div className="space-y-3.5 py-2">
           {/* Step 1 */}
           <div className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50/80 border border-gray-100">
-            <div className="w-7 h-7 rounded-xl bg-[#F35C16] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
+            <div className="w-7 h-7 rounded-xl bg-[#F95721] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
               1
             </div>
             <div className="text-xs text-gray-700">
@@ -59,7 +59,7 @@ export const IOSInstallGuideModal: React.FC<IOSInstallGuideModalProps> = ({
 
           {/* Step 2 */}
           <div className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50/80 border border-gray-100">
-            <div className="w-7 h-7 rounded-xl bg-[#F35C16] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
+            <div className="w-7 h-7 rounded-xl bg-[#F95721] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
               2
             </div>
             <div className="text-xs text-gray-700">
@@ -87,7 +87,7 @@ export const IOSInstallGuideModal: React.FC<IOSInstallGuideModalProps> = ({
         {/* Action Button */}
         <button
           onClick={onClose}
-          className="w-full py-3 bg-[#F35C16] hover:bg-[#E04F0E] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
+          className="w-full py-3 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
         >
           <CheckCircle className="w-4 h-4" />
           <span>Got it!</span>

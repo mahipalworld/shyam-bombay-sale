@@ -61,7 +61,7 @@ export const EditProfileModal: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-3 text-xs">
           <div>
             <label className="font-bold text-gray-700 block mb-1">Full Name</label>
-            <div className="flex items-center border rounded-xl px-3 py-2 bg-gray-50 focus-within:bg-white focus-within:border-[#F35C16]">
+            <div className="flex items-center border rounded-xl px-3 py-2 bg-gray-50 focus-within:bg-white focus-within:border-[#F95721]">
               <User className="w-4 h-4 text-gray-400 mr-2" />
               <input
                 type="text"
@@ -75,7 +75,7 @@ export const EditProfileModal: React.FC = () => {
 
           <div>
             <label className="font-bold text-gray-700 block mb-1">Email Address</label>
-            <div className="flex items-center border rounded-xl px-3 py-2 bg-gray-50 focus-within:bg-white focus-within:border-[#F35C16]">
+            <div className="flex items-center border rounded-xl px-3 py-2 bg-gray-50 focus-within:bg-white focus-within:border-[#F95721]">
               <Mail className="w-4 h-4 text-gray-400 mr-2" />
               <input
                 type="email"
@@ -89,7 +89,7 @@ export const EditProfileModal: React.FC = () => {
 
           <div>
             <label className="font-bold text-gray-700 block mb-1">Mobile Number</label>
-            <div className="flex items-center border rounded-xl bg-gray-50 focus-within:bg-white focus-within:border-[#F35C16] overflow-hidden">
+            <div className="flex items-center border rounded-xl bg-gray-50 focus-within:bg-white focus-within:border-[#F95721] overflow-hidden">
               <div className="flex items-center gap-1 px-2.5 py-2 bg-gray-100/90 border-r border-gray-200 select-none shrink-0">
                 <span className="text-xs" role="img" aria-label="India">🇮🇳</span>
                 <span className="text-xs font-bold text-gray-700">+91</span>
@@ -121,7 +121,7 @@ export const EditProfileModal: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 bg-[#F35C16] hover:bg-[#E04F0E] text-white font-bold rounded-xl shadow-sm"
+              className="flex-1 py-2.5 bg-[#F95721] hover:bg-[#E44813] text-white font-bold rounded-xl shadow-sm"
             >
               Save Details
             </button>

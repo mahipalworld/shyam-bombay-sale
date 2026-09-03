@@ -43,7 +43,7 @@ export const WishlistView: React.FC = () => {
         </div>
         <button
           onClick={() => setActiveTab('home')}
-          className="px-8 py-3.5 bg-[#F35C16] hover:bg-[#E04F0E] text-white text-xs md:text-sm font-bold rounded-xl shadow-float transition-all tap-active"
+          className="px-8 py-3.5 bg-[#F95721] hover:bg-[#E44813] text-white text-xs md:text-sm font-bold rounded-xl shadow-float transition-all tap-active"
         >
           Explore Catalog
         </button>
@@ -65,7 +65,7 @@ export const WishlistView: React.FC = () => {
         </div>
         <button
           onClick={() => showToast('All wishlist items synced!')}
-          className="text-xs md:text-sm font-bold text-[#F35C16] hover:underline"
+          className="text-xs md:text-sm font-bold text-[#F95721] hover:underline"
         >
           Manage
         </button>
@@ -106,7 +106,7 @@ export const WishlistView: React.FC = () => {
               {/* Product Info */}
               <div className="mt-2.5 flex-1 flex flex-col justify-between">
                 <div onClick={() => setSelectedProductDetail(product)} className="cursor-pointer">
-                  <h3 className="font-bold text-gray-900 text-xs sm:text-sm line-clamp-1 group-hover:text-[#F35C16] transition-colors">
+                  <h3 className="font-bold text-gray-900 text-xs sm:text-sm line-clamp-1 group-hover:text-[#F95721] transition-colors">
                     {product.name}
                   </h3>
 
@@ -119,7 +119,7 @@ export const WishlistView: React.FC = () => {
 
                   {/* Pricing Row */}
                   <div className="flex items-baseline flex-wrap gap-1.5 mt-1 sm:mt-1.5">
-                    <span className="text-sm sm:text-base font-extrabold text-[#F35C16]">
+                    <span className="text-sm sm:text-base font-extrabold text-[#F95721]">
                       ₹{product.price.toLocaleString('en-IN')}
                     </span>
                     <span className="text-[11px] text-gray-400 line-through">
@@ -142,7 +142,7 @@ export const WishlistView: React.FC = () => {
                 {/* Single Clean Full-Width Add to Cart Button */}
                 <button
                   onClick={() => addToCart(product, 1)}
-                  className="mt-3 w-full h-9 px-3 bg-gradient-to-r from-[#F35C16] to-[#FA7035] hover:from-[#E04F0E] hover:to-[#F35C16] active:scale-98 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition-all"
+                  className="mt-3 w-full h-9 px-3 bg-gradient-to-r from-[#F95721] to-[#FA7035] hover:from-[#E44813] hover:to-[#F95721] active:scale-98 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition-all"
                 >
                   <ShoppingCart className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>Add to Cart</span>
@@ -156,8 +156,8 @@ export const WishlistView: React.FC = () => {
       {/* Price Drop Alert Notification Banner matching Screenshot */}
       <div className="bg-[#FFF6F0] border border-[#FEDDC7] rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-subtle">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-white text-[#F35C16] flex items-center justify-center flex-shrink-0 shadow-xs">
-            <Heart className="w-6 h-6 fill-[#F35C16]" />
+          <div className="w-12 h-12 rounded-2xl bg-white text-[#F95721] flex items-center justify-center flex-shrink-0 shadow-xs">
+            <Heart className="w-6 h-6 fill-[#F95721]" />
           </div>
           <div>
             <h4 className="text-sm font-bold text-gray-900">
@@ -174,7 +174,7 @@ export const WishlistView: React.FC = () => {
           className={`px-5 py-2.5 text-xs font-bold rounded-xl border flex-shrink-0 transition-all ${
             notified
               ? 'bg-[#EBF7F0] border-[#A7E3BC] text-[#00A859]'
-              : 'bg-white border-[#F35C16] text-[#F35C16] hover:bg-orange-50'
+              : 'bg-white border-[#F95721] text-[#F95721] hover:bg-orange-50'
           }`}
         >
           {notified ? 'Subscribed' : 'Notify Me'}

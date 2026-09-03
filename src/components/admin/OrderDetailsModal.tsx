@@ -68,7 +68,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                   ? 'bg-blue-100 text-blue-700' 
                   : order.status === 'Returns'
                   ? 'bg-red-100 text-red-700'
-                  : 'bg-orange-100 text-[#F35C16]'
+                  : 'bg-orange-100 text-[#F95721]'
               }`}>
                 {order.status}
               </span>
@@ -103,14 +103,14 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                   <div key={st.label} className="flex flex-col items-center relative z-10 space-y-1">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs transition-all ${
                       isCurrent
-                        ? 'bg-[#F35C16] text-white ring-4 ring-orange-200 shadow-xs'
+                        ? 'bg-[#F95721] text-white ring-4 ring-orange-200 shadow-xs'
                         : isPassed
                         ? 'bg-[#00A859] text-white'
                         : 'bg-white border-2 border-gray-300 text-gray-400'
                     }`}>
                       <Icon className="w-4 h-4" />
                     </div>
-                    <span className={`text-[10px] font-bold ${isCurrent ? 'text-[#F35C16]' : isPassed ? 'text-gray-800' : 'text-gray-400'}`}>
+                    <span className={`text-[10px] font-bold ${isCurrent ? 'text-[#F95721]' : isPassed ? 'text-gray-800' : 'text-gray-400'}`}>
                       {st.label}
                     </span>
                   </div>
@@ -128,7 +128,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
             <select
               value={order.status}
               onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)}
-              className="bg-white border-2 border-orange-300 text-[#F35C16] font-extrabold text-xs rounded-xl px-3 py-1.5 outline-none cursor-pointer shadow-xs"
+              className="bg-white border-2 border-orange-300 text-[#F95721] font-extrabold text-xs rounded-xl px-3 py-1.5 outline-none cursor-pointer shadow-xs"
             >
               <option value="To Pay">To Pay</option>
               <option value="Processing">Processing / Preparing</option>
@@ -171,7 +171,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
           <div className="grid grid-cols-1 gap-2">
             <div className="bg-gray-50/80 border border-gray-200/80 rounded-2xl p-3 space-y-1.5">
               <div className="flex items-center gap-1.5 text-gray-700 font-bold text-xs">
-                <MapPin className="w-3.5 h-3.5 text-[#F35C16]" />
+                <MapPin className="w-3.5 h-3.5 text-[#F95721]" />
                 <span>Shipping Address</span>
               </div>
               <p className="font-semibold text-gray-900">{order.shippingAddress.name}</p>
@@ -191,7 +191,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
               </div>
               <div className="text-right space-y-0.5">
                 <span className="text-[10px] uppercase font-bold text-gray-400">Tracking Code</span>
-                <p className="font-mono text-[11px] font-bold text-[#F35C16]">{order.trackingNumber || 'N/A'}</p>
+                <p className="font-mono text-[11px] font-bold text-[#F95721]">{order.trackingNumber || 'N/A'}</p>
               </div>
             </div>
           </div>
@@ -216,7 +216,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
               </div>
               <div className="pt-2 border-t border-gray-100 flex justify-between font-black text-sm text-gray-900">
                 <span>Total Collected</span>
-                <span className="text-[#F35C16]">₹{order.total}</span>
+                <span className="text-[#F95721]">₹{order.total}</span>
               </div>
             </div>
           </div>

@@ -205,7 +205,7 @@ export const NotificationsView: React.FC = () => {
       case 'stock': return <AlertTriangle className="w-4 h-4 text-amber-500" />;
       case 'return': return <RotateCcw className="w-4 h-4 text-red-500" />;
       case 'payment': return <CreditCard className="w-4 h-4 text-purple-500" />;
-      default: return <Bell className="w-4 h-4 text-[#F35C16]" />;
+      default: return <Bell className="w-4 h-4 text-[#F95721]" />;
     }
   };
 
@@ -216,7 +216,7 @@ export const NotificationsView: React.FC = () => {
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
             <span>Notification & Push Studio</span>
-            <span className="px-2.5 py-0.5 rounded-full bg-orange-100 text-[#F35C16] text-xs font-black">
+            <span className="px-2.5 py-0.5 rounded-full bg-orange-100 text-[#F95721] text-xs font-black">
               LIVE
             </span>
           </h1>
@@ -233,7 +233,7 @@ export const NotificationsView: React.FC = () => {
           </div>
           <div className="px-3 py-1.5 rounded-2xl bg-white border border-gray-100 shadow-2xs text-center">
             <span className="text-[10px] text-gray-400 font-bold uppercase block">Drafts</span>
-            <span className="text-xs font-black text-[#F35C16]">{userNotificationDrafts.length}</span>
+            <span className="text-xs font-black text-[#F95721]">{userNotificationDrafts.length}</span>
           </div>
           <div className="px-3 py-1.5 rounded-2xl bg-white border border-gray-100 shadow-2xs text-center">
             <span className="text-[10px] text-gray-400 font-bold uppercase block">Audience</span>
@@ -248,7 +248,7 @@ export const NotificationsView: React.FC = () => {
           onClick={() => setActiveTab('BROADCAST')}
           className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
             activeTab === 'BROADCAST'
-              ? 'bg-white text-[#F35C16] shadow-xs'
+              ? 'bg-white text-[#F95721] shadow-xs'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -260,7 +260,7 @@ export const NotificationsView: React.FC = () => {
           onClick={() => setActiveTab('DRAFTS')}
           className={`flex-1 min-w-[110px] py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
             activeTab === 'DRAFTS'
-              ? 'bg-white text-[#F35C16] shadow-xs'
+              ? 'bg-white text-[#F95721] shadow-xs'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -272,7 +272,7 @@ export const NotificationsView: React.FC = () => {
           onClick={() => setActiveTab('HISTORY')}
           className={`flex-1 min-w-[110px] py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
             activeTab === 'HISTORY'
-              ? 'bg-white text-[#F35C16] shadow-xs'
+              ? 'bg-white text-[#F95721] shadow-xs'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -284,7 +284,7 @@ export const NotificationsView: React.FC = () => {
           onClick={() => setActiveTab('ALERTS')}
           className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
             activeTab === 'ALERTS'
-              ? 'bg-white text-[#F35C16] shadow-xs'
+              ? 'bg-white text-[#F95721] shadow-xs'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -303,7 +303,7 @@ export const NotificationsView: React.FC = () => {
             {/* 1-Click Templates Strip */}
             <div className="bg-gradient-to-r from-orange-50/70 via-white to-orange-50/40 border border-orange-200/80 rounded-3xl p-4 space-y-2.5 shadow-2xs">
               <span className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#F35C16]" /> Quick 1-Click Campaign Templates
+                <Sparkles className="w-3.5 h-3.5 text-[#F95721]" /> Quick 1-Click Campaign Templates
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {templates.map((tpl, i) => (
@@ -314,7 +314,7 @@ export const NotificationsView: React.FC = () => {
                     className="p-2.5 rounded-2xl bg-white border border-gray-100 hover:border-orange-300 hover:bg-orange-50 text-left transition-all tap-active shadow-2xs group"
                   >
                     <span className="text-base block mb-1">{tpl.icon}</span>
-                    <span className="text-[11px] font-bold text-gray-800 group-hover:text-[#F35C16] line-clamp-1 block">
+                    <span className="text-[11px] font-bold text-gray-800 group-hover:text-[#F95721] line-clamp-1 block">
                       {tpl.name.replace(/^[^\s]+\s*/, '')}
                     </span>
                   </button>
@@ -326,7 +326,7 @@ export const NotificationsView: React.FC = () => {
             <form onSubmit={handleSendBroadcast} className="bg-white border border-gray-100 rounded-3xl p-5 space-y-4 shadow-subtle">
               <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                 <h3 className="text-sm font-black text-gray-900 flex items-center gap-2">
-                  <Send className="w-4 h-4 text-[#F35C16]" />
+                  <Send className="w-4 h-4 text-[#F95721]" />
                   <span>{formData.id ? 'Edit & Dispatch Campaign' : 'Compose Notification'}</span>
                 </h3>
                 {formData.id && (
@@ -353,7 +353,7 @@ export const NotificationsView: React.FC = () => {
                   value={formData.title}
                   maxLength={65}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-semibold text-gray-900 outline-none focus:border-[#F35C16] focus:bg-white transition-all"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-semibold text-gray-900 outline-none focus:border-[#F95721] focus:bg-white transition-all"
                 />
               </div>
 
@@ -370,7 +370,7 @@ export const NotificationsView: React.FC = () => {
                   placeholder="e.g. Grab mini washing machines and smart kitchen sealers at half price! Free delivery on orders above ₹1,700."
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs text-gray-900 outline-none focus:border-[#F35C16] focus:bg-white transition-all resize-none"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs text-gray-900 outline-none focus:border-[#F95721] focus:bg-white transition-all resize-none"
                 />
               </div>
 
@@ -382,7 +382,7 @@ export const NotificationsView: React.FC = () => {
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-semibold text-gray-800 outline-none focus:border-[#F35C16] focus:bg-white transition-all cursor-pointer"
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-semibold text-gray-800 outline-none focus:border-[#F95721] focus:bg-white transition-all cursor-pointer"
                   >
                     <option value="deal">⚡ Flash Deal & Discount</option>
                     <option value="promo">🎁 Promotional Offer</option>
@@ -397,7 +397,7 @@ export const NotificationsView: React.FC = () => {
                   <select
                     value={formData.targetAudience}
                     onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value as any })}
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-semibold text-gray-800 outline-none focus:border-[#F35C16] focus:bg-white transition-all cursor-pointer"
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-semibold text-gray-800 outline-none focus:border-[#F95721] focus:bg-white transition-all cursor-pointer"
                   >
                     <option value="ALL">🌐 All Users (1,450+ App Installs)</option>
                     <option value="CUSTOMERS">👥 Registered Members (980+)</option>
@@ -413,7 +413,7 @@ export const NotificationsView: React.FC = () => {
                   <select
                     value={formData.actionUrl}
                     onChange={(e) => setFormData({ ...formData, actionUrl: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-semibold text-gray-800 outline-none focus:border-[#F35C16] focus:bg-white transition-all cursor-pointer"
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-semibold text-gray-800 outline-none focus:border-[#F95721] focus:bg-white transition-all cursor-pointer"
                   >
                     <option value="offers">🎉 Offers & Today&apos;s Deals</option>
                     <option value="categories">📂 All Categories</option>
@@ -432,7 +432,7 @@ export const NotificationsView: React.FC = () => {
                     placeholder="https://images.unsplash.com/..."
                     value={formData.imageUrl}
                     onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs text-gray-900 outline-none focus:border-[#F35C16] focus:bg-white transition-all"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs text-gray-900 outline-none focus:border-[#F95721] focus:bg-white transition-all"
                   >
                   </input>
                 </div>
@@ -443,7 +443,7 @@ export const NotificationsView: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSending}
-                  className="w-full sm:flex-1 py-3 bg-gradient-to-r from-[#F35C16] to-[#FF7A3D] hover:from-[#E04F0E] hover:to-[#F35C16] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all disabled:opacity-50"
+                  className="w-full sm:flex-1 py-3 bg-gradient-to-r from-[#F95721] to-[#FF7A3D] hover:from-[#E44813] hover:to-[#F95721] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                   <span>{isSending ? 'Sending Broadcast...' : '🚀 Send Push Notification Now'}</span>
@@ -466,7 +466,7 @@ export const NotificationsView: React.FC = () => {
             <div className="bg-white border border-gray-100 rounded-3xl p-5 space-y-4 shadow-subtle sticky top-24">
               <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                 <span className="text-xs font-black text-gray-900 flex items-center gap-1.5">
-                  <Smartphone className="w-4 h-4 text-[#F35C16]" /> Live Multi-Device Preview
+                  <Smartphone className="w-4 h-4 text-[#F95721]" /> Live Multi-Device Preview
                 </span>
                 <span className="text-[10px] text-gray-400 font-medium">Real-time</span>
               </div>
@@ -479,7 +479,7 @@ export const NotificationsView: React.FC = () => {
                 <div className="bg-gray-900/95 backdrop-blur-xl text-white rounded-2xl p-3.5 shadow-xl border border-gray-800 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-                      <div className="w-4 h-4 rounded-full bg-[#F35C16] flex items-center justify-center text-[8px] font-black text-white">
+                      <div className="w-4 h-4 rounded-full bg-[#F95721] flex items-center justify-center text-[8px] font-black text-white">
                         S
                       </div>
                       <span className="text-[11px] font-extrabold text-gray-200">SBS STORE</span>
@@ -507,9 +507,9 @@ export const NotificationsView: React.FC = () => {
                   2. In-App Notification Center
                 </span>
                 <div className="bg-gradient-to-r from-orange-50/80 via-white to-orange-50/30 border border-[#FEDDC7] rounded-2xl p-3 shadow-2xs space-y-1.5 relative overflow-hidden">
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#F35C16]" />
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#F95721]" />
                   <div className="flex items-start gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-white border border-gray-100 p-1.5 flex items-center justify-center flex-shrink-0 shadow-2xs text-[#F35C16]">
+                    <div className="w-8 h-8 rounded-xl bg-white border border-gray-100 p-1.5 flex items-center justify-center flex-shrink-0 shadow-2xs text-[#F95721]">
                       <Sparkles className="w-4 h-4" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -522,7 +522,7 @@ export const NotificationsView: React.FC = () => {
                       <p className="text-[11px] text-gray-600 leading-relaxed line-clamp-2 mt-0.5">
                         {formData.message || 'Grab smart products at unbeatable prices.'}
                       </p>
-                      <div className="pt-1 flex items-center gap-1 text-[10px] font-bold text-[#F35C16]">
+                      <div className="pt-1 flex items-center gap-1 text-[10px] font-bold text-[#F95721]">
                         <span>Tap to open &ldquo;{formData.actionUrl}&rdquo;</span>
                         <ArrowRight className="w-2.5 h-2.5" />
                       </div>
@@ -546,7 +546,7 @@ export const NotificationsView: React.FC = () => {
             </h3>
             <button
               onClick={() => setActiveTab('BROADCAST')}
-              className="px-3 py-1.5 bg-[#F35C16] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs"
+              className="px-3 py-1.5 bg-[#F95721] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create New</span>
@@ -581,14 +581,14 @@ export const NotificationsView: React.FC = () => {
                     <div className="pt-1 flex flex-wrap gap-2 text-[10px] text-gray-500 font-semibold">
                       <span className="bg-gray-100 px-2 py-0.5 rounded-md">Type: {draft.type}</span>
                       <span className="bg-gray-100 px-2 py-0.5 rounded-md">Target: {draft.targetAudience}</span>
-                      {draft.actionUrl && <span className="bg-orange-50 text-[#F35C16] px-2 py-0.5 rounded-md">➔ {draft.actionUrl}</span>}
+                      {draft.actionUrl && <span className="bg-orange-50 text-[#F95721] px-2 py-0.5 rounded-md">➔ {draft.actionUrl}</span>}
                     </div>
                   </div>
 
                   <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
                     <button
                       onClick={() => loadDraftToComposer(draft)}
-                      className="px-3.5 py-2 bg-orange-50 hover:bg-orange-100 text-[#F35C16] text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors"
+                      className="px-3.5 py-2 bg-orange-50 hover:bg-orange-100 text-[#F95721] text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors"
                     >
                       <span>Edit & Launch</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -664,7 +664,7 @@ export const NotificationsView: React.FC = () => {
                   <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center justify-between text-[11px] text-gray-500 gap-2">
                     <div className="flex items-center gap-3">
                       <span className="flex items-center gap-1 font-semibold text-gray-700">
-                        <Users className="w-3 h-3 text-[#F35C16]" /> {notif.recipientCount || '1,240+'} Recipients
+                        <Users className="w-3 h-3 text-[#F95721]" /> {notif.recipientCount || '1,240+'} Recipients
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" /> {notif.sentAt ? new Date(notif.sentAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Recently'}
@@ -682,7 +682,7 @@ export const NotificationsView: React.FC = () => {
                           imageUrl: notif.imageUrl,
                         });
                       }}
-                      className="text-xs font-bold text-[#F35C16] hover:underline flex items-center gap-1"
+                      className="text-xs font-bold text-[#F95721] hover:underline flex items-center gap-1"
                     >
                       <RefreshCw className="w-3 h-3" />
                       <span>Re-Broadcast</span>
@@ -756,7 +756,7 @@ export const NotificationsView: React.FC = () => {
                         {n.priority}
                       </span>
                       {!n.read && (
-                        <span className="w-2 h-2 rounded-full bg-[#F35C16]" />
+                        <span className="w-2 h-2 rounded-full bg-[#F95721]" />
                       )}
                     </div>
                   </div>

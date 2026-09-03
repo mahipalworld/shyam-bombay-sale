@@ -68,7 +68,7 @@ export const PaymentsView: React.FC = () => {
             onClick={() => setActiveMethodFilter(m.key as any)}
             className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all ${
               activeMethodFilter === m.key
-                ? 'bg-white text-[#F35C16] shadow-xs'
+                ? 'bg-white text-[#F95721] shadow-xs'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >

@@ -9,16 +9,16 @@ module.exports = {
     extend: {
       colors: {
         sbs: {
-          orange: "#F35C16",
-          orangeHover: "#E04F0E",
+          orange: "#F95721",
+          orangeHover: "#E44813",
           orangeLight: "#FFF4EC",
-          orangeBadge: "#FFEBE0",
+          orangeBadge: "#FFEAD9",
           cream: "#FAF7F2",
-          dark: "#1A1A1A",
+          dark: "#18181B",
           muted: "#71717A",
           border: "#F0EBE6",
-          green: "#00A859",
-          greenLight: "#EBF7F0",
+          green: "#059669",
+          greenLight: "#ECFDF5",
         },
       },
       fontFamily: {

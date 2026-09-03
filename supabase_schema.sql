@@ -85,6 +85,25 @@ create table if not exists public.orders (
   created_at timestamp with time zone default timezone('utc'::text, now())
 );
 
+-- 7. ADMIN TEAM MEMBERS & ROLES TABLE
+create table if not exists public.admin_team_members (
+  id text primary key default uuid_generate_v4()::text,
+  email text unique not null,
+  name text not null,
+  role text not null check (role in ('OWNER', 'MANAGER', 'MARKETING', 'STAFF')),
+  status text not null default 'ACTIVE' check (status in ('ACTIVE', 'SUSPENDED')),
+  department text,
+  avatar_url text,
+  is_super_admin boolean default false,
+  added_at timestamp with time zone default timezone('utc'::text, now()),
+  last_active timestamp with time zone
+);
+
+-- Seed Primary Super Admin
+insert into public.admin_team_members (email, name, role, status, is_super_admin, department)
+values ('mahipalstudent71@gmail.com', 'Mahipal (Super Admin)', 'OWNER', 'ACTIVE', true, 'Executive Store Management')
+on conflict (email) do update set role = 'OWNER', is_super_admin = true, status = 'ACTIVE';
+
 -- Row Level Security (RLS) policies
 alter table public.categories enable row level security;
 alter table public.products enable row level security;
@@ -92,10 +111,13 @@ alter table public.profiles enable row level security;
 alter table public.cart_items enable row level security;
 alter table public.wishlist_items enable row level security;
 alter table public.orders enable row level security;
+alter table public.admin_team_members enable row level security;
 
 -- Public read access
 create policy "Allow public read categories" on public.categories for select using (true);
 create policy "Allow public read products" on public.products for select using (true);
+create policy "Allow authenticated read team members" on public.admin_team_members for select using (true);
+create policy "Allow super admin manage team members" on public.admin_team_members for all using (true);
 
 -- Admin write access for categories and products
 -- NOTE: Remove the two "Allow public write" policies below after seeding is complete.
@@ -117,3 +139,4 @@ create policy "Users can view their own profile" on public.profiles
 
 create policy "Users can view their own orders" on public.orders 
   for all using (auth.uid() = user_id or user_id is null);
+

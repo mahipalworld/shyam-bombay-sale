@@ -84,7 +84,7 @@ export const AdminGlobalSearchModal: React.FC<AdminGlobalSearchModalProps> = ({
               placeholder="Search products, orders, customers, categories..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full bg-gray-100/90 focus:bg-white border border-transparent focus:border-[#F35C16] text-xs font-semibold rounded-2xl pl-9 pr-8 py-2.5 outline-none transition-all placeholder:text-gray-400"
+              className="w-full bg-gray-100/90 focus:bg-white border border-transparent focus:border-[#F95721] text-xs font-semibold rounded-2xl pl-9 pr-8 py-2.5 outline-none transition-all placeholder:text-gray-400"
             />
             {query && (
               <button
@@ -107,7 +107,7 @@ export const AdminGlobalSearchModal: React.FC<AdminGlobalSearchModalProps> = ({
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
           {!query && (
             <div className="py-8 text-center space-y-2">
-              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F35C16] flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F95721] flex items-center justify-center mx-auto">
                 <Search className="w-6 h-6" />
               </div>
               <p className="text-xs font-bold text-gray-800">Quick Global Search</p>
@@ -129,7 +129,7 @@ export const AdminGlobalSearchModal: React.FC<AdminGlobalSearchModalProps> = ({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase text-gray-400 flex items-center gap-1">
-                  <Package className="w-3.5 h-3.5 text-[#F35C16]" />
+                  <Package className="w-3.5 h-3.5 text-[#F95721]" />
                   Products ({searchResults.products.length})
                 </span>
                 <button
@@ -137,7 +137,7 @@ export const AdminGlobalSearchModal: React.FC<AdminGlobalSearchModalProps> = ({
                     onNavigateToTab('products');
                     onClose();
                   }}
-                  className="text-[11px] font-bold text-[#F35C16] flex items-center gap-0.5"
+                  className="text-[11px] font-bold text-[#F95721] flex items-center gap-0.5"
                 >
                   <span>View All</span>
                   <ChevronRight className="w-3 h-3" />
@@ -163,7 +163,7 @@ export const AdminGlobalSearchModal: React.FC<AdminGlobalSearchModalProps> = ({
                         <p className="text-[10px] text-gray-500">₹{p.price} • {p.stockCount} in stock</p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold text-[#F35C16] bg-orange-100 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-bold text-[#F95721] bg-orange-100 px-2 py-0.5 rounded-full">
                       Edit
                     </span>
                   </div>

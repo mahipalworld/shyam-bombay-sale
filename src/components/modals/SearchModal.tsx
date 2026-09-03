@@ -56,7 +56,7 @@ export const SearchModal: React.FC = () => {
           </div>
           <button
             onClick={() => setIsSearchOpen(false)}
-            className="text-xs font-bold text-[#F35C16] hover:underline"
+            className="text-xs font-bold text-[#F95721] hover:underline"
           >
             Cancel
           </button>
@@ -68,7 +68,7 @@ export const SearchModal: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <span className="text-xs font-bold text-gray-900 flex items-center gap-1.5 mb-2.5">
-                  <TrendingUp className="w-3.5 h-3.5 text-[#F35C16]" /> Popular Searches
+                  <TrendingUp className="w-3.5 h-3.5 text-[#F95721]" /> Popular Searches
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {popularSearches.map((term, i) => (

@@ -80,7 +80,7 @@ export const CustomerNotificationsModal: React.FC = () => {
   const getTypeIcon = (type: UserBroadcastNotification['type']) => {
     switch (type) {
       case 'deal':
-        return <Sparkles className="w-4 h-4 text-[#F35C16]" />;
+        return <Sparkles className="w-4 h-4 text-[#F95721]" />;
       case 'promo':
         return <Tag className="w-4 h-4 text-emerald-600" />;
       case 'system':
@@ -89,7 +89,7 @@ export const CustomerNotificationsModal: React.FC = () => {
       case 'alert':
         return <AlertCircle className="w-4 h-4 text-red-600" />;
       default:
-        return <Bell className="w-4 h-4 text-[#F35C16]" />;
+        return <Bell className="w-4 h-4 text-[#F95721]" />;
     }
   };
 
@@ -105,14 +105,14 @@ export const CustomerNotificationsModal: React.FC = () => {
         {/* Header */}
         <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-orange-50 text-[#F35C16] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-2xl bg-orange-50 text-[#F95721] flex items-center justify-center">
               <Bell className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-base font-extrabold text-gray-900 flex items-center gap-2">
                 <span>Notifications</span>
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-[#F35C16] text-white text-[10px] font-black">
+                  <span className="px-2 py-0.5 rounded-full bg-[#F95721] text-white text-[10px] font-black">
                     {unreadCount} New
                   </span>
                 )}
@@ -153,7 +153,7 @@ export const CustomerNotificationsModal: React.FC = () => {
         {permissionState === 'default' && (
           <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 border-b border-orange-100 p-3 px-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <BellRing className="w-5 h-5 text-[#F35C16] flex-shrink-0 animate-bounce" />
+              <BellRing className="w-5 h-5 text-[#F95721] flex-shrink-0 animate-bounce" />
               <div className="min-w-0">
                 <p className="text-xs font-bold text-gray-900 leading-tight">Get Instant Deal Alerts</p>
                 <p className="text-[10px] text-gray-600 leading-tight truncate">Never miss flash price drops</p>
@@ -161,7 +161,7 @@ export const CustomerNotificationsModal: React.FC = () => {
             </div>
             <button
               onClick={handleEnablePush}
-              className="px-3 py-1.5 bg-[#F35C16] hover:bg-[#E04F0E] text-white text-[11px] font-bold rounded-xl whitespace-nowrap shadow-xs active:scale-95 transition-all"
+              className="px-3 py-1.5 bg-[#F95721] hover:bg-[#E44813] text-white text-[11px] font-bold rounded-xl whitespace-nowrap shadow-xs active:scale-95 transition-all"
             >
               Turn On
             </button>
@@ -181,7 +181,7 @@ export const CustomerNotificationsModal: React.FC = () => {
               onClick={() => setActiveFilter(tab.id as any)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                 activeFilter === tab.id
-                  ? 'bg-white text-[#F35C16] shadow-xs'
+                  ? 'bg-white text-[#F95721] shadow-xs'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -217,7 +217,7 @@ export const CustomerNotificationsModal: React.FC = () => {
               >
                 {/* Unread Accent Bar */}
                 {!notif.read && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#F35C16]" />
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#F95721]" />
                 )}
 
                 <div className="flex items-start gap-3">
@@ -252,7 +252,7 @@ export const CustomerNotificationsModal: React.FC = () => {
                     )}
 
                     {notif.actionUrl && (
-                      <div className="pt-1.5 flex items-center gap-1 text-[11px] font-bold text-[#F35C16] group-hover:underline">
+                      <div className="pt-1.5 flex items-center gap-1 text-[11px] font-bold text-[#F95721] group-hover:underline">
                         <span>Explore Now</span>
                         <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                       </div>

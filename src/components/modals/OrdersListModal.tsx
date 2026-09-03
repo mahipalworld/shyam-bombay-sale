@@ -47,7 +47,7 @@ export const OrdersListModal: React.FC = () => {
               onClick={() => setOrderListFilter(tab)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                 orderListFilter === tab
-                  ? 'bg-[#F35C16] text-white shadow-xs'
+                  ? 'bg-[#F95721] text-white shadow-xs'
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
               }`}
             >
@@ -74,7 +74,7 @@ export const OrdersListModal: React.FC = () => {
                       {new Date(order.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-orange-50 text-[#F35C16] border border-orange-200">
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-orange-50 text-[#F95721] border border-orange-200">
                     {order.status}
                   </span>
                 </div>
@@ -101,7 +101,7 @@ export const OrdersListModal: React.FC = () => {
                   <span className="text-xs text-gray-500">
                     Total: <strong className="text-gray-900">₹{order.total.toLocaleString('en-IN')}</strong>
                   </span>
-                  <span className="text-xs font-bold text-[#F35C16] flex items-center gap-0.5">
+                  <span className="text-xs font-bold text-[#F95721] flex items-center gap-0.5">
                     View Details <ChevronRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
@@ -119,7 +119,7 @@ export const OrdersListModal: React.FC = () => {
                   setOrderListFilter(null);
                   setActiveTab('home');
                 }}
-                className="px-4 py-2 bg-[#F35C16] text-white text-xs font-bold rounded-xl"
+                className="px-4 py-2 bg-[#F95721] text-white text-xs font-bold rounded-xl"
               >
                 Explore Store
               </button>

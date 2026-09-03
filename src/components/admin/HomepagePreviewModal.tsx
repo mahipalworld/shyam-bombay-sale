@@ -72,7 +72,7 @@ export const HomepagePreviewModal: React.FC<HomepagePreviewModalProps> = ({
             {/* Store Top Bar */}
             <div className="flex items-center justify-between bg-white p-2.5 rounded-2xl shadow-xs border border-gray-100">
               <div className="flex items-center gap-1.5">
-                <span className="font-black text-[#F35C16] text-sm">{storeSettings.logo || 'SBS'}</span>
+                <span className="font-black text-[#F95721] text-sm">{storeSettings.logo || 'SBS'}</span>
                 <span className="font-bold text-gray-800 text-xs tracking-tight">STORE</span>
               </div>
               <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">
@@ -95,7 +95,7 @@ export const HomepagePreviewModal: React.FC<HomepagePreviewModalProps> = ({
                   </span>
                   <h3 className="text-sm font-black leading-snug">{activeBanners[0].heading}</h3>
                   <p className="text-[11px] text-white/90 leading-tight line-clamp-2">{activeBanners[0].description}</p>
-                  <button className="mt-1 px-3 py-1 bg-white text-[#F35C16] text-[10px] font-black rounded-lg shadow-sm">
+                  <button className="mt-1 px-3 py-1 bg-white text-[#F95721] text-[10px] font-black rounded-lg shadow-sm">
                     {activeBanners[0].ctaText || 'Shop Now'}
                   </button>
                 </div>
@@ -107,7 +107,7 @@ export const HomepagePreviewModal: React.FC<HomepagePreviewModalProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-extrabold text-xs text-gray-900">Popular Categories</span>
-                  <span className="text-[10px] text-[#F35C16] font-bold">See All</span>
+                  <span className="text-[10px] text-[#F95721] font-bold">See All</span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {activeCategories.map((c) => (
@@ -152,7 +152,7 @@ export const HomepagePreviewModal: React.FC<HomepagePreviewModalProps> = ({
                       </div>
                       <p className="font-bold text-gray-800 text-[11px] line-clamp-1">{p.name}</p>
                       <div className="flex items-center justify-between">
-                        <span className="font-extrabold text-[#F35C16]">₹{p.price}</span>
+                        <span className="font-extrabold text-[#F95721]">₹{p.price}</span>
                         <span className="text-[10px] text-gray-400 line-through">₹{p.originalPrice}</span>
                       </div>
                     </div>
@@ -174,7 +174,7 @@ export const HomepagePreviewModal: React.FC<HomepagePreviewModalProps> = ({
                       </div>
                       <p className="font-bold text-gray-800 text-[11px] line-clamp-1">{p.name}</p>
                       <div className="flex items-center justify-between">
-                        <span className="font-extrabold text-[#F35C16]">₹{p.price}</span>
+                        <span className="font-extrabold text-[#F95721]">₹{p.price}</span>
                         <span className="text-[10px] text-green-600 font-bold">{p.discountPercentage}% OFF</span>
                       </div>
                     </div>

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useStore } from '@/context/StoreContext';
+import { useAuth } from '@/context/AuthContext';
 import { 
   ShieldCheck, 
   Search, 
@@ -33,12 +34,15 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
     storeSettings 
   } = useStore();
 
+  const { authUser, supabaseUser, isGoogleAuth } = useAuth();
+  const currentEmail = authUser?.email || supabaseUser?.email || 'mahipalstudent71@gmail.com';
+
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
   const unreadCount = adminNotifications.filter(n => !n.read).length;
 
   const roles: { role: AdminRole; label: string; desc: string; color: string }[] = [
-    { role: 'OWNER', label: 'Owner', desc: 'Full store access & settings', color: 'bg-[#F35C16] text-white' },
+    { role: 'OWNER', label: 'Owner', desc: 'Full store access & settings', color: 'bg-[#F95721] text-white' },
     { role: 'MANAGER', label: 'Store Manager', desc: 'Products, Orders, Customers', color: 'bg-blue-600 text-white' },
     { role: 'MARKETING', label: 'Marketing Head', desc: 'Homepage, Offers, Analytics', color: 'bg-purple-600 text-white' },
     { role: 'STAFF', label: 'Operations Staff', desc: 'Orders & Inventory only', color: 'bg-emerald-600 text-white' },
@@ -51,15 +55,18 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto">
         {/* Left: SBS Store Brand & Role Badge */}
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#F35C16] to-[#FF7E47] flex items-center justify-center text-white font-black text-sm shadow-sm shadow-orange-500/20 flex-shrink-0">
-            SBS
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="SBS Logo"
+            className="h-8 object-contain"
+          />
           <div>
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-black tracking-tight text-gray-900 leading-none">
                 {storeSettings.storeName || 'SBS Store'}
               </span>
-              <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded bg-orange-100 text-[#F35C16] leading-none">
+              <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded bg-orange-100 text-[#F95721] leading-none">
                 Admin
               </span>
             </div>
@@ -96,14 +103,14 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                             showToast(`Switched role to ${r.label}`);
                           }}
                           className={`w-full text-left px-2.5 py-2 rounded-xl text-xs flex items-center justify-between transition-colors ${
-                            adminRole === r.role ? 'bg-orange-50 text-[#F35C16] font-bold' : 'hover:bg-gray-50 text-gray-700'
+                            adminRole === r.role ? 'bg-orange-50 text-[#F95721] font-bold' : 'hover:bg-gray-50 text-gray-700'
                           }`}
                         >
                           <div>
                             <p className="font-bold leading-tight">{r.label}</p>
                             <p className="text-[10px] text-gray-500">{r.desc}</p>
                           </div>
-                          {adminRole === r.role && <Check className="w-4 h-4 text-[#F35C16]" />}
+                          {adminRole === r.role && <Check className="w-4 h-4 text-[#F95721]" />}
                         </button>
                       ))}
                     </div>
@@ -129,7 +136,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           {/* Homepage Customer Preview */}
           <button
             onClick={onOpenHomepagePreview}
-            className="px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-[#F35C16] rounded-xl flex items-center gap-1 text-xs font-bold transition-all border border-orange-200/60"
+            className="px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-[#F95721] rounded-xl flex items-center gap-1 text-xs font-bold transition-all border border-orange-200/60"
             title="Live Storefront Preview"
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -145,7 +152,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           >
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#F35C16] text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white animate-pulse">
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#F95721] text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white animate-pulse">
                 {unreadCount}
               </span>
             )}

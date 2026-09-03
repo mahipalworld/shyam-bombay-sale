@@ -13,6 +13,8 @@ import {
   Order,
   OrderStatus,
   AdminRole,
+  AdminTeamMember,
+  RoleAuditLog,
   AdminNotification,
   ReturnRequest,
   PaymentRecord,
@@ -22,7 +24,10 @@ import {
   BestSellersConfig,
   HomepageSection,
   StoreSettings,
-  UserBroadcastNotification
+  UserBroadcastNotification,
+  ProductStory,
+  ScratchCardConfig,
+  FlashDealConfig
 } from '@/types';
 import {
   INITIAL_CATEGORIES,
@@ -30,7 +35,10 @@ import {
   INITIAL_USER,
   INITIAL_ADDRESSES,
   INITIAL_COUPONS,
-  INITIAL_ORDERS
+  INITIAL_ORDERS,
+  INITIAL_STORIES,
+  INITIAL_SCRATCH_CONFIG,
+  INITIAL_FLASH_DEAL_CONFIG
 } from '@/data/initialData';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import confetti from 'canvas-confetti';
@@ -78,6 +86,8 @@ interface StoreContextType {
 
   // Admin specific states
   adminRole: AdminRole;
+  adminTeamMembers: AdminTeamMember[];
+  roleAuditLogs: RoleAuditLog[];
   adminNotifications: AdminNotification[];
   returnRequests: ReturnRequest[];
   paymentRecords: PaymentRecord[];
@@ -136,8 +146,14 @@ interface StoreContextType {
   deleteProduct: (id: string) => void;
   resetCatalogToDefault: () => void;
 
-  // Admin UI Actions
+  // Admin UI & Role Actions
   setAdminRole: (role: AdminRole) => void;
+  addTeamMember: (member: Omit<AdminTeamMember, 'id' | 'addedAt'>, actorEmail?: string) => { success: boolean; error?: string };
+  updateTeamMemberRole: (id: string, newRole: AdminRole, actorEmail?: string) => void;
+  toggleTeamMemberStatus: (id: string, actorEmail?: string) => void;
+  removeTeamMember: (id: string, actorEmail?: string) => { success: boolean; error?: string };
+  isEmailAuthorizedAdmin: (email?: string | null) => boolean;
+  getEffectiveAdminRole: (email?: string | null) => AdminRole;
   addNotification: (notification: Omit<AdminNotification, 'id' | 'timestamp' | 'read'>) => void;
   markNotificationRead: (id: string) => void;
   clearAllNotifications: () => void;
@@ -167,6 +183,20 @@ interface StoreContextType {
   setBestSellersConfig: React.Dispatch<React.SetStateAction<BestSellersConfig>>;
   setHomepageSections: React.Dispatch<React.SetStateAction<HomepageSection[]>>;
   setStoreSettings: React.Dispatch<React.SetStateAction<StoreSettings>>;
+
+  // Stories, Scratch Card & Interactive Features
+  stories: ProductStory[];
+  setStories: React.Dispatch<React.SetStateAction<ProductStory[]>>;
+  addStory: (story: Omit<ProductStory, 'id'>) => void;
+  updateStory: (id: string, updates: Partial<ProductStory>) => void;
+  deleteStory: (id: string) => void;
+  toggleStory: (id: string) => void;
+  scratchConfig: ScratchCardConfig;
+  setScratchConfig: React.Dispatch<React.SetStateAction<ScratchCardConfig>>;
+  updateScratchConfig: (updates: Partial<ScratchCardConfig>) => void;
+  flashDealConfig: FlashDealConfig;
+  setFlashDealConfig: React.Dispatch<React.SetStateAction<FlashDealConfig>>;
+  updateFlashDealConfig: (updates: Partial<FlashDealConfig>) => void;
 
   // Calculation helpers
   cartSubtotal: number;
@@ -290,6 +320,72 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Admin specific states
   const [adminRole, setAdminRole] = useState<AdminRole>('OWNER');
+  const [adminTeamMembers, setAdminTeamMembers] = useState<AdminTeamMember[]>([
+    {
+      id: 'super_admin_1',
+      name: 'Mahipal Singh (Super Admin)',
+      email: 'mahipalstudent71@gmail.com',
+      role: 'OWNER',
+      status: 'ACTIVE',
+      isSuperAdmin: true,
+      department: 'Store Executive Ownership',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      addedAt: '2026-01-01T00:00:00Z',
+      lastActive: new Date().toISOString()
+    },
+    {
+      id: 'team_2',
+      name: 'Kailash Sharma',
+      email: 'kailash.manager@gmail.com',
+      role: 'MANAGER',
+      status: 'ACTIVE',
+      department: 'Store Operations & Catalog',
+      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      addedAt: '2026-02-15T10:00:00Z',
+      lastActive: '2026-09-02T14:20:00Z'
+    },
+    {
+      id: 'team_3',
+      name: 'Divya Patel',
+      email: 'divya.marketing@gmail.com',
+      role: 'MARKETING',
+      status: 'ACTIVE',
+      department: 'Growth & Promotions',
+      avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      addedAt: '2026-03-01T11:30:00Z',
+      lastActive: '2026-09-01T09:15:00Z'
+    },
+    {
+      id: 'team_4',
+      name: 'Suresh Kumar',
+      email: 'suresh.staff@gmail.com',
+      role: 'STAFF',
+      status: 'ACTIVE',
+      department: 'Warehouse & Inventory',
+      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+      addedAt: '2026-04-10T16:45:00Z',
+      lastActive: '2026-09-03T08:00:00Z'
+    }
+  ]);
+
+  const [roleAuditLogs, setRoleAuditLogs] = useState<RoleAuditLog[]>([
+    {
+      id: 'log_audit_1',
+      actorEmail: 'mahipalstudent71@gmail.com',
+      action: 'MEMBER_ADDED',
+      targetEmail: 'kailash.manager@gmail.com',
+      details: 'Added as Store Manager with catalog and orders permissions',
+      timestamp: '2026-02-15T10:00:00Z'
+    },
+    {
+      id: 'log_audit_2',
+      actorEmail: 'mahipalstudent71@gmail.com',
+      action: 'MEMBER_ADDED',
+      targetEmail: 'divya.marketing@gmail.com',
+      details: 'Added as Marketing Head for campaigns and banner manager',
+      timestamp: '2026-03-01T11:30:00Z'
+    }
+  ]);
 
   const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([
     { id: 'n1', title: 'New Order Received', message: 'Order SBS-99012 placed by Mahipal Singh', type: 'order', priority: 'high', read: false, timestamp: new Date(Date.now() - 3600000 * 2).toISOString() },
@@ -395,8 +491,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     lowStockThreshold: 5,
     orderNotification: true,
     lowStockNotification: true,
-    customerNotification: true
+    customerNotification: true,
+    enableStories: true,
+    enableScratchCard: true,
+    enableFlashDeals: true,
+    enableConfetti: true,
   });
+
+  // Stories, Scratch & Flash Deals states
+  const [stories, setStories] = useState<ProductStory[]>(INITIAL_STORIES);
+  const [scratchConfig, setScratchConfig] = useState<ScratchCardConfig>(INITIAL_SCRATCH_CONFIG);
+  const [flashDealConfig, setFlashDealConfig] = useState<FlashDealConfig>(INITIAL_FLASH_DEAL_CONFIG);
 
   // Load state from local storage on mount
   useEffect(() => {
@@ -461,10 +566,79 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       const savedCoupons = localStorage.getItem('sbs_coupons');
-      if (savedCoupons) setCoupons(JSON.parse(savedCoupons));
+      if (savedCoupons) {
+        try {
+          const parsed = JSON.parse(savedCoupons);
+          const existingCodes = new Set(parsed.map((c: any) => c.code.toUpperCase()));
+          const missingInitial = INITIAL_COUPONS.filter((c) => !existingCodes.has(c.code.toUpperCase()));
+          setCoupons([...parsed, ...missingInitial]);
+        } catch {
+          setCoupons(INITIAL_COUPONS);
+        }
+      } else {
+        setCoupons(INITIAL_COUPONS);
+      }
 
       const savedRole = localStorage.getItem('sbs_admin_role');
       if (savedRole) setAdminRole(savedRole as AdminRole);
+
+      const savedStories = localStorage.getItem('sbs_stories');
+      if (savedStories) {
+        try {
+          setStories(JSON.parse(savedStories));
+        } catch {
+          setStories(INITIAL_STORIES);
+        }
+      }
+
+      const savedScratch = localStorage.getItem('sbs_scratch_config');
+      if (savedScratch) {
+        try {
+          setScratchConfig(JSON.parse(savedScratch));
+        } catch {
+          setScratchConfig(INITIAL_SCRATCH_CONFIG);
+        }
+      }
+
+      const savedFlashDeal = localStorage.getItem('sbs_flash_deal_config');
+      if (savedFlashDeal) {
+        try {
+          setFlashDealConfig(JSON.parse(savedFlashDeal));
+        } catch {
+          setFlashDealConfig(INITIAL_FLASH_DEAL_CONFIG);
+        }
+      }
+
+      const savedTeamMembers = localStorage.getItem('sbs_admin_team_members');
+      if (savedTeamMembers) {
+        try {
+          const parsed = JSON.parse(savedTeamMembers);
+          // Ensure super admin is always present and active
+          const hasSuper = parsed.some((m: AdminTeamMember) => m.email.toLowerCase() === 'mahipalstudent71@gmail.com');
+          if (!hasSuper) {
+            parsed.unshift({
+              id: 'super_admin_1',
+              name: 'Mahipal Singh (Super Admin)',
+              email: 'mahipalstudent71@gmail.com',
+              role: 'OWNER',
+              status: 'ACTIVE',
+              isSuperAdmin: true,
+              department: 'Store Executive Ownership',
+              avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+              addedAt: '2026-01-01T00:00:00Z',
+              lastActive: new Date().toISOString()
+            });
+          }
+          setAdminTeamMembers(parsed);
+        } catch { }
+      }
+
+      const savedAuditLogs = localStorage.getItem('sbs_role_audit_logs');
+      if (savedAuditLogs) {
+        try {
+          setRoleAuditLogs(JSON.parse(savedAuditLogs));
+        } catch { }
+      }
 
       const savedNotifs = localStorage.getItem('sbs_admin_notifications');
       if (savedNotifs) setAdminNotifications(JSON.parse(savedNotifs));
@@ -694,6 +868,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       localStorage.setItem('sbs_categories', JSON.stringify(categories));
       localStorage.setItem('sbs_coupons', JSON.stringify(coupons));
       localStorage.setItem('sbs_admin_role', adminRole);
+      localStorage.setItem('sbs_admin_team_members', JSON.stringify(adminTeamMembers));
+      localStorage.setItem('sbs_role_audit_logs', JSON.stringify(roleAuditLogs));
       localStorage.setItem('sbs_admin_notifications', JSON.stringify(adminNotifications));
       localStorage.setItem('sbs_return_requests', JSON.stringify(returnRequests));
       localStorage.setItem('sbs_payment_records', JSON.stringify(paymentRecords));
@@ -706,14 +882,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       localStorage.setItem('sbs_bestsellers_config', JSON.stringify(bestSellersConfig));
       localStorage.setItem('sbs_homepage_sections', JSON.stringify(homepageSections));
       localStorage.setItem('sbs_store_settings', JSON.stringify(storeSettings));
+      localStorage.setItem('sbs_stories', JSON.stringify(stories));
+      localStorage.setItem('sbs_scratch_config', JSON.stringify(scratchConfig));
+      localStorage.setItem('sbs_flash_deal_config', JSON.stringify(flashDealConfig));
     } catch (e) {
       console.error('Failed to save to storage', e);
     }
   }, [
     cart, wishlist, orders, user, products, categories, coupons, adminRole,
+    adminTeamMembers, roleAuditLogs,
     adminNotifications, returnRequests, paymentRecords, inventoryLogs, heroBanners,
     homepageCategories, homepageSubcategories, trendingNowProducts, todayDeals, bestSellersConfig,
-    homepageSections, storeSettings, isLoaded
+    homepageSections, storeSettings, stories, scratchConfig, flashDealConfig, isLoaded
   ]);
 
   const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
@@ -783,7 +963,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               x: Math.max(0, Math.min(1, endX / window.innerWidth)),
               y: Math.max(0, Math.min(1, endY / window.innerHeight)),
             },
-            colors: ['#F35C16', '#FFA41C', '#00A859', '#FFFFFF'],
+            colors: ['#F95721', '#FFA41C', '#00A859', '#FFFFFF'],
             ticks: 120,
             gravity: 1.2,
             scalar: 0.6,
@@ -817,25 +997,42 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart((prev) => prev.filter((item) => item.productId !== productId));
+  const removeFromCart = (identifier: string) => {
+    setCart((prev) =>
+      prev.filter(
+        (item) =>
+          item.productId !== identifier &&
+          item.id !== identifier &&
+          item.product?.id !== identifier
+      )
+    );
     showToast('Item removed from cart');
   };
 
-  const updateCartQuantity = (productId: string, quantity: number) => {
+  const updateCartQuantity = (identifier: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(identifier);
       return;
     }
     setCart((prev) =>
-      prev.map((item) => (item.productId === productId ? { ...item, quantity } : item))
+      prev.map((item) =>
+        item.productId === identifier ||
+        item.id === identifier ||
+        item.product?.id === identifier
+          ? { ...item, quantity }
+          : item
+      )
     );
   };
 
-  const toggleCartItemSelection = (productId: string) => {
+  const toggleCartItemSelection = (identifier: string) => {
     setCart((prev) =>
       prev.map((item) =>
-        item.productId === productId ? { ...item, selected: !item.selected } : item
+        item.productId === identifier ||
+        item.id === identifier ||
+        item.product?.id === identifier
+          ? { ...item, selected: !item.selected }
+          : item
       )
     );
   };
@@ -912,15 +1109,31 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Checkout & Coupon
   const applyCoupon = (code: string) => {
-    const found = coupons.find((c) => c.code.toUpperCase() === code.trim().toUpperCase() && c.isActive !== false);
+    if (!code || !code.trim()) {
+      showToast('Please enter a coupon code', 'error');
+      return false;
+    }
+    const cleanCode = code.trim().toUpperCase();
+    let found = coupons.find((c) => c.code.toUpperCase() === cleanCode && c.isActive !== false);
+    
+    // Fallback check in INITIAL_COUPONS if not present in state
     if (!found) {
-      showToast('Invalid or inactive coupon code', 'error');
+      found = INITIAL_COUPONS.find((c) => c.code.toUpperCase() === cleanCode);
+      if (found) {
+        setCoupons((prev) => (prev.some((c) => c.code.toUpperCase() === cleanCode) ? prev : [...prev, found!]));
+      }
+    }
+
+    if (!found) {
+      showToast(`Invalid coupon code "${cleanCode}". Try SBS150, SBS100 or SAVE10!`, 'error');
       return false;
     }
+
     if (cartSubtotal < found.minOrderValue) {
-      showToast(`Minimum order value of ₹${found.minOrderValue} required`, 'error');
+      showToast(`Cart total must be at least ₹${found.minOrderValue} for ${found.code} (Current: ₹${cartSubtotal})`, 'error');
       return false;
     }
+
     setAppliedCoupon(found);
     showToast(`Coupon "${found.code}" applied successfully! 🎉`);
     return true;
@@ -1153,6 +1366,134 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     showToast('Catalog refreshed with all 36+ products & subcategories! ✨', 'success');
   };
 
+  // Admin Team & Role Authorization Methods
+  const isEmailAuthorizedAdmin = (email?: string | null): boolean => {
+    if (!email) return false;
+    const cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail === 'mahipalstudent71@gmail.com') return true;
+    const member = adminTeamMembers.find(m => m.email.trim().toLowerCase() === cleanEmail);
+    return Boolean(member && member.status === 'ACTIVE');
+  };
+
+  const getEffectiveAdminRole = (email?: string | null): AdminRole => {
+    if (!email) return 'STAFF';
+    const cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail === 'mahipalstudent71@gmail.com') return 'OWNER';
+    const member = adminTeamMembers.find(m => m.email.trim().toLowerCase() === cleanEmail);
+    return member?.role || 'STAFF';
+  };
+
+  const addTeamMember = (
+    member: Omit<AdminTeamMember, 'id' | 'addedAt'>,
+    actorEmail = 'mahipalstudent71@gmail.com'
+  ): { success: boolean; error?: string } => {
+    const cleanEmail = member.email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { success: false, error: 'Please enter a valid Google email address' };
+    }
+
+    if (cleanEmail === 'mahipalstudent71@gmail.com') {
+      return { success: false, error: 'This email is already the permanent Super Admin' };
+    }
+
+    if (adminTeamMembers.some(m => m.email.trim().toLowerCase() === cleanEmail)) {
+      return { success: false, error: 'An admin account with this email already exists' };
+    }
+
+    const newMember: AdminTeamMember = {
+      ...member,
+      email: cleanEmail,
+      id: `team_${Date.now()}`,
+      addedAt: new Date().toISOString(),
+      lastActive: undefined,
+    };
+
+    setAdminTeamMembers(prev => [newMember, ...prev]);
+
+    const newLog: RoleAuditLog = {
+      id: `audit_${Date.now()}`,
+      actorEmail,
+      action: 'MEMBER_ADDED',
+      targetEmail: cleanEmail,
+      details: `Granted ${member.role} role (${member.department || 'General Admin'})`,
+      timestamp: new Date().toISOString()
+    };
+    setRoleAuditLogs(prev => [newLog, ...prev]);
+
+    showToast(`Added ${member.name} as ${member.role} 🎉`, 'success');
+    return { success: true };
+  };
+
+  const updateTeamMemberRole = (id: string, newRole: AdminRole, actorEmail = 'mahipalstudent71@gmail.com') => {
+    const target = adminTeamMembers.find(m => m.id === id);
+    if (!target) return;
+
+    if (target.email.toLowerCase() === 'mahipalstudent71@gmail.com') {
+      showToast('Super Admin role cannot be modified', 'info');
+      return;
+    }
+
+    setAdminTeamMembers(prev => prev.map(m => m.id === id ? { ...m, role: newRole } : m));
+
+    const newLog: RoleAuditLog = {
+      id: `audit_${Date.now()}`,
+      actorEmail,
+      action: 'ROLE_UPDATED',
+      targetEmail: target.email,
+      details: `Role updated from ${target.role} to ${newRole}`,
+      timestamp: new Date().toISOString()
+    };
+    setRoleAuditLogs(prev => [newLog, ...prev]);
+    showToast(`Updated role of ${target.name} to ${newRole}`, 'success');
+  };
+
+  const toggleTeamMemberStatus = (id: string, actorEmail = 'mahipalstudent71@gmail.com') => {
+    const target = adminTeamMembers.find(m => m.id === id);
+    if (!target) return;
+
+    if (target.email.toLowerCase() === 'mahipalstudent71@gmail.com') {
+      showToast('Super Admin account cannot be suspended', 'error');
+      return;
+    }
+
+    const nextStatus = target.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    setAdminTeamMembers(prev => prev.map(m => m.id === id ? { ...m, status: nextStatus } : m));
+
+    const newLog: RoleAuditLog = {
+      id: `audit_${Date.now()}`,
+      actorEmail,
+      action: 'STATUS_CHANGED',
+      targetEmail: target.email,
+      details: `Account status changed to ${nextStatus}`,
+      timestamp: new Date().toISOString()
+    };
+    setRoleAuditLogs(prev => [newLog, ...prev]);
+    showToast(`${target.name} is now ${nextStatus.toLowerCase()}`, nextStatus === 'ACTIVE' ? 'success' : 'info');
+  };
+
+  const removeTeamMember = (id: string, actorEmail = 'mahipalstudent71@gmail.com'): { success: boolean; error?: string } => {
+    const target = adminTeamMembers.find(m => m.id === id);
+    if (!target) return { success: false, error: 'Member not found' };
+
+    if (target.email.toLowerCase() === 'mahipalstudent71@gmail.com' || target.isSuperAdmin) {
+      return { success: false, error: 'Super Admin cannot be removed' };
+    }
+
+    setAdminTeamMembers(prev => prev.filter(m => m.id !== id));
+
+    const newLog: RoleAuditLog = {
+      id: `audit_${Date.now()}`,
+      actorEmail,
+      action: 'MEMBER_REMOVED',
+      targetEmail: target.email,
+      details: `Revoked ${target.role} admin access and removed from team`,
+      timestamp: new Date().toISOString()
+    };
+    setRoleAuditLogs(prev => [newLog, ...prev]);
+    showToast(`Removed ${target.name} from admin team`, 'info');
+    return { success: true };
+  };
+
   // Admin Custom Actions
   const addNotification = (notif: Omit<AdminNotification, 'id' | 'timestamp' | 'read'>) => {
     const newNotif: AdminNotification = {
@@ -1284,6 +1625,41 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const deleteCoupon = (id: string) => {
     setCoupons((prev) => prev.filter((c) => c.id !== id));
     showToast('Coupon deleted');
+  };
+
+  // Stories Management Actions
+  const addStory = (story: Omit<ProductStory, 'id'>) => {
+    const newStory: ProductStory = {
+      ...story,
+      id: `story_${Date.now()}`,
+    };
+    setStories((prev) => [newStory, ...prev]);
+    showToast(`Story "${newStory.title}" created successfully! 🎉`);
+  };
+
+  const updateStory = (id: string, updates: Partial<ProductStory>) => {
+    setStories((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+    showToast('Story updated successfully!');
+  };
+
+  const deleteStory = (id: string) => {
+    setStories((prev) => prev.filter((s) => s.id !== id));
+    showToast('Story deleted');
+  };
+
+  const toggleStory = (id: string) => {
+    setStories((prev) => prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)));
+  };
+
+  // Scratch Card & Flash Deal Config Updaters
+  const updateScratchConfig = (updates: Partial<ScratchCardConfig>) => {
+    setScratchConfig((prev) => ({ ...prev, ...updates }));
+    showToast('Scratch card settings saved! 🎁');
+  };
+
+  const updateFlashDealConfig = (updates: Partial<FlashDealConfig>) => {
+    setFlashDealConfig((prev) => ({ ...prev, ...updates }));
+    showToast('Flash deals settings saved! ⚡');
   };
 
   // Inventory actions
@@ -1423,6 +1799,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         // Admin states
         adminRole,
+        adminTeamMembers,
+        roleAuditLogs,
         adminNotifications,
         returnRequests,
         paymentRecords,
@@ -1475,8 +1853,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         deleteProduct,
         resetCatalogToDefault,
 
-        // Admin Actions
+        // Admin & Role Actions
         setAdminRole,
+        addTeamMember,
+        updateTeamMemberRole,
+        toggleTeamMemberStatus,
+        removeTeamMember,
+        isEmailAuthorizedAdmin,
+        getEffectiveAdminRole,
         addNotification,
         markNotificationRead,
         clearAllNotifications,
@@ -1490,6 +1874,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addCoupon,
         updateCoupon,
         deleteCoupon,
+
+        // Stories, Scratch Card & Flash Deals
+        stories,
+        setStories,
+        addStory,
+        updateStory,
+        deleteStory,
+        toggleStory,
+        scratchConfig,
+        setScratchConfig,
+        updateScratchConfig,
+        flashDealConfig,
+        setFlashDealConfig,
+        updateFlashDealConfig,
 
         addInventoryLog,
 

@@ -1,7 +1,7 @@
-'use client';
-
 import React, { useState } from 'react';
 import { useStore } from '@/context/StoreContext';
+import { triggerConfetti } from '@/utils/confetti';
+import { ScratchCardModal } from '@/components/modals/ScratchCardModal';
 import { 
   Trash2, 
   Heart, 
@@ -11,7 +11,9 @@ import {
   Truck, 
   ChevronRight, 
   ShoppingBag,
-  Ticket
+  Ticket,
+  Sparkles,
+  Gift
 } from 'lucide-react';
 
 export const CartView: React.FC = () => {
@@ -34,6 +36,7 @@ export const CartView: React.FC = () => {
   } = useStore();
 
   const [couponCodeInput, setCouponCodeInput] = useState('');
+  const [isScratchOpen, setIsScratchOpen] = useState(false);
   const freeShippingThreshold = 1700;
   const awayFromFreeShipping = Math.max(0, freeShippingThreshold - cartSubtotal);
   const freeShippingProgress = Math.min(100, (cartSubtotal / freeShippingThreshold) * 100);
@@ -49,13 +52,14 @@ export const CartView: React.FC = () => {
     if (!couponCodeInput.trim()) return;
     if (applyCoupon(couponCodeInput)) {
       setCouponCodeInput('');
+      triggerConfetti();
     }
   };
 
   if (cart.length === 0) {
     return (
       <div className="py-16 flex flex-col items-center justify-center text-center space-y-4 pb-24 animate-fadeIn">
-        <div className="w-24 h-24 rounded-full bg-orange-50 flex items-center justify-center text-[#F35C16]">
+        <div className="w-24 h-24 rounded-full bg-orange-50 flex items-center justify-center text-[#F95721]">
           <ShoppingBag className="w-12 h-12" />
         </div>
         <div>
@@ -66,7 +70,7 @@ export const CartView: React.FC = () => {
         </div>
         <button
           onClick={() => setActiveTab('home')}
-          className="px-8 py-3.5 bg-[#F35C16] hover:bg-[#E04F0E] text-white text-xs md:text-sm font-bold rounded-xl shadow-float transition-all tap-active"
+          className="px-8 py-3.5 bg-[#F95721] hover:bg-[#E44813] text-white text-xs md:text-sm font-bold rounded-xl shadow-float transition-all tap-active"
         >
           Start Shopping
         </button>
@@ -88,7 +92,7 @@ export const CartView: React.FC = () => {
         </div>
         <button
           onClick={() => setActiveTab('categories')}
-          className="text-xs md:text-sm font-bold text-[#F35C16] hover:underline"
+          className="text-xs md:text-sm font-bold text-[#F95721] hover:underline"
         >
           Add More
         </button>
@@ -130,7 +134,7 @@ export const CartView: React.FC = () => {
                       type="checkbox"
                       checked={item.selected}
                       onChange={() => toggleCartItemSelection(item.productId)}
-                      className="w-4 h-4 sm:w-5 sm:h-5 rounded text-[#F35C16] focus:ring-[#F35C16] cursor-pointer accent-[#F35C16]"
+                      className="w-4 h-4 sm:w-5 sm:h-5 rounded text-[#F95721] focus:ring-[#F95721] cursor-pointer accent-[#F95721]"
                     />
                   </div>
 
@@ -174,7 +178,7 @@ export const CartView: React.FC = () => {
 
                     {/* Price Line */}
                     <div className="flex items-baseline flex-wrap gap-1.5 mt-1 sm:mt-1.5">
-                      <span className="text-sm sm:text-base font-extrabold text-[#F35C16]">
+                      <span className="text-sm sm:text-base font-extrabold text-[#F95721]">
                         ₹{item.product.price.toLocaleString('en-IN')}
                       </span>
                       <span className="text-[11px] sm:text-xs text-gray-400 line-through">
@@ -231,13 +235,13 @@ export const CartView: React.FC = () => {
           <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 space-y-2.5 shadow-subtle">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#FFF4EC] text-[#F35C16] flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#FFF4EC] text-[#F95721] flex items-center justify-center flex-shrink-0">
                   <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div className="min-w-0">
                   {awayFromFreeShipping > 0 ? (
                     <p className="text-xs font-semibold text-gray-800 leading-tight">
-                      You are <span className="font-extrabold text-[#F35C16]">₹{awayFromFreeShipping}</span> away from <span className="font-extrabold text-[#00A859]">FREE Delivery</span>
+                      You are <span className="font-extrabold text-[#F95721]">₹{awayFromFreeShipping}</span> away from <span className="font-extrabold text-[#00A859]">FREE Delivery</span>
                     </p>
                   ) : (
                     <p className="text-xs font-extrabold text-[#00A859] leading-tight">
@@ -248,7 +252,7 @@ export const CartView: React.FC = () => {
               </div>
               <button
                 onClick={() => setActiveTab('categories')}
-                className="text-[11px] sm:text-xs font-bold text-[#F35C16] border border-[#FEDDC7] px-2.5 py-1 rounded-xl hover:bg-[#FFF4EC] flex-shrink-0 transition-colors"
+                className="text-[11px] sm:text-xs font-bold text-[#F95721] border border-[#FEDDC7] px-2.5 py-1 rounded-xl hover:bg-[#FFF4EC] flex-shrink-0 transition-colors"
               >
                 Shop More
               </button>
@@ -257,7 +261,7 @@ export const CartView: React.FC = () => {
             {/* Progress Bar */}
             <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
               <div
-                className="bg-gradient-to-r from-[#F35C16] to-[#FA7035] h-full rounded-full transition-all duration-500"
+                className="bg-gradient-to-r from-[#F95721] to-[#FA7035] h-full rounded-full transition-all duration-500"
                 style={{ width: `${freeShippingProgress}%` }}
               />
             </div>
@@ -268,15 +272,36 @@ export const CartView: React.FC = () => {
           </div>
 
           {/* Coupon Application Box */}
-          <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 shadow-subtle space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-800">
-              <Ticket className="w-4 h-4 text-[#F35C16]" />
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 shadow-subtle space-y-3">
+            {/* Scratch & Win Quick Banner */}
+            <div 
+              onClick={() => setIsScratchOpen(true)}
+              className="p-3 bg-gradient-to-r from-orange-50 via-[#FFF4EC] to-amber-50 rounded-2xl border border-orange-200/80 flex items-center justify-between cursor-pointer hover:border-orange-300 shadow-2xs group tap-active transition-all"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#F95721] text-white flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                  <Gift className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-gray-900 leading-tight">
+                    Scratch for Surprise Discount!
+                  </h4>
+                  <p className="text-[10px] text-gray-500">Tap to uncover a mystery coupon</p>
+                </div>
+              </div>
+              <span className="text-[11px] font-black text-[#F95721] bg-white px-2.5 py-1 rounded-xl border border-orange-200 shadow-2xs">
+                Scratch →
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-800 pt-1">
+              <Ticket className="w-4 h-4 text-[#F95721]" />
               <span>Apply Promo Coupon</span>
             </div>
             {appliedCoupon ? (
               <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl p-2.5 px-3">
                 <div>
-                  <span className="text-xs font-bold text-[#F35C16]">{appliedCoupon.code}</span>
+                  <span className="text-xs font-bold text-[#F95721]">{appliedCoupon.code}</span>
                   <p className="text-[11px] text-gray-600">{appliedCoupon.title}</p>
                 </div>
                 <button
@@ -293,7 +318,7 @@ export const CartView: React.FC = () => {
                   placeholder="e.g. SBS100"
                   value={couponCodeInput}
                   onChange={(e) => setCouponCodeInput(e.target.value.toUpperCase())}
-                  className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs uppercase font-bold tracking-wider outline-none focus:border-[#F35C16]"
+                  className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs uppercase font-bold tracking-wider outline-none focus:border-[#F95721]"
                 />
                 <button
                   type="submit"
@@ -304,6 +329,11 @@ export const CartView: React.FC = () => {
               </form>
             )}
           </div>
+
+          <ScratchCardModal
+            isOpen={isScratchOpen}
+            onClose={() => setIsScratchOpen(false)}
+          />
 
           {/* Price Details Card */}
           <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 sm:p-5 space-y-3 shadow-subtle">
@@ -340,7 +370,7 @@ export const CartView: React.FC = () => {
                   <span className="font-bold text-gray-900 text-sm">Total Amount</span>
                   <p className="text-[10px] text-gray-400">(Inclusive of all taxes)</p>
                 </div>
-                <span className="text-xl sm:text-2xl font-black text-[#F35C16]">
+                <span className="text-xl sm:text-2xl font-black text-[#F95721]">
                   ₹{cartTotal.toLocaleString('en-IN')}
                 </span>
               </div>
@@ -350,7 +380,7 @@ export const CartView: React.FC = () => {
             <button
               disabled={selectedItems.length === 0}
               onClick={() => setIsCheckoutOpen(true)}
-              className="hidden lg:flex w-full py-3.5 bg-gradient-to-r from-[#F35C16] to-[#FA7035] hover:from-[#E04F0E] hover:to-[#F35C16] disabled:bg-gray-300 text-white font-bold text-sm rounded-2xl items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
+              className="hidden lg:flex w-full py-3.5 bg-gradient-to-r from-[#F95721] to-[#FA7035] hover:from-[#E44813] hover:to-[#F95721] disabled:bg-gray-300 text-white font-bold text-sm rounded-2xl items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
             >
               <span>Proceed to Checkout</span>
               <ChevronRight className="w-4 h-4 stroke-[3px]" />
@@ -365,7 +395,7 @@ export const CartView: React.FC = () => {
           <div>
             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Total Amount</span>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-black text-[#F35C16]">
+              <span className="text-lg font-black text-[#F95721]">
                 ₹{cartTotal.toLocaleString('en-IN')}
               </span>
               {cartDiscount > 0 && (
@@ -379,7 +409,7 @@ export const CartView: React.FC = () => {
           <button
             disabled={selectedItems.length === 0}
             onClick={() => setIsCheckoutOpen(true)}
-            className="flex-1 max-w-[200px] py-3 px-4 bg-gradient-to-r from-[#F35C16] to-[#FA7035] hover:from-[#E04F0E] hover:to-[#F35C16] disabled:bg-gray-300 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-float active:scale-95 transition-all"
+            className="flex-1 max-w-[200px] py-3 px-4 bg-gradient-to-r from-[#F95721] to-[#FA7035] hover:from-[#E44813] hover:to-[#F95721] disabled:bg-gray-300 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-float active:scale-95 transition-all"
           >
             <span>Checkout</span>
             <ChevronRight className="w-4 h-4 stroke-[3px]" />

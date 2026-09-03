@@ -19,7 +19,10 @@ export const metadata: Metadata = {
     title: 'SBS',
   },
   icons: {
-    icon: '/icon.svg',
+    icon: [
+      { url: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
     apple: '/apple-touch-icon.png',
   },
   openGraph: {
@@ -34,7 +37,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#F35C16',
+  themeColor: '#F95721',
 };
 
 export default function RootLayout({
@@ -44,7 +47,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-[#F8F9FA] text-gray-900 min-h-screen antialiased selection:bg-[#F35C16] selection:text-white">
+      <body className="bg-[#F8F9FA] text-gray-900 min-h-screen antialiased selection:bg-[#F95721] selection:text-white">
         <PWAProvider>
           <AuthProvider>
             <StoreProvider>

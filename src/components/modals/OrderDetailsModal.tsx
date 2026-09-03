@@ -47,7 +47,7 @@ export const OrderDetailsModal: React.FC = () => {
           <div className="bg-orange-50 border border-orange-200 rounded-2xl p-3 flex items-center justify-between">
             <div>
               <span className="text-[10px] uppercase font-bold text-gray-500">Current Status</span>
-              <p className="text-sm font-extrabold text-[#F35C16]">{order.status}</p>
+              <p className="text-sm font-extrabold text-[#F95721]">{order.status}</p>
             </div>
             <div className="text-right">
               <span className="text-[10px] text-gray-500">Tracking Code</span>
@@ -111,7 +111,7 @@ export const OrderDetailsModal: React.FC = () => {
           {/* Delivery Address */}
           <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-1 shadow-subtle">
             <h3 className="font-bold text-gray-900 flex items-center gap-1.5 mb-1">
-              <MapPin className="w-4 h-4 text-[#F35C16]" /> Shipping Address
+              <MapPin className="w-4 h-4 text-[#F95721]" /> Shipping Address
             </h3>
             <p className="font-semibold text-gray-800">{order.shippingAddress.name}</p>
             <p className="text-gray-600">{order.shippingAddress.street}, {order.shippingAddress.city} - {order.shippingAddress.pincode}</p>
@@ -139,7 +139,7 @@ export const OrderDetailsModal: React.FC = () => {
             </div>
             <div className="border-t pt-2 flex justify-between font-bold text-sm text-gray-900">
               <span>Total Paid</span>
-              <span className="text-[#F35C16]">₹{order.total.toLocaleString('en-IN')}</span>
+              <span className="text-[#F95721]">₹{order.total.toLocaleString('en-IN')}</span>
             </div>
           </div>
         </div>

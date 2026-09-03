@@ -51,7 +51,7 @@ export const AddressesModal: React.FC = () => {
         {/* Header */}
         <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-4 py-3 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-[#F35C16]" />
+            <MapPin className="w-5 h-5 text-[#F95721]" />
             <h2 className="text-base font-bold text-gray-900">Saved Addresses</h2>
           </div>
           <button
@@ -66,7 +66,7 @@ export const AddressesModal: React.FC = () => {
           {!isAdding && (
             <button
               onClick={() => setIsAdding(true)}
-              className="w-full py-2.5 bg-orange-50 hover:bg-orange-100 text-[#F35C16] border border-orange-200 rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+              className="w-full py-2.5 bg-orange-50 hover:bg-orange-100 text-[#F95721] border border-orange-200 rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
             >
               <Plus className="w-4 h-4" />
               <span>Add New Address</span>
@@ -82,7 +82,7 @@ export const AddressesModal: React.FC = () => {
                 placeholder="Receiver Name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F35C16]"
+                className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721]"
               />
               <input
                 type="tel"
@@ -90,7 +90,7 @@ export const AddressesModal: React.FC = () => {
                 placeholder="Phone Number"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F35C16]"
+                className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721]"
               />
               <textarea
                 rows={2}
@@ -98,7 +98,7 @@ export const AddressesModal: React.FC = () => {
                 placeholder="Flat / Building / Street / Area"
                 value={formData.street}
                 onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F35C16]"
+                className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721]"
               />
               <div className="grid grid-cols-2 gap-2">
                 <input
@@ -107,7 +107,7 @@ export const AddressesModal: React.FC = () => {
                   placeholder="City"
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F35C16]"
+                  className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721]"
                 />
                 <input
                   type="text"
@@ -115,7 +115,7 @@ export const AddressesModal: React.FC = () => {
                   placeholder="Pincode"
                   value={formData.pincode}
                   onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                  className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F35C16]"
+                  className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721]"
                 />
               </div>
 
@@ -128,7 +128,7 @@ export const AddressesModal: React.FC = () => {
                       name="addr_type"
                       checked={formData.type === t}
                       onChange={() => setFormData({ ...formData, type: t })}
-                      className="text-[#F35C16]"
+                      className="text-[#F95721]"
                     />
                     <span className="text-[11px] font-semibold">{t}</span>
                   </label>
@@ -145,7 +145,7 @@ export const AddressesModal: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-[#F35C16] text-white font-bold rounded-xl shadow-sm"
+                  className="flex-1 py-2 bg-[#F95721] text-white font-bold rounded-xl shadow-sm"
                 >
                   Save Address
                 </button>
@@ -157,7 +157,7 @@ export const AddressesModal: React.FC = () => {
                 <div
                   key={addr.id}
                   className={`bg-white rounded-2xl border p-4 shadow-subtle space-y-2 transition-all ${
-                    addr.isDefault ? 'border-[#F35C16] bg-[#FFFBF8]' : 'border-gray-100'
+                    addr.isDefault ? 'border-[#F95721] bg-[#FFFBF8]' : 'border-gray-100'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -174,7 +174,7 @@ export const AddressesModal: React.FC = () => {
                     ) : (
                       <button
                         onClick={() => setDefaultAddress(addr.id)}
-                        className="text-[11px] font-bold text-[#F35C16] hover:underline"
+                        className="text-[11px] font-bold text-[#F95721] hover:underline"
                       >
                         Set Default
                       </button>

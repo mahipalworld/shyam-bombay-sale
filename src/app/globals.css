@@ -10,8 +10,8 @@
 
 body {
   font-family: var(--font-inter);
-  background-color: #F8F9FA;
-  color: #1A1A1A;
+  background-color: #FAF9F6;
+  color: #18181B;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
@@ -55,7 +55,7 @@ body {
 
 /* Custom checkbox */
 input[type="checkbox"] {
-  accent-color: #F35C16;
+  accent-color: #F95721;
 }
 
 /* Cart Icon Bump / Bounce Animation when items fly in */

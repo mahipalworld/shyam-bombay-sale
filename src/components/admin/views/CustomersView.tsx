@@ -84,7 +84,7 @@ export const CustomersView: React.FC = () => {
           placeholder="Search by customer name, email, or phone..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white border border-gray-200 rounded-2xl pl-9 pr-3 py-2 text-xs outline-none focus:border-[#F35C16]"
+          className="w-full bg-white border border-gray-200 rounded-2xl pl-9 pr-3 py-2 text-xs outline-none focus:border-[#F95721]"
         />
       </div>
 
@@ -111,7 +111,7 @@ export const CustomersView: React.FC = () => {
                 </div>
 
                 <div className="text-right">
-                  <span className="text-xs font-black text-[#F35C16]">₹{estimatedSpend.toLocaleString('en-IN')}</span>
+                  <span className="text-xs font-black text-[#F95721]">₹{estimatedSpend.toLocaleString('en-IN')}</span>
                   <p className="text-[9px] text-gray-400 uppercase font-bold">Lifetime Value</p>
                 </div>
               </div>
@@ -142,7 +142,7 @@ export const CustomersView: React.FC = () => {
           <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full mx-auto p-5 space-y-4 shadow-2xl max-h-[88vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#F35C16] text-white font-black text-sm flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-[#F95721] text-white font-black text-sm flex items-center justify-center">
                   {selectedCustomer.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
@@ -176,7 +176,7 @@ export const CustomersView: React.FC = () => {
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-orange-50/80 p-2.5 rounded-2xl text-center">
                 <span className="text-[10px] font-bold text-gray-500">Orders</span>
-                <p className="text-sm font-black text-[#F35C16] mt-0.5">{selectedCustomer.ordersCount}</p>
+                <p className="text-sm font-black text-[#F95721] mt-0.5">{selectedCustomer.ordersCount}</p>
               </div>
               <div className="bg-blue-50/80 p-2.5 rounded-2xl text-center">
                 <span className="text-[10px] font-bold text-gray-500">Total Spent</span>
@@ -191,7 +191,7 @@ export const CustomersView: React.FC = () => {
             {/* Shipping Address */}
             <div className="space-y-1.5 text-xs">
               <span className="font-bold text-gray-800 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-[#F35C16]" />
+                <MapPin className="w-3.5 h-3.5 text-[#F95721]" />
                 Primary Shipping Address
               </span>
               <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100 text-[11px] text-gray-600 leading-relaxed">
