@@ -762,16 +762,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               name: c.name,
               subtitle: c.subtitle,
               image: c.image,
-              bgColor: c.bg_color || initMatch?.bgColor,
-              accentColor: c.accent_color || initMatch?.accentColor,
+              bgColor: c.bg_color || initMatch?.bgColor || '#FFF0E6',
+              accentColor: c.accent_color || initMatch?.accentColor || '#F95721',
               itemCount: c.item_count || initMatch?.itemCount || 0,
               subcategories: c.subcategories || initMatch?.subcategories || [],
               showOnHome: c.show_on_home !== undefined ? c.show_on_home : (initMatch?.showOnHome ?? true),
             };
           });
-          const remoteCatIds = new Set(mappedCats.map((c) => c.id));
-          const missingInitialCats = INITIAL_CATEGORIES.filter((c) => !remoteCatIds.has(c.id));
-          setCategories([...mappedCats, ...missingInitialCats]);
+          setCategories(mappedCats);
         }
 
         if (prods && prods.length > 0) {
@@ -803,9 +801,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             };
           });
 
-          const remoteIds = new Set(mappedRemote.map((p) => p.id));
-          const missingInitial = INITIAL_PRODUCTS.filter((p) => !remoteIds.has(p.id));
-          setProducts([...mappedRemote, ...missingInitial]);
+          setProducts(mappedRemote);
         }
 
         if (coups && coups.length > 0) {

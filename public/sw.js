@@ -1,5 +1,5 @@
 // SBS Store Service Worker
-const CACHE_NAME = 'sbs-pwa-v1';
+const CACHE_NAME = 'sbs-pwa-v3';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -12,9 +12,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch(() => {
-        // Continue even if some assets fail to cache immediately
-      });
+      return cache.addAll(STATIC_ASSETS).catch(() => {});
     })
   );
 });
