@@ -1430,40 +1430,17 @@ export const INITIAL_PRODUCTS: Product[] = [
 ];
 
 export const INITIAL_USER: UserProfile = {
-  id: 'usr_mahipal',
-  name: 'Mahipal Singh',
-  email: 'mahipal@example.com',
-  phone: '+91 98765 43210',
-  ordersCount: 12,
-  wishlistCount: 6,
-  couponsCount: 3,
-  rewardPoints: 250,
+  id: '',
+  name: 'Shopper',
+  email: '',
+  phone: '',
+  ordersCount: 0,
+  wishlistCount: 0,
+  couponsCount: 0,
+  rewardPoints: 0,
 };
 
-export const INITIAL_ADDRESSES: Address[] = [
-  {
-    id: 'addr_1',
-    name: 'Mahipal Singh',
-    phone: '+91 98765 43210',
-    street: 'Flat 402, Sunshine Residency, Sector 18',
-    city: 'Jaipur',
-    state: 'Rajasthan',
-    pincode: '302017',
-    isDefault: true,
-    type: 'HOME',
-  },
-  {
-    id: 'addr_2',
-    name: 'Mahipal Singh (Office)',
-    phone: '+91 98765 43210',
-    street: 'Tech Hub Park, Building B, 3rd Floor',
-    city: 'Jaipur',
-    state: 'Rajasthan',
-    pincode: '302020',
-    isDefault: false,
-    type: 'WORK',
-  },
-];
+export const INITIAL_ADDRESSES: Address[] = [];
 
 export const INITIAL_COUPONS: Coupon[] = [
   {
@@ -1538,113 +1515,7 @@ export const INITIAL_COUPONS: Coupon[] = [
   }
 ];
 
-export const INITIAL_ORDERS: Order[] = [
-  {
-    id: 'ord_101',
-    orderNumber: 'SBS-98231',
-    createdAt: '2026-08-28T14:30:00Z',
-    status: 'Processing',
-    items: [
-      {
-        productId: 'p1',
-        name: 'Mini Washing Machine',
-        price: 1499,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=600&auto=format&fit=crop&q=80',
-      },
-      {
-        productId: 'p2',
-        name: 'Packet Sealer',
-        price: 349,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=600&auto=format&fit=crop&q=80',
-      }
-    ],
-    subtotal: 1848,
-    discount: 0,
-    deliveryCharge: 0,
-    total: 1848,
-    shippingAddress: INITIAL_ADDRESSES[0],
-    paymentMethod: 'UPI (GPay / PhonePe)',
-    trackingNumber: 'TRK-SBS-774910',
-    estimatedDelivery: 'Tomorrow by 8:00 PM',
-  },
-  {
-    id: 'ord_102',
-    orderNumber: 'SBS-98104',
-    createdAt: '2026-08-26T11:15:00Z',
-    status: 'Shipped',
-    items: [
-      {
-        productId: 'p3',
-        name: 'Rechargeable Trimmer',
-        price: 799,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1621607512214-68297480165e?w=600&auto=format&fit=crop&q=80',
-      }
-    ],
-    subtotal: 799,
-    discount: 50,
-    deliveryCharge: 40,
-    total: 789,
-    shippingAddress: INITIAL_ADDRESSES[0],
-    paymentMethod: 'Credit Card',
-    trackingNumber: 'TRK-BLUEDART-88912',
-    estimatedDelivery: 'Aug 31, 2026',
-  },
-  {
-    id: 'ord_103',
-    orderNumber: 'SBS-97640',
-    createdAt: '2026-08-20T09:00:00Z',
-    status: 'Delivered',
-    items: [
-      {
-        productId: 'p4',
-        name: 'Spin Mop with Bucket',
-        price: 799,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80',
-      },
-      {
-        productId: 'p5',
-        name: 'Microfiber Cleaning Cloth (Pack of 5)',
-        price: 199,
-        quantity: 2,
-        image: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&auto=format&fit=crop&q=80',
-      }
-    ],
-    subtotal: 1197,
-    discount: 100,
-    deliveryCharge: 0,
-    total: 1097,
-    shippingAddress: INITIAL_ADDRESSES[0],
-    paymentMethod: 'Cash on Delivery',
-    trackingNumber: 'TRK-DELHIVERY-54019',
-    estimatedDelivery: 'Delivered on Aug 23, 2026',
-  },
-  {
-    id: 'ord_104',
-    orderNumber: 'SBS-99012',
-    createdAt: '2026-08-29T18:00:00Z',
-    status: 'To Pay',
-    items: [
-      {
-        productId: 'p7',
-        name: 'Non-Stick Frying Pan (24cm)',
-        price: 549,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1583778176476-4a8b02a64c01?w=600&auto=format&fit=crop&q=80',
-      }
-    ],
-    subtotal: 549,
-    discount: 0,
-    deliveryCharge: 40,
-    total: 589,
-    shippingAddress: INITIAL_ADDRESSES[0],
-    paymentMethod: 'Pending Payment',
-    trackingNumber: 'PENDING',
-  }
-];
+export const INITIAL_ORDERS: Order[] = [];
 
 export const INITIAL_STORIES: ProductStory[] = [
   {

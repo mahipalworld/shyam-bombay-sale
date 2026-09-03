@@ -213,22 +213,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
 
-  // Initialize with initial cart items
-  const [cart, setCart] = useState<CartItem[]>([
-    { id: 'c1', productId: 'p1', product: INITIAL_PRODUCTS[0], quantity: 1, selected: true },
-    { id: 'c2', productId: 'p2', product: INITIAL_PRODUCTS[1], quantity: 1, selected: true },
-    { id: 'c3', productId: 'p3', product: INITIAL_PRODUCTS[2], quantity: 1, selected: true },
-  ]);
+  // Clean empty initial cart for all visitors
+  const [cart, setCart] = useState<CartItem[]>([]);
 
-  // Initial wishlist items
-  const [wishlist, setWishlist] = useState<WishlistItem[]>([
-    { id: 'w1', productId: 'p1', product: INITIAL_PRODUCTS[0], addedAt: new Date().toISOString() },
-    { id: 'w2', productId: 'p2', product: INITIAL_PRODUCTS[1], addedAt: new Date().toISOString() },
-    { id: 'w3', productId: 'p3', product: INITIAL_PRODUCTS[2], addedAt: new Date().toISOString() },
-    { id: 'w4', productId: 'p4', product: INITIAL_PRODUCTS[3], addedAt: new Date().toISOString() },
-    { id: 'w5', productId: 'p5', product: INITIAL_PRODUCTS[4], addedAt: new Date().toISOString() },
-    { id: 'w6', productId: 'p6', product: INITIAL_PRODUCTS[5], addedAt: new Date().toISOString() },
-  ]);
+  // Clean empty initial wishlist
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
 
   const [user, setUser] = useState<UserProfile>(INITIAL_USER);
   const [addresses, setAddresses] = useState<Address[]>(INITIAL_ADDRESSES);
@@ -507,16 +496,68 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem('sbs_cart');
-      if (savedCart) setCart(JSON.parse(savedCart));
+      if (savedCart) {
+        try {
+          const parsed = JSON.parse(savedCart);
+          // Auto-clean legacy dummy test cart items (c1, c2, c3)
+          const isLegacyMockCart = Array.isArray(parsed) && parsed.length > 0 && parsed.every((item: any) => ['c1', 'c2', 'c3'].includes(item.id));
+          if (isLegacyMockCart) {
+            localStorage.removeItem('sbs_cart');
+            setCart([]);
+          } else {
+            setCart(parsed);
+          }
+        } catch {
+          setCart([]);
+        }
+      }
 
       const savedWishlist = localStorage.getItem('sbs_wishlist');
-      if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
+      if (savedWishlist) {
+        try {
+          const parsed = JSON.parse(savedWishlist);
+          const isLegacyMockWishlist = Array.isArray(parsed) && parsed.length > 0 && parsed.every((item: any) => ['w1', 'w2', 'w3', 'w4', 'w5', 'w6'].includes(item.id));
+          if (isLegacyMockWishlist) {
+            localStorage.removeItem('sbs_wishlist');
+            setWishlist([]);
+          } else {
+            setWishlist(parsed);
+          }
+        } catch {
+          setWishlist([]);
+        }
+      }
 
       const savedOrders = localStorage.getItem('sbs_orders');
-      if (savedOrders) setOrders(JSON.parse(savedOrders));
+      if (savedOrders) {
+        try {
+          const parsed = JSON.parse(savedOrders);
+          const isLegacyMockOrders = Array.isArray(parsed) && parsed.length > 0 && parsed.every((item: any) => ['ord_101', 'ord_102', 'ord_103', 'ord_104'].includes(item.id));
+          if (isLegacyMockOrders) {
+            localStorage.removeItem('sbs_orders');
+            setOrders([]);
+          } else {
+            setOrders(parsed);
+          }
+        } catch {
+          setOrders([]);
+        }
+      }
 
       const savedUser = localStorage.getItem('sbs_user');
-      if (savedUser) setUser(JSON.parse(savedUser));
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          if (parsed.id === 'usr_mahipal') {
+            localStorage.removeItem('sbs_user');
+            setUser(INITIAL_USER);
+          } else {
+            setUser(parsed);
+          }
+        } catch {
+          setUser(INITIAL_USER);
+        }
+      }
 
       const savedProducts = localStorage.getItem('sbs_products');
       if (savedProducts) {
