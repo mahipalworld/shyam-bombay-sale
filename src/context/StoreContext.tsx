@@ -855,6 +855,106 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => subscription.unsubscribe();
   }, []);
 
+  // --- Supabase: Real-time Multi-Device Push Broadcast Receiver ---
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    // 1. Fetch remote broadcast notifications on mount
+    supabase
+      .from('broadcast_notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(30)
+      .then(({ data, error }) => {
+        if (data && data.length > 0) {
+          const mapped: UserBroadcastNotification[] = data.map((d: any) => ({
+            id: d.id,
+            title: d.title,
+            message: d.message,
+            type: d.type || 'deal',
+            targetAudience: d.target_audience || 'ALL',
+            actionUrl: d.action_url || 'offers',
+            imageUrl: d.image_url || undefined,
+            status: d.status || 'SENT',
+            read: false,
+            recipientCount: d.recipient_count || 1450,
+            createdAt: d.created_at,
+            sentAt: d.created_at,
+          }));
+
+          setUserNotifications((prev) => {
+            const existingIds = new Set(prev.map((n) => n.id));
+            const newItems = mapped.filter((m) => !existingIds.has(m.id));
+            return [...newItems, ...prev];
+          });
+        }
+      });
+
+    // 2. Subscribe to real-time broadcasts sent from ANY device
+    const channel = supabase
+      .channel('sbs_broadcast_realtime')
+      .on('broadcast', { event: 'new_push_notification' }, ({ payload }) => {
+        if (!payload || !payload.id) return;
+        console.log('⚡ Real-time push broadcast received on device:', payload);
+
+        // Update local state
+        setUserNotifications((prev) => {
+          if (prev.some((n) => n.id === payload.id)) return prev;
+          return [payload, ...prev];
+        });
+
+        // Trigger real native device notification popup!
+        triggerBrowserPushNotification({
+          title: payload.title,
+          body: payload.message,
+          image: payload.imageUrl,
+          data: { url: payload.actionUrl ? `/${payload.actionUrl}` : '/' },
+        });
+
+        // Show in-app banner toast
+        showToast(`🔔 ${payload.title}`, 'info');
+      })
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'broadcast_notifications' },
+        (payload) => {
+          const d = payload.new as any;
+          if (!d || !d.id) return;
+          const notifObj: UserBroadcastNotification = {
+            id: d.id,
+            title: d.title,
+            message: d.message,
+            type: d.type || 'deal',
+            targetAudience: d.target_audience || 'ALL',
+            actionUrl: d.action_url || 'offers',
+            imageUrl: d.image_url || undefined,
+            status: d.status || 'SENT',
+            read: false,
+            recipientCount: d.recipient_count || 1450,
+            createdAt: d.created_at,
+            sentAt: d.created_at,
+          };
+
+          setUserNotifications((prev) => {
+            if (prev.some((n) => n.id === notifObj.id)) return prev;
+            return [notifObj, ...prev];
+          });
+
+          triggerBrowserPushNotification({
+            title: notifObj.title,
+            body: notifObj.message,
+            image: notifObj.imageUrl,
+            data: { url: notifObj.actionUrl ? `/${notifObj.actionUrl}` : '/' },
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
 
   // Save to localStorage when updated
   useEffect(() => {
@@ -871,6 +971,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       localStorage.setItem('sbs_admin_team_members', JSON.stringify(adminTeamMembers));
       localStorage.setItem('sbs_role_audit_logs', JSON.stringify(roleAuditLogs));
       localStorage.setItem('sbs_admin_notifications', JSON.stringify(adminNotifications));
+      localStorage.setItem('sbs_user_notifications', JSON.stringify(userNotifications));
+      localStorage.setItem('sbs_user_notification_drafts', JSON.stringify(userNotificationDrafts));
       localStorage.setItem('sbs_return_requests', JSON.stringify(returnRequests));
       localStorage.setItem('sbs_payment_records', JSON.stringify(paymentRecords));
       localStorage.setItem('sbs_inventory_logs', JSON.stringify(inventoryLogs));
@@ -891,7 +993,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [
     cart, wishlist, orders, user, products, categories, coupons, adminRole,
     adminTeamMembers, roleAuditLogs,
-    adminNotifications, returnRequests, paymentRecords, inventoryLogs, heroBanners,
+    adminNotifications, userNotifications, userNotificationDrafts, returnRequests, paymentRecords, inventoryLogs, heroBanners,
     homepageCategories, homepageSubcategories, trendingNowProducts, todayDeals, bestSellersConfig,
     homepageSections, storeSettings, stories, scratchConfig, flashDealConfig, isLoaded
   ]);
@@ -1691,17 +1793,52 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       recipientCount: notif.recipientCount || Math.floor(Math.random() * 500) + 1200,
     };
 
+    // 1. Update local admin state
     setUserNotifications((prev) => [newNotif, ...prev]);
 
-    // Dispatch real browser web push notification
+    // 2. Dispatch real browser web push notification on this admin screen
     triggerBrowserPushNotification({
       title: newNotif.title,
       body: newNotif.message,
       image: newNotif.imageUrl,
-      data: { url: '/' },
+      data: { url: newNotif.actionUrl ? `/${newNotif.actionUrl}` : '/' },
     });
 
-    showToast(`🚀 Broadcast sent to ${newNotif.recipientCount} users!`);
+    // 3. Persist to Supabase Database and broadcast to ALL other customer devices in real-time
+    if (isSupabaseConfigured && supabase) {
+      // Insert to DB for all future/offline visitors
+      supabase
+        .from('broadcast_notifications')
+        .insert({
+          id: newNotif.id,
+          title: newNotif.title,
+          message: newNotif.message,
+          type: newNotif.type,
+          target_audience: newNotif.targetAudience,
+          action_url: newNotif.actionUrl,
+          image_url: newNotif.imageUrl,
+          status: 'SENT',
+          recipient_count: newNotif.recipientCount,
+          created_at: newNotif.createdAt,
+        })
+        .then(({ error }) => {
+          if (error) console.error('Supabase broadcast save error:', error);
+        });
+
+      // Broadcast to all active open devices in real time
+      const realtimeChannel = supabase.channel('sbs_broadcast_realtime');
+      realtimeChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          realtimeChannel.send({
+            type: 'broadcast',
+            event: 'new_push_notification',
+            payload: newNotif,
+          });
+        }
+      });
+    }
+
+    showToast(`🚀 Broadcast sent live to all customer devices (${newNotif.recipientCount} reach)!`, 'success');
   };
 
   const saveNotificationDraft = (
