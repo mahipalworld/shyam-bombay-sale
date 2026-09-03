@@ -80,6 +80,40 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Handle incoming background push notifications
+self.addEventListener('push', (event) => {
+  let data = {
+    title: 'SBS STORE',
+    body: 'Exclusive deals and updates are waiting for you!',
+    icon: '/icon-192x192.png',
+    badge: '/icon.svg',
+    data: { url: '/' }
+  };
+
+  if (event.data) {
+    try {
+      const json = event.data.json();
+      data = { ...data, ...json };
+    } catch {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon || '/icon-192x192.png',
+    badge: data.badge || '/icon.svg',
+    image: data.image,
+    vibrate: [200, 100, 200],
+    data: data.data || { url: '/' },
+    requireInteraction: false
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
 // Handle push notification click
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
@@ -89,7 +123,10 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (let client of windowClients) {
-        if (client.url === urlToOpen && 'focus' in client) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          if (client.navigate) {
+            client.navigate(urlToOpen);
+          }
           return client.focus();
         }
       }

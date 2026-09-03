@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '@/context/StoreContext';
 import { 
   Bell, 
@@ -26,9 +26,16 @@ import {
   Eye,
   Plus,
   RefreshCw,
-  Clock
+  Clock,
+  Volume2,
+  Check
 } from 'lucide-react';
 import { UserBroadcastNotification, AdminNotification } from '@/types';
+import { 
+  triggerBrowserPushNotification, 
+  getNotificationPermissionState, 
+  requestNotificationPermission 
+} from '@/utils/pushNotifications';
 
 export const NotificationsView: React.FC = () => {
   const { 
@@ -45,6 +52,45 @@ export const NotificationsView: React.FC = () => {
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'BROADCAST' | 'DRAFTS' | 'HISTORY' | 'ALERTS'>('BROADCAST');
+  const [permissionState, setPermissionState] = useState<NotificationPermission | 'unsupported'>('default');
+
+  useEffect(() => {
+    getNotificationPermissionState().then(setPermissionState);
+  }, []);
+
+  const handleRequestPermission = async () => {
+    const res = await requestNotificationPermission();
+    setPermissionState(res);
+    if (res === 'granted') {
+      showToast('Browser notifications enabled! 🎉', 'success');
+    } else if (res === 'denied') {
+      showToast('Notifications are blocked in your browser settings. Please click the padlock icon in URL bar to enable.', 'error');
+    }
+  };
+
+  const handleTestOnDevice = async () => {
+    const title = formData.title.trim() || '🔥 Weekend Flash Sale: 40% OFF!';
+    const body = formData.message.trim() || 'Grab mini washing machines and smart kitchen sealers at half price today!';
+    
+    const result = await triggerBrowserPushNotification({
+      title,
+      body,
+      image: formData.imageUrl.trim() || undefined,
+      data: { url: '/' }
+    });
+
+    if (result.success) {
+      showToast(`🔔 Test notification sent to your screen via ${result.method === 'service_worker' ? 'Service Worker' : 'Browser Notification'}!`, 'success');
+    } else {
+      if (result.permission === 'denied') {
+        showToast('❌ Permission denied: Please allow notifications in your browser', 'error');
+      } else if (result.permission === 'unsupported') {
+        showToast('⚠️ Notifications not supported in this browser window', 'error');
+      } else {
+        showToast(`⚠️ Could not show notification: ${result.error || 'Unknown error'}`, 'error');
+      }
+    }
+  };
 
   // Broadcast Form State
   const [formData, setFormData] = useState<{
@@ -322,6 +368,63 @@ export const NotificationsView: React.FC = () => {
               </div>
             </div>
 
+            {/* Device Permission & Quick Test Strip */}
+            <div className="bg-white border border-gray-100 rounded-3xl p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-2xl flex items-center justify-center ${
+                  permissionState === 'granted' 
+                    ? 'bg-green-100 text-green-700' 
+                    : permissionState === 'denied' 
+                    ? 'bg-red-100 text-red-700' 
+                    : 'bg-orange-100 text-[#F95721]'
+                }`}>
+                  <Bell className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-gray-900">Your Browser Push Status:</span>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                      permissionState === 'granted'
+                        ? 'bg-green-100 text-green-700'
+                        : permissionState === 'denied'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-orange-100 text-orange-700'
+                    }`}>
+                      {permissionState === 'granted' ? '✅ Enabled' : permissionState === 'denied' ? '❌ Blocked' : '⚠️ Click to Allow'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-500">
+                    {permissionState === 'granted' 
+                      ? 'This device will receive instant pop-up notifications.'
+                      : permissionState === 'denied'
+                      ? 'Blocked in browser settings. Unblock in browser URL bar to test.'
+                      : 'Click Allow to test real push notifications on your screen.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {permissionState !== 'granted' && (
+                  <button
+                    type="button"
+                    onClick={handleRequestPermission}
+                    className="px-3 py-2 bg-gradient-to-r from-[#F95721] to-[#FF7A3D] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Enable Push</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleTestOnDevice}
+                  className="px-3 py-2 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
+                >
+                  <Volume2 className="w-3.5 h-3.5 text-orange-400" />
+                  <span>Send Test Push</span>
+                </button>
+              </div>
+            </div>
+
             {/* Campaign Form */}
             <form onSubmit={handleSendBroadcast} className="bg-white border border-gray-100 rounded-3xl p-5 space-y-4 shadow-subtle">
               <div className="flex items-center justify-between pb-2 border-b border-gray-100">
@@ -366,34 +469,32 @@ export const NotificationsView: React.FC = () => {
                 <textarea
                   required
                   rows={3}
-                  maxLength={180}
-                  placeholder="e.g. Grab mini washing machines and smart kitchen sealers at half price! Free delivery on orders above ₹1,700."
+                  placeholder="Type your message text here..."
                   value={formData.message}
+                  maxLength={180}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs text-gray-900 outline-none focus:border-[#F95721] focus:bg-white transition-all resize-none"
                 />
               </div>
 
-              {/* Type & Audience Grid */}
+              {/* Type & Target Audience */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Notification Category */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-800">Campaign Type</label>
+                  <label className="text-xs font-bold text-gray-800">Notification Category</label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
                     className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-semibold text-gray-800 outline-none focus:border-[#F95721] focus:bg-white transition-all cursor-pointer"
                   >
-                    <option value="deal">⚡ Flash Deal & Discount</option>
-                    <option value="promo">🎁 Promotional Offer</option>
-                    <option value="system">🚚 Order & Delivery Notice</option>
-                    <option value="alert">⚠️ Urgent Stock / Store Notice</option>
+                    <option value="deal">🔥 Flash Deal / Discount</option>
+                    <option value="promo">✨ New Arrival / Promotion</option>
+                    <option value="system">📦 Order & Shipping Notice</option>
+                    <option value="alert">⚠️ Important Alert</option>
                   </select>
                 </div>
 
-                {/* Target Audience */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-800">Target Audience</label>
+                  <label className="text-xs font-bold text-gray-800">Target Segment</label>
                   <select
                     value={formData.targetAudience}
                     onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value as any })}
@@ -451,8 +552,18 @@ export const NotificationsView: React.FC = () => {
 
                 <button
                   type="button"
+                  onClick={handleTestOnDevice}
+                  className="w-full sm:w-auto px-4 py-3 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-1.5 active:scale-98 transition-all"
+                  title="Test notification directly on this browser screen"
+                >
+                  <Volume2 className="w-3.5 h-3.5 text-orange-400" />
+                  <span>Test on My Screen</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={handleSaveDraft}
-                  className="w-full sm:w-auto px-5 py-3 bg-gray-50 hover:bg-gray-100 text-gray-800 border border-gray-200 text-xs font-bold rounded-2xl flex items-center justify-center gap-2 active:scale-98 transition-all"
+                  className="w-full sm:w-auto px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-800 border border-gray-200 text-xs font-bold rounded-2xl flex items-center justify-center gap-1.5 active:scale-98 transition-all"
                 >
                   <Save className="w-4 h-4 text-gray-600" />
                   <span>Save Draft</span>

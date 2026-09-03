@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Utility for managing Web Push & Browser Notifications for SBS Store
+ * Robust Web Push & Browser Notifications Engine for SBS Store
  */
 
 export async function getNotificationPermissionState(): Promise<NotificationPermission | 'unsupported'> {
@@ -20,7 +20,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
     const permission = await Notification.requestPermission();
     return permission;
   } catch (err) {
-    console.error('Error requesting notification permission', err);
+    console.error('Error requesting notification permission:', err);
     return 'denied';
   }
 }
@@ -38,49 +38,91 @@ export interface PushNotificationPayload {
   };
 }
 
-export async function triggerBrowserPushNotification(payload: PushNotificationPayload) {
-  if (typeof window === 'undefined') return;
+export interface PushNotificationResult {
+  success: boolean;
+  permission: NotificationPermission | 'unsupported';
+  method?: 'service_worker' | 'window_notification' | 'none';
+  error?: string;
+}
+
+export async function triggerBrowserPushNotification(
+  payload: PushNotificationPayload
+): Promise<PushNotificationResult> {
+  if (typeof window === 'undefined') {
+    return { success: false, permission: 'unsupported', error: 'Window undefined' };
+  }
+
+  if (!('Notification' in window)) {
+    console.warn('SBS Notifications: Notification API not supported in this browser.');
+    return { success: false, permission: 'unsupported', error: 'Notification API unsupported' };
+  }
+
+  let currentPermission = Notification.permission;
+
+  // If permission is default (not yet prompted), request it
+  if (currentPermission === 'default') {
+    try {
+      currentPermission = await Notification.requestPermission();
+    } catch {
+      currentPermission = 'denied';
+    }
+  }
+
+  if (currentPermission !== 'granted') {
+    console.warn(`SBS Notifications: Notification permission is ${currentPermission}`);
+    return { success: false, permission: currentPermission, error: `Permission is ${currentPermission}` };
+  }
 
   const defaultIcon = '/icon-192x192.png';
   const defaultBadge = '/icon.svg';
 
-  const notificationOptions: NotificationOptions & { image?: string } = {
+  const notificationOptions: any = {
     body: payload.body,
     icon: payload.icon || defaultIcon,
     badge: payload.badge || defaultBadge,
-    image: payload.image,
     tag: payload.tag || `sbs-notif-${Date.now()}`,
     data: payload.data || { url: '/' },
+    vibrate: [200, 100, 200],
     requireInteraction: false,
     silent: false,
   };
 
-  // If Service Worker is ready, use registration.showNotification (recommended for PWAs & Android)
+  if (payload.image) {
+    notificationOptions.image = payload.image;
+  }
+
+  // 1. Attempt Service Worker showNotification (Best for PWAs, Android Chrome & Background tabs)
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.ready;
-      if (registration && registration.showNotification) {
+      // Use timeout race so we don't hang if SW is installing or not ready
+      const swReadyPromise = navigator.serviceWorker.ready;
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500));
+      const registration = await Promise.race([swReadyPromise, timeoutPromise]);
+
+      if (registration && typeof registration.showNotification === 'function') {
         await registration.showNotification(payload.title, notificationOptions);
-        return;
+        return { success: true, permission: 'granted', method: 'service_worker' };
       }
-    } catch {
-      // fallback to window.Notification
+    } catch (swErr) {
+      console.warn('SBS Notifications: Service Worker showNotification failed, falling back to window.Notification', swErr);
     }
   }
 
-  // Fallback to standard window.Notification API
-  if ('Notification' in window && Notification.permission === 'granted') {
-    try {
-      const notif = new Notification(payload.title, notificationOptions);
-      notif.onclick = () => {
-        window.focus();
-        if (payload.data?.url) {
-          window.location.href = payload.data.url;
-        }
-        notif.close();
-      };
-    } catch {
-      // Ignored if window notifications not supported in environment
-    }
+  // 2. Direct window.Notification Fallback (Desktop Chrome, Firefox, Edge, Safari)
+  try {
+    const notif = new Notification(payload.title, notificationOptions);
+    notif.onclick = (e) => {
+      e.preventDefault();
+      window.focus();
+      const targetUrl = payload.data?.url || '/';
+      if (targetUrl && targetUrl !== '/') {
+        window.location.href = targetUrl;
+      }
+      notif.close();
+    };
+    return { success: true, permission: 'granted', method: 'window_notification' };
+  } catch (winErr: any) {
+    console.error('SBS Notifications: Direct Notification error:', winErr);
+    return { success: false, permission: 'granted', error: winErr?.message || 'Failed to display notification' };
   }
 }
