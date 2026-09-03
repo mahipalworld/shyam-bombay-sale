@@ -3,6 +3,7 @@ import { useStore } from '@/context/StoreContext';
 import { ProductCard } from '@/components/ProductCard';
 import { ProductStories } from '@/components/ProductStories';
 import { ScratchCardModal } from '@/components/modals/ScratchCardModal';
+import { NotificationRewardCard } from '@/components/modals/NotificationRewardPrompt';
 import { 
   ChevronRight, 
   ChevronLeft, 
@@ -472,6 +473,11 @@ export const HomeView: React.FC = () => {
         isOpen={isScratchModalOpen}
         onClose={() => setIsScratchModalOpen(false)}
       />
+
+      {/* Notification VIP Alerts & 250 Points Reward Card */}
+      <section>
+        <NotificationRewardCard variant="compact" />
+      </section>
 
       {/* Feature / Trust Badges Strip */}
       <section className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">

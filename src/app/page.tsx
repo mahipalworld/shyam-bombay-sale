@@ -22,6 +22,7 @@ import { OrdersListModal } from '@/components/modals/OrdersListModal';
 import { AddressesModal } from '@/components/modals/AddressesModal';
 import { CouponsModal } from '@/components/modals/CouponsModal';
 import { CustomerNotificationsModal } from '@/components/modals/CustomerNotificationsModal';
+import { NotificationRewardModal } from '@/components/modals/NotificationRewardPrompt';
 import { CheckCircle2, AlertCircle, Info, Heart, ShoppingBag, ShieldCheck } from 'lucide-react';
 
 export default function App() {
@@ -189,6 +190,7 @@ export default function App() {
       <AddressesModal />
       <CouponsModal />
       <CustomerNotificationsModal />
+      <NotificationRewardModal />
     </div>
   );
 }

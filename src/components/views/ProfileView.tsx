@@ -32,6 +32,7 @@ import {
 import { OrderStatus } from '@/types';
 import { usePWA } from '@/context/PWAContext';
 import { IOSInstallGuideModal } from '@/components/modals/IOSInstallGuideModal';
+import { NotificationRewardCard } from '@/components/modals/NotificationRewardPrompt';
 
 export const ProfileView: React.FC = () => {
   const { 
@@ -341,6 +342,9 @@ export const ProfileView: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* On-Device Notifications & 250 Points Reward Card */}
+          <NotificationRewardCard variant="full" />
 
           <div className="bg-white border border-gray-100 rounded-3xl p-3 shadow-subtle divide-y divide-gray-50">
             {/* My Orders */}

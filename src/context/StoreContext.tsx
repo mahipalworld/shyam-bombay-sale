@@ -42,10 +42,19 @@ import {
 } from '@/data/initialData';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import confetti from 'canvas-confetti';
-import { triggerBrowserPushNotification } from '@/utils/pushNotifications';
+import { 
+  triggerBrowserPushNotification, 
+  requestNotificationPermission, 
+  playNotificationChime 
+} from '@/utils/pushNotifications';
 
 
 interface StoreContextType {
+  // Notification Reward
+  isNotificationRewardClaimed: boolean;
+  isNotificationPromptOpen: boolean;
+  setIsNotificationPromptOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  claimNotificationReward: () => Promise<{ success: boolean; message: string }>;
   products: Product[];
   categories: Category[];
   cart: CartItem[];
@@ -246,6 +255,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [toast, setToast] = useState<{ message: string; type?: 'success' | 'info' | 'error' } | null>(null);
   const [flyingItems, setFlyingItems] = useState<Array<{ id: string; image: string; startX: number; startY: number; endX: number; endY: number }>>([]);
   const [isUserNotificationsModalOpen, setIsUserNotificationsModalOpen] = useState(false);
+  const [isNotificationRewardClaimed, setIsNotificationRewardClaimed] = useState(false);
+  const [isNotificationPromptOpen, setIsNotificationPromptOpen] = useState(false);
 
   const [userNotifications, setUserNotifications] = useState<UserBroadcastNotification[]>([
     {
@@ -1934,9 +1945,78 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     showToast('All notifications cleared');
   };
 
+  // Notification Reward Claim Action
+  const claimNotificationReward = async (): Promise<{ success: boolean; message: string }> => {
+    const permission = await requestNotificationPermission();
+
+    if (permission !== 'granted') {
+      showToast('⚠️ Please allow notification permission in your browser to claim 250 points!', 'error');
+      return { success: false, message: 'Notification permission not granted' };
+    }
+
+    if (isNotificationRewardClaimed) {
+      showToast('You have already claimed your 250 notification welcome points! 🎁', 'info');
+      setIsNotificationPromptOpen(false);
+      return { success: true, message: 'Already claimed' };
+    }
+
+    // 1. Award 250 points to user
+    setUser((prev) => ({
+      ...prev,
+      rewardPoints: (prev.rewardPoints || 0) + 250,
+      couponsCount: (prev.couponsCount || 0) + 1,
+    }));
+
+    // Update Supabase profiles table if logged in
+    if (isSupabaseConfigured && supabase) {
+      supabase.auth.getUser().then(({ data: { user: authUsr } }) => {
+        if (authUsr) {
+          supabase
+            .from('profiles')
+            .update({ reward_points: (user.rewardPoints || 0) + 250 })
+            .eq('id', authUsr.id)
+            .then();
+        }
+      });
+    }
+
+    // 2. Mark as claimed
+    setIsNotificationRewardClaimed(true);
+    try {
+      localStorage.setItem('sbs_notif_reward_claimed', 'true');
+    } catch { }
+
+    // 3. Audio chime + Confetti celebration
+    playNotificationChime();
+    try {
+      confetti({
+        particleCount: 90,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+    } catch { }
+
+    showToast('🎉 +250 SBS Reward Points credited to your wallet!', 'success');
+
+    // 4. Welcome push notification on device
+    triggerBrowserPushNotification({
+      title: '🎁 +250 Points Unlocked!',
+      body: 'Welcome to SBS VIP Alerts! You will now receive flash deals & order updates.',
+      data: { url: '/profile' },
+    });
+
+    setIsNotificationPromptOpen(false);
+    return { success: true, message: '+250 Points credited successfully' };
+  };
+
   return (
     <StoreContext.Provider
       value={{
+        isNotificationRewardClaimed,
+        isNotificationPromptOpen,
+        setIsNotificationPromptOpen,
+        claimNotificationReward,
+
         products,
         categories,
         cart,
