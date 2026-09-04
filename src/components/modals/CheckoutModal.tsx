@@ -260,7 +260,7 @@ export const CheckoutModal: React.FC = () => {
 
     const message = `Hi SBS 👋\n\nI've completed the payment for my order.\n\nOrder ID: ${activeOrder.orderNumber}\nAmount: ₹${activeOrder.total.toLocaleString('en-IN')}\nPayment confirmation time: ${currentConfirmedTime}\n\nPlease verify my payment and confirm my order. Thank you!`;
 
-    const rawPhone = storeSettings.contactPhone || '9226294797';
+    const rawPhone = (storeSettings?.contactPhone && !storeSettings.contactPhone.includes('99887')) ? storeSettings.contactPhone : '9226294797';
     let cleanPhone = rawPhone.replace(/\D/g, '');
     if (cleanPhone.length === 10) {
       cleanPhone = `91${cleanPhone}`;
@@ -287,7 +287,7 @@ export const CheckoutModal: React.FC = () => {
     showToast('Thank you! Your order is placed and waiting for payment verification 📦', 'success');
   };
 
-  const storeUpiId = storeSettings.upiId || 'suhanarajpurohit3@oksbi';
+  const storeUpiId = (storeSettings?.upiId && !storeSettings.upiId.includes('fam@') && !storeSettings.upiId.includes('sbsstore@')) ? storeSettings.upiId : 'suhanarajpurohit3@oksbi';
   const orderAmount = activeOrder ? activeOrder.total : cartTotal;
   const upiDeepLink = `upi://pay?pa=${encodeURIComponent(storeUpiId)}&pn=SBS&am=${orderAmount.toFixed(2)}&cu=INR`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(upiDeepLink)}&margin=10`;
