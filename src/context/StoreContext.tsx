@@ -1461,27 +1461,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Calculations
-  const selectedCartItems = cart.filter((item) => item.selected);
-  const cartSelectedItemsCount = selectedCartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const selectedCartItems = cart.filter((item) => item && item.product && item.selected);
+  const cartSelectedItemsCount = selectedCartItems.reduce((acc, item) => acc + (item.quantity || 0), 0);
 
   const cartOriginalMRP = selectedCartItems.reduce(
-    (acc, item) => acc + item.product.originalPrice * item.quantity,
+    (acc, item) => acc + (item.product?.originalPrice ?? item.product?.price ?? 0) * (item.quantity || 1),
     0
   );
 
   const cartSubtotal = selectedCartItems.reduce(
-    (acc, item) => acc + item.product.price * item.quantity,
+    (acc, item) => acc + (item.product?.price ?? 0) * (item.quantity || 1),
     0
   );
 
-  const cartDiscountMRP = cartOriginalMRP - cartSubtotal;
+  const cartDiscountMRP = Math.max(0, cartOriginalMRP - cartSubtotal);
 
   let couponDiscount = 0;
   if (appliedCoupon) {
     if (appliedCoupon.discountType === 'FLAT') {
-      couponDiscount = appliedCoupon.value;
+      couponDiscount = appliedCoupon.value || 0;
     } else {
-      couponDiscount = Math.round((cartSubtotal * appliedCoupon.value) / 100);
+      couponDiscount = Math.round((cartSubtotal * (appliedCoupon.value || 0)) / 100);
     }
     // Cap max discount if configured
     if (appliedCoupon.maxDiscount && couponDiscount > appliedCoupon.maxDiscount) {
@@ -1490,7 +1490,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }
 
   const cartDiscount = cartDiscountMRP + couponDiscount;
-  const cartDeliveryCharge = cartSubtotal >= storeSettings.freeDeliveryThreshold || cartSubtotal === 0 ? 0 : storeSettings.deliveryCharge;
+  const cartDeliveryCharge = cartSubtotal >= (storeSettings?.freeDeliveryThreshold ?? 1700) || cartSubtotal === 0 ? 0 : (storeSettings?.deliveryCharge ?? 49);
   const cartTotal = Math.max(0, cartSubtotal - couponDiscount + cartDeliveryCharge);
 
   // Checkout & Coupon
@@ -1500,13 +1500,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return false;
     }
     const cleanCode = code.trim().toUpperCase();
-    let found = coupons.find((c) => c.code.toUpperCase() === cleanCode && c.isActive !== false);
+    let found = coupons.find((c) => c && c.code && c.code.toUpperCase() === cleanCode && c.isActive !== false);
     
     // Fallback check in INITIAL_COUPONS if not present in state
     if (!found) {
-      found = INITIAL_COUPONS.find((c) => c.code.toUpperCase() === cleanCode);
+      found = INITIAL_COUPONS.find((c) => c && c.code && c.code.toUpperCase() === cleanCode);
       if (found) {
-        setCoupons((prev) => (prev.some((c) => c.code.toUpperCase() === cleanCode) ? prev : [...prev, found!]));
+        setCoupons((prev) => (prev.some((c) => c && c.code && c.code.toUpperCase() === cleanCode) ? prev : [...prev, found!]));
       }
     }
 
@@ -1515,13 +1515,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return false;
     }
 
-    if (cartSubtotal < found.minOrderValue) {
-      showToast(`Cart total must be at least ₹${found.minOrderValue} for ${found.code} (Current: ₹${cartSubtotal})`, 'error');
-      return false;
+    if (cartSubtotal > 0 && cartSubtotal < found.minOrderValue) {
+      showToast(`Add ₹${found.minOrderValue - cartSubtotal} more to activate ${found.code} (Min: ₹${found.minOrderValue})`, 'info');
     }
 
     setAppliedCoupon(found);
-    showToast(`Coupon "${found.code}" applied successfully! 🎉`);
+    showToast(`Coupon "${found.code}" applied! 🎉`);
     return true;
   };
 

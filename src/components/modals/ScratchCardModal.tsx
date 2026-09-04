@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useStore } from '@/context/StoreContext';
 import { triggerConfetti } from '@/utils/confetti';
 import { X, Sparkles, Check, Gift, Copy, ArrowRight } from 'lucide-react';
@@ -14,6 +14,7 @@ export const ScratchCardModal: React.FC<ScratchCardModalProps> = ({ isOpen, onCl
   const { scratchConfig, storeSettings, applyCoupon, showToast, setActiveTab } = useStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
+  const lastCheckTime = useRef(0);
   const [isRevealed, setIsRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -25,9 +26,46 @@ export const ScratchCardModal: React.FC<ScratchCardModalProps> = ({ isOpen, onCl
     discountAmount: scratchConfig?.discountAmount || 150,
   };
 
-  if (!isOpen || storeSettings.enableScratchCard === false || scratchConfig?.enabled === false) {
-    return null;
-  }
+  const isEnabled = storeSettings?.enableScratchCard !== false && scratchConfig?.enabled !== false;
+
+  const initCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    try {
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width || 280;
+      const height = rect.height || 150;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2 to prevent excessive memory on mobile
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+
+      // Draw holographic silver/gold scratch foil
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, '#E5E7EB');
+      gradient.addColorStop(0.3, '#D1D5DB');
+      gradient.addColorStop(0.5, '#F3F4F6');
+      gradient.addColorStop(0.7, '#9CA3AF');
+      gradient.addColorStop(1, '#D1D5DB');
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Add playful text pattern & shimmer particles
+      ctx.fillStyle = '#6B7280';
+      ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('✨ SCRATCH WITH FINGER OR MOUSE ✨', width / 2, 60);
+      ctx.font = '11px system-ui, -apple-system, sans-serif';
+      ctx.fillText('🎁 Mystery Discount Inside', width / 2, 85);
+    } catch {
+      // Fallback
+    }
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -36,60 +74,52 @@ export const ScratchCardModal: React.FC<ScratchCardModalProps> = ({ isOpen, onCl
       return;
     }
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const timer = setTimeout(() => {
+      initCanvas();
+    }, 50);
 
-    // High-DPI Canvas resolution
-    const rect = canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = (rect.width || 300) * dpr;
-    canvas.height = (rect.height || 160) * dpr;
-    ctx.scale(dpr, dpr);
-
-    // Draw holographic silver/gold scratch foil
-    const gradient = ctx.createLinearGradient(0, 0, rect.width || 300, rect.height || 160);
-    gradient.addColorStop(0, '#E5E7EB');
-    gradient.addColorStop(0.3, '#D1D5DB');
-    gradient.addColorStop(0.5, '#F3F4F6');
-    gradient.addColorStop(0.7, '#9CA3AF');
-    gradient.addColorStop(1, '#D1D5DB');
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, rect.width || 300, rect.height || 160);
-
-    // Add playful text pattern & shimmer particles
-    ctx.fillStyle = '#6B7280';
-    ctx.font = 'bold 13px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('✨ SCRATCH WITH FINGER / MOUSE ✨', (rect.width || 300) / 2, 65);
-    ctx.font = '11px system-ui, sans-serif';
-    ctx.fillText('🎁 Mystery Discount Inside', (rect.width || 300) / 2, 95);
-  }, [isOpen]);
+    return () => clearTimeout(timer);
+  }, [isOpen, initCanvas]);
 
   const checkScratchPercentage = () => {
     if (isRevealed) return;
+    const now = performance.now();
+    // Throttle calculation to max once every 120ms to prevent CPU freeze on mobile
+    if (now - lastCheckTime.current < 120) return;
+    lastCheckTime.current = now;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixels = imageData.data;
-    let transparentPixels = 0;
+    try {
+      if (canvas.width <= 0 || canvas.height <= 0) return;
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = imageData.data;
+      let transparentCount = 0;
+      let sampledCount = 0;
 
-    for (let i = 3; i < pixels.length; i += 4) {
-      if (pixels[i] === 0) {
-        transparentPixels++;
+      // Sample every 32nd pixel (stride = 128 bytes) for ultra-fast, non-blocking check
+      for (let i = 3; i < pixels.length; i += 128) {
+        sampledCount++;
+        if (pixels[i] === 0) {
+          transparentCount++;
+        }
       }
-    }
 
-    const percentage = (transparentPixels / (pixels.length / 4)) * 100;
-    if (percentage > 40) {
-      setIsRevealed(true);
-      triggerConfetti();
-      showToast('🎉 Surprise Discount Unlocked: SBS150!');
+      if (sampledCount > 0) {
+        const percentage = (transparentCount / sampledCount) * 100;
+        if (percentage > 35) {
+          setIsRevealed(true);
+          try {
+            triggerConfetti();
+          } catch { }
+          showToast(`🎉 Surprise Discount Unlocked: ${couponData.code}!`);
+        }
+      }
+    } catch {
+      // If canvas security or getImageData is restricted, allow simple scratch reveal
     }
   };
 
@@ -100,16 +130,20 @@ export const ScratchCardModal: React.FC<ScratchCardModalProps> = ({ isOpen, onCl
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    try {
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
 
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.beginPath();
-    ctx.arc(x, y, 22, 0, Math.PI * 2, false);
-    ctx.fill();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(x, y, 22, 0, Math.PI * 2, false);
+      ctx.fill();
 
-    checkScratchPercentage();
+      checkScratchPercentage();
+    } catch {
+      // Safe fallback
+    }
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -128,31 +162,41 @@ export const ScratchCardModal: React.FC<ScratchCardModalProps> = ({ isOpen, onCl
 
   const handleTouchStart = (e: React.TouchEvent) => {
     isDrawing.current = true;
-    if (e.touches[0]) {
+    if (e.touches && e.touches[0]) {
       scratch(e.touches[0].clientX, e.touches[0].clientY);
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDrawing.current || !e.touches[0]) return;
+    if (!isDrawing.current || !e.touches || !e.touches[0]) return;
     scratch(e.touches[0].clientX, e.touches[0].clientY);
   };
 
   const handleApplyCoupon = () => {
-    applyCoupon(couponData.code);
-    triggerConfetti();
+    try {
+      applyCoupon(couponData.code);
+    } catch { }
+
+    try {
+      triggerConfetti();
+    } catch { }
+
     onClose();
     setActiveTab('cart');
   };
 
   const handleCopy = () => {
-    navigator.clipboard?.writeText(couponData.code);
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(couponData.code);
+      }
+    } catch { }
     setCopied(true);
     showToast('Code copied to clipboard! 📋');
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !isEnabled) return null;
 
   return (
     <div
@@ -192,13 +236,13 @@ export const ScratchCardModal: React.FC<ScratchCardModalProps> = ({ isOpen, onCl
         </div>
 
         {/* Scratch Card Container */}
-        <div className="relative w-full h-40 rounded-2xl overflow-hidden border-2 border-dashed border-orange-200 bg-gradient-to-br from-[#FFF5EE] via-[#FFF0E6] to-[#FFEAD9] flex flex-col items-center justify-center p-4 shadow-inner select-none cursor-pointer">
+        <div className="relative w-full h-36 sm:h-40 rounded-2xl overflow-hidden border-2 border-dashed border-orange-200 bg-gradient-to-br from-[#FFF5EE] via-[#FFF0E6] to-[#FFEAD9] flex flex-col items-center justify-center p-4 shadow-inner select-none cursor-pointer">
           {/* Underneath Revealed Content */}
           <div className="space-y-1.5 flex flex-col items-center justify-center text-center">
-            <div className="w-10 h-10 rounded-full bg-[#F95721] text-white flex items-center justify-center shadow-xs">
-              <Gift className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-full bg-[#F95721] text-white flex items-center justify-center shadow-xs">
+              <Gift className="w-4 h-4" />
             </div>
-            <h4 className="text-2xl font-black text-[#F95721] tracking-tight">
+            <h4 className="text-xl sm:text-2xl font-black text-[#F95721] tracking-tight">
               {couponData.title}
             </h4>
             <div className="inline-flex items-center gap-2 bg-white/90 px-3 py-1 rounded-xl border border-orange-200/80 shadow-2xs">
@@ -206,8 +250,9 @@ export const ScratchCardModal: React.FC<ScratchCardModalProps> = ({ isOpen, onCl
                 {couponData.code}
               </span>
               <button
+                type="button"
                 onClick={handleCopy}
-                className="text-gray-500 hover:text-[#F95721] transition-colors"
+                className="text-gray-500 hover:text-[#F95721] transition-colors p-0.5"
                 title="Copy code"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -236,6 +281,7 @@ export const ScratchCardModal: React.FC<ScratchCardModalProps> = ({ isOpen, onCl
         <div className="w-full relative z-10 pt-1">
           {isRevealed ? (
             <button
+              type="button"
               onClick={handleApplyCoupon}
               className="w-full py-3 bg-[#F95721] hover:bg-[#E44813] text-white font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-float active:scale-95 transition-all"
             >
@@ -244,9 +290,12 @@ export const ScratchCardModal: React.FC<ScratchCardModalProps> = ({ isOpen, onCl
             </button>
           ) : (
             <button
+              type="button"
               onClick={() => {
                 setIsRevealed(true);
-                triggerConfetti();
+                try {
+                  triggerConfetti();
+                } catch { }
               }}
               className="text-xs font-bold text-gray-400 hover:text-[#F95721] transition-colors underline"
             >
