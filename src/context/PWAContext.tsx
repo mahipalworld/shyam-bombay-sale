@@ -49,11 +49,12 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const isIOSSafari = /iphone|ipad|ipod/.test(userAgent) && !/crios|fxios|opios/.test(userAgent);
     setIsIOS(isIOSSafari);
 
-    // 3. Register Service Worker on root mount
+    // 3. Register Service Worker on root mount and force check for update
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js')
         .then((reg) => {
+          reg.update().catch(() => {});
           console.log('SBS Service Worker registered with scope:', reg.scope);
         })
         .catch((err) => {
