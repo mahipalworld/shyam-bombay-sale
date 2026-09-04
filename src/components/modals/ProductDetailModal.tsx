@@ -30,6 +30,7 @@ export const ProductDetailModal: React.FC = () => {
     toggleWishlist, 
     isInWishlist, 
     setIsCheckoutOpen,
+    setActiveTab,
     showToast 
   } = useStore();
 
@@ -77,7 +78,7 @@ export const ProductDetailModal: React.FC = () => {
   const handleBuyNow = (e: React.MouseEvent<HTMLButtonElement>) => {
     addToCart(p, quantity, e.currentTarget);
     setSelectedProductDetail(null);
-    setIsCheckoutOpen(true);
+    setActiveTab('cart');
   };
 
   return (
