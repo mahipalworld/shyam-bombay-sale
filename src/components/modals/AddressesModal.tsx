@@ -16,11 +16,11 @@ export const AddressesModal: React.FC = () => {
 
   const [isAdding, setIsAdding] = useState(false);
   const [formData, setFormData] = useState({
-    name: 'Mahipal Singh',
-    phone: '+91 98765 43210',
+    name: '',
+    phone: '',
     street: '',
-    city: 'Jaipur',
-    state: 'Rajasthan',
+    city: '',
+    state: '',
     pincode: '',
     type: 'HOME' as 'HOME' | 'WORK' | 'OTHER',
     isDefault: false,
@@ -34,11 +34,11 @@ export const AddressesModal: React.FC = () => {
     addAddress(formData);
     setIsAdding(false);
     setFormData({
-      name: 'Mahipal Singh',
-      phone: '+91 98765 43210',
+      name: '',
+      phone: '',
       street: '',
-      city: 'Jaipur',
-      state: 'Rajasthan',
+      city: '',
+      state: '',
       pincode: '',
       type: 'HOME',
       isDefault: false,

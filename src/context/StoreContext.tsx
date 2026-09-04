@@ -12,6 +12,7 @@ import {
   Coupon,
   Order,
   OrderStatus,
+  PaymentStatus,
   AdminRole,
   AdminTeamMember,
   RoleAuditLog,
@@ -140,8 +141,30 @@ interface StoreContextType {
   // Checkout & Orders
   applyCoupon: (code: string) => boolean;
   removeCoupon: () => void;
-  placeOrder: (paymentMethod: string, address: Address) => Order;
+  placeOrder: (
+    paymentMethod: string, 
+    address: Address, 
+    options?: {
+      paymentStatus?: PaymentStatus;
+      paymentConfirmedAt?: string;
+      whatsappConfirmedAt?: string;
+      keepCart?: boolean;
+    }
+  ) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
+  updateOrderPaymentStatus: (
+    orderId: string, 
+    paymentStatus: PaymentStatus, 
+    extra?: { paymentConfirmedAt?: string; whatsappConfirmedAt?: string }
+  ) => void;
+  addCustomerNotification: (notification: {
+    title: string;
+    message: string;
+    type?: 'order' | 'deal' | 'promo' | 'system' | 'alert';
+    orderId?: string;
+    actionUrl?: string;
+  }) => void;
+  refreshOrders: () => Promise<void>;
 
   // User Profile & Addresses
   updateUserProfile: (updates: Partial<UserProfile>) => void;
@@ -480,14 +503,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     storeName: 'Shyam Business Store',
     logo: 'SBS',
     contactEmail: 'support@sbsstore.com',
-    contactPhone: '+91 99887 76655',
+    contactPhone: '+91 92262 94797',
     address: 'Shyam Bazaar, Jaipur, Rajasthan, 302001',
     businessHours: '09:00 AM - 09:00 PM',
     deliveryCharge: 40,
     freeDeliveryThreshold: 499,
     deliveryZones: ['Jaipur', 'Jodhpur', 'Kota', 'Udaipur'],
     codEnabled: true,
-    upiId: 'sbsstore@upi',
+    upiId: 'suhanarajpurohit3@oksbi',
     lowStockThreshold: 5,
     orderNotification: true,
     lowStockNotification: true,
@@ -559,9 +582,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedUser) {
         try {
           const parsed = JSON.parse(savedUser);
-          if (parsed.id === 'usr_mahipal') {
-            localStorage.removeItem('sbs_user');
-            setUser(INITIAL_USER);
+          if (parsed.id === 'usr_mahipal' || parsed.name === 'Shopper') {
+            const cleanUser = { ...parsed, name: parsed.name === 'Shopper' ? '' : parsed.name };
+            setUser(cleanUser);
+            localStorage.setItem('sbs_user', JSON.stringify(cleanUser));
           } else {
             setUser(parsed);
           }
@@ -726,7 +750,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedSections) setHomepageSections(JSON.parse(savedSections));
 
       const savedSettings = localStorage.getItem('sbs_store_settings');
-      if (savedSettings) setStoreSettings(JSON.parse(savedSettings));
+      if (savedSettings) {
+        try {
+          const parsed = JSON.parse(savedSettings);
+          // Migrate legacy test UPI and phone numbers
+          if (parsed.upiId === 'fam@7387467108' || parsed.upiId === 'sbsstore@upi' || !parsed.upiId) {
+            parsed.upiId = 'suhanarajpurohit3@oksbi';
+          }
+          if (parsed.contactPhone === '+91 99887 76655' || parsed.contactPhone === '9988776655' || !parsed.contactPhone) {
+            parsed.contactPhone = '+91 92262 94797';
+          }
+          setStoreSettings(parsed);
+          localStorage.setItem('sbs_store_settings', JSON.stringify(parsed));
+        } catch {
+          // ignore parsing error
+        }
+      }
 
     } catch (e) {
       console.error('Failed to load storage state', e);
@@ -836,7 +875,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             orderNumber: o.order_number,
             createdAt: o.created_at,
             status: o.status,
-            items: o.items,
+            paymentStatus: o.payment_status || (o.payment_method?.includes('UPI') ? 'PENDING' : 'PAYMENT_VERIFIED'),
+            paymentConfirmedAt: o.payment_confirmed_at,
+            whatsappConfirmedAt: o.whatsapp_confirmed_at,
+            items: o.items || [],
             subtotal: Number(o.subtotal),
             discount: Number(o.discount),
             deliveryCharge: Number(o.delivery_charge),
@@ -976,7 +1018,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           orderNumber: o.order_number,
           createdAt: o.created_at,
           status: o.status,
-          items: o.items,
+          paymentStatus: o.payment_status || (o.payment_method?.includes('UPI') ? 'PENDING' : 'PAYMENT_VERIFIED'),
+          paymentConfirmedAt: o.payment_confirmed_at,
+          whatsappConfirmedAt: o.whatsapp_confirmed_at,
+          items: o.items || [],
           subtotal: Number(o.subtotal),
           discount: Number(o.discount),
           deliveryCharge: Number(o.delivery_charge),
@@ -992,7 +1037,48 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const o = payload.new as any;
         if (!o || !o.id) return;
         setOrders((prev) =>
-          prev.map((ord) => (ord.id === o.id ? { ...ord, status: o.status, trackingNumber: o.tracking_number } : ord))
+          prev.map((ord) => (ord.id === o.id ? { 
+            ...ord, 
+            status: o.status || ord.status,
+            paymentStatus: o.payment_status || ord.paymentStatus,
+            paymentConfirmedAt: o.payment_confirmed_at || ord.paymentConfirmedAt,
+            whatsappConfirmedAt: o.whatsapp_confirmed_at || ord.whatsappConfirmedAt,
+            trackingNumber: o.tracking_number || ord.trackingNumber 
+          } : ord))
+        );
+      })
+      // Direct Cross-Device Broadcast Sync for Instant Screen Updates
+      .on('broadcast', { event: 'cross_device_order_placed' }, (payload) => {
+        const o = payload.payload as any;
+        if (!o || !o.id) return;
+        setOrders((prev) => (prev.some((x) => x.id === o.id) ? prev : [o, ...prev]));
+        setPaymentRecords((prev) => (prev.some((p) => p.orderId === o.id) ? prev : [{
+          id: `pay_${Date.now()}_${Math.floor(Math.random() * 100)}`,
+          orderId: o.id,
+          customerName: o.shippingAddress?.name || 'Customer',
+          amount: o.total,
+          method: (o.paymentMethod?.includes('UPI') ? 'UPI' : o.paymentMethod === 'COD' ? 'COD' : 'Card') as any,
+          status: o.paymentStatus === 'PAYMENT_VERIFIED' ? 'Verified' : o.paymentStatus === 'CUSTOMER_CONFIRMED' ? 'Customer Confirmed' : 'Pending',
+          timestamp: o.createdAt || new Date().toISOString()
+        }, ...prev]));
+      })
+      .on('broadcast', { event: 'cross_device_payment_updated' }, (payload) => {
+        const { orderId, paymentStatus, paymentConfirmedAt, whatsappConfirmedAt } = payload.payload;
+        if (!orderId) return;
+        setOrders((prev) =>
+          prev.map((ord) => (ord.id === orderId ? {
+            ...ord,
+            paymentStatus,
+            paymentConfirmedAt: paymentConfirmedAt || ord.paymentConfirmedAt,
+            whatsappConfirmedAt: whatsappConfirmedAt || ord.whatsappConfirmedAt,
+            status: paymentStatus === 'PAYMENT_VERIFIED' && (ord.status === 'To Pay' as any) ? 'Processing' : ord.status
+          } : ord))
+        );
+        setPaymentRecords((prev) =>
+          prev.map((p) => (p.orderId === orderId ? {
+            ...p,
+            status: paymentStatus === 'CUSTOMER_CONFIRMED' ? 'Customer Confirmed' : paymentStatus === 'PAYMENT_VERIFIED' ? 'Verified' : paymentStatus === 'PAYMENT_FAILED' ? 'Failed' : p.status
+          } : p))
         );
       })
       // Coupons Realtime Sync
@@ -1102,11 +1188,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
 
         // Load orders
-        const { data: dbOrders } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
+        const userEmail = session.user.email?.toLowerCase();
+        const isUserAdmin = userEmail === 'mahipalstudent71@gmail.com' || adminTeamMembers.some(m => m.email.toLowerCase() === userEmail && m.status === 'ACTIVE');
+
+        let ordersQuery = supabase.from('orders').select('*').order('created_at', { ascending: false });
+        if (!isUserAdmin) {
+          ordersQuery = ordersQuery.eq('user_id', userId);
+        }
+
+        const { data: dbOrders } = await ordersQuery;
 
         if (dbOrders && dbOrders.length > 0) {
           setOrders(dbOrders.map((o: any) => ({
@@ -1114,11 +1204,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             orderNumber: o.order_number,
             createdAt: o.created_at,
             status: o.status,
-            items: o.items,
-            subtotal: o.subtotal,
-            discount: o.discount,
-            deliveryCharge: o.delivery_charge,
-            total: o.total,
+            paymentStatus: o.payment_status || (o.payment_method?.includes('UPI') ? 'PENDING' : 'PAYMENT_VERIFIED'),
+            paymentConfirmedAt: o.payment_confirmed_at,
+            whatsappConfirmedAt: o.whatsapp_confirmed_at,
+            items: o.items || [],
+            subtotal: Number(o.subtotal),
+            discount: Number(o.discount),
+            deliveryCharge: Number(o.delivery_charge),
+            total: Number(o.total),
             shippingAddress: o.shipping_address,
             paymentMethod: o.payment_method,
             trackingNumber: o.tracking_number,
@@ -1529,8 +1622,53 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     showToast('Coupon removed');
   };
 
-  const placeOrder = (paymentMethod: string, address: Address) => {
-    const orderNum = `SBS-${Math.floor(10000 + Math.random() * 90000)}`;
+  const addCustomerNotification = (notif: {
+    title: string;
+    message: string;
+    type?: 'order' | 'deal' | 'promo' | 'system' | 'alert';
+    orderId?: string;
+    actionUrl?: string;
+  }) => {
+    const newNotif: UserBroadcastNotification = {
+      id: `un_cust_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      title: notif.title,
+      message: notif.message,
+      type: notif.type || 'order',
+      targetAudience: 'ALL',
+      orderId: notif.orderId,
+      actionUrl: notif.actionUrl || (notif.orderId ? 'orders' : undefined),
+      read: false,
+      status: 'SENT',
+      createdAt: new Date().toISOString(),
+      sentAt: new Date().toISOString(),
+    };
+
+    setUserNotifications((prev) => [newNotif, ...prev]);
+
+    // Dispatch real browser push notification if permitted
+    try {
+      triggerBrowserPushNotification({
+        title: newNotif.title,
+        body: newNotif.message,
+        data: { url: '/orders' }
+      });
+    } catch { }
+  };
+
+  const placeOrder = (
+    paymentMethod: string, 
+    address: Address, 
+    options?: {
+      paymentStatus?: PaymentStatus;
+      paymentConfirmedAt?: string;
+      whatsappConfirmedAt?: string;
+      keepCart?: boolean;
+    }
+  ) => {
+    const orderNum = `SBS-${Math.floor(1000 + Math.random() * 9000)}`;
+    const isUpi = paymentMethod.includes('UPI') || paymentMethod === 'UPI';
+    const initialPaymentStatus: PaymentStatus = options?.paymentStatus || (isUpi ? 'PENDING' : 'PAYMENT_VERIFIED');
+
     const newOrder: Order = {
       id: `ord_${Date.now()}`,
       orderNumber: orderNum,
@@ -1549,32 +1687,69 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       total: cartTotal,
       shippingAddress: address,
       paymentMethod,
+      paymentStatus: initialPaymentStatus,
+      paymentConfirmedAt: options?.paymentConfirmedAt,
+      whatsappConfirmedAt: options?.whatsappConfirmedAt,
       trackingNumber: `TRK-SBS-${Math.floor(100000 + Math.random() * 900000)}`,
       estimatedDelivery: '3-4 Business Days',
     };
 
     setOrders((prev) => [newOrder, ...prev]);
 
-    // Persist order to Supabase if user is logged in
+    // Add Customer Notification: Order Placed
+    addCustomerNotification({
+      title: 'Order Placed',
+      message: `Your SBS order #${orderNum} has been placed.`,
+      type: 'order',
+      orderId: newOrder.id
+    });
+
+    // Persist order to Supabase
     if (isSupabaseConfigured && supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) {
-          supabase.from('orders').insert({
-            id: newOrder.id,
-            order_number: newOrder.orderNumber,
-            user_id: session.user.id,
-            status: newOrder.status,
-            items: newOrder.items,
-            subtotal: newOrder.subtotal,
-            discount: newOrder.discount,
-            delivery_charge: newOrder.deliveryCharge,
-            total: newOrder.total,
-            shipping_address: newOrder.shippingAddress,
-            payment_method: newOrder.paymentMethod,
-            tracking_number: newOrder.trackingNumber,
-            estimated_delivery: newOrder.estimatedDelivery,
+        const orderPayload: any = {
+          id: newOrder.id,
+          order_number: newOrder.orderNumber,
+          user_id: session?.user?.id || null,
+          status: newOrder.status,
+          items: newOrder.items,
+          subtotal: newOrder.subtotal,
+          discount: newOrder.discount,
+          delivery_charge: newOrder.deliveryCharge,
+          total: newOrder.total,
+          shipping_address: newOrder.shippingAddress,
+          payment_method: newOrder.paymentMethod,
+          payment_status: newOrder.paymentStatus,
+          payment_confirmed_at: newOrder.paymentConfirmedAt,
+          whatsapp_confirmed_at: newOrder.whatsappConfirmedAt,
+          tracking_number: newOrder.trackingNumber,
+          estimated_delivery: newOrder.estimatedDelivery,
+        };
+
+        supabase.from('orders').insert(orderPayload).then(({ error }) => {
+          if (error) {
+            console.error('Supabase order insert error (attempting fallback):', error);
+            const fallback = { ...orderPayload };
+            delete fallback.payment_status;
+            delete fallback.payment_confirmed_at;
+            delete fallback.whatsapp_confirmed_at;
+            supabase.from('orders').insert(fallback).then();
+          }
+        });
+
+        // Broadcast to all active open screens (including admin laptop dashboard) in real time
+        try {
+          const broadcastCh = supabase.channel('sbs_catalog_realtime');
+          broadcastCh.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              broadcastCh.send({
+                type: 'broadcast',
+                event: 'cross_device_order_placed',
+                payload: newOrder,
+              });
+            }
           });
-        }
+        } catch (e) { }
       });
     }
 
@@ -1582,6 +1757,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const payMethodMap: Record<string, PaymentRecord['method']> = {
       'Cash on Delivery': 'COD',
       'UPI (GPay / PhonePe)': 'UPI',
+      'UPI': 'UPI',
       'Credit Card': 'Card',
       'Net Banking': 'Net Banking'
     };
@@ -1593,7 +1769,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       customerName: user.name,
       amount: cartTotal,
       method: mappedMethod,
-      status: mappedMethod === 'COD' ? 'Pending' : 'Success',
+      status: mappedMethod === 'COD' ? 'Pending' : mappedMethod === 'UPI' ? 'Pending' : 'Success',
       timestamp: new Date().toISOString()
     };
     setPaymentRecords((prev) => [newPayment, ...prev]);
@@ -1635,9 +1811,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       priority: 'high'
     });
 
-    // Remove only checked items from cart
-    setCart((prev) => prev.filter((item) => !item.selected));
-    setAppliedCoupon(null);
+    // If keepCart is false or not passed, remove selected items from cart
+    if (!options?.keepCart) {
+      setCart((prev) => prev.filter((item) => !item.selected));
+      setAppliedCoupon(null);
+    }
 
     // Update user stats
     setUser((prev) => ({
@@ -1646,22 +1824,192 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       rewardPoints: prev.rewardPoints + Math.round(cartTotal * 0.05),
     }));
 
-    try {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
-    } catch (e) { }
-
-    showToast(`Order ${newOrder.orderNumber} placed successfully! 🎉`, 'success');
     return newOrder;
   };
 
-  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+  const updateOrderPaymentStatus = (
+    orderId: string, 
+    paymentStatus: PaymentStatus, 
+    extra?: { paymentConfirmedAt?: string; whatsappConfirmedAt?: string }
+  ) => {
+    let orderNum = '';
+    let oldPaymentStatus: PaymentStatus | undefined;
+
     setOrders((prev) =>
-      prev.map((ord) => (ord.id === orderId ? { ...ord, status } : ord))
+      prev.map((ord) => {
+        if (ord.id === orderId) {
+          orderNum = ord.orderNumber;
+          oldPaymentStatus = ord.paymentStatus;
+          return {
+            ...ord,
+            paymentStatus,
+            paymentConfirmedAt: extra?.paymentConfirmedAt || ord.paymentConfirmedAt,
+            whatsappConfirmedAt: extra?.whatsappConfirmedAt || ord.whatsappConfirmedAt,
+            status: paymentStatus === 'PAYMENT_VERIFIED' && (ord.status === 'To Pay' as any) ? 'Processing' : ord.status
+          };
+        }
+        return ord;
+      })
     );
+
+    // Update payment record in ledger
+    setPaymentRecords((prevPays) =>
+      prevPays.map((p) => {
+        if (p.orderId === orderId) {
+          let status: PaymentRecord['status'] = p.status;
+          if (paymentStatus === 'CUSTOMER_CONFIRMED') status = 'Customer Confirmed';
+          else if (paymentStatus === 'PAYMENT_VERIFIED') status = 'Verified';
+          else if (paymentStatus === 'PAYMENT_FAILED') status = 'Failed';
+          return { ...p, status };
+        }
+        return p;
+      })
+    );
+
+    // Only create customer notification if payment status actually changed
+    if (oldPaymentStatus !== paymentStatus) {
+      const numDisplay = orderNum || orderId;
+      if (paymentStatus === 'CUSTOMER_CONFIRMED') {
+        addCustomerNotification({
+          title: 'Payment Confirmation Submitted',
+          message: `We've received your payment confirmation for order #${numDisplay}. We're verifying your payment.`,
+          type: 'order',
+          orderId
+        });
+      } else if (paymentStatus === 'PAYMENT_VERIFIED') {
+        addCustomerNotification({
+          title: 'Payment Verified ✓',
+          message: `Payment for order #${numDisplay} has been verified ✓`,
+          type: 'order',
+          orderId
+        });
+        showToast(`Payment for ${numDisplay} verified! ✓`, 'success');
+      } else if (paymentStatus === 'PAYMENT_FAILED') {
+        addCustomerNotification({
+          title: 'Payment Verification Failed',
+          message: `We couldn't verify the payment for order #${numDisplay}. Please contact SBS.`,
+          type: 'alert',
+          orderId
+        });
+        showToast(`Payment for ${numDisplay} marked as failed`, 'error');
+      }
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      const updateData: any = { payment_status: paymentStatus };
+      if (extra?.paymentConfirmedAt) updateData.payment_confirmed_at = extra.paymentConfirmedAt;
+      if (extra?.whatsappConfirmedAt) updateData.whatsapp_confirmed_at = extra.whatsappConfirmedAt;
+      supabase.from('orders').update(updateData).eq('id', orderId).then(({ error }) => {
+        if (error) console.error('Supabase payment status update error:', error);
+      });
+
+      // Broadcast payment update to all open client and admin devices
+      try {
+        const broadcastCh = supabase.channel('sbs_catalog_realtime');
+        broadcastCh.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            broadcastCh.send({
+              type: 'broadcast',
+              event: 'cross_device_payment_updated',
+              payload: { orderId, paymentStatus, ...extra },
+            });
+          }
+        });
+      } catch (e) { }
+    }
+  };
+
+  const refreshOrders = async () => {
+    if (!isSupabaseConfigured || !supabase) return;
+    try {
+      const { data: allOrders, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) {
+        console.error('Error refreshing orders from Supabase:', error);
+        return;
+      }
+
+      if (allOrders && allOrders.length > 0) {
+        setOrders(allOrders.map((o: any) => ({
+          id: o.id,
+          orderNumber: o.order_number,
+          createdAt: o.created_at,
+          status: o.status,
+          paymentStatus: o.payment_status || (o.payment_method?.includes('UPI') ? 'PENDING' : 'PAYMENT_VERIFIED'),
+          paymentConfirmedAt: o.payment_confirmed_at,
+          whatsappConfirmedAt: o.whatsapp_confirmed_at,
+          items: o.items || [],
+          subtotal: Number(o.subtotal),
+          discount: Number(o.discount),
+          deliveryCharge: Number(o.delivery_charge),
+          total: Number(o.total),
+          shippingAddress: o.shipping_address,
+          paymentMethod: o.payment_method,
+          trackingNumber: o.tracking_number,
+          estimatedDelivery: o.estimated_delivery,
+        })));
+        showToast('Orders refreshed from cloud! 🔄', 'success');
+      }
+    } catch (e) {
+      console.error('Failed to refresh orders:', e);
+    }
+  };
+
+  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+    let orderNum = '';
+    let trackingNum = '';
+    let oldStatus: OrderStatus | undefined;
+
+    setOrders((prev) =>
+      prev.map((ord) => {
+        if (ord.id === orderId) {
+          orderNum = ord.orderNumber;
+          trackingNum = ord.trackingNumber || '';
+          oldStatus = ord.status;
+          return { ...ord, status };
+        }
+        return ord;
+      })
+    );
+
+    // Only create notification if status actually changed (avoid duplicates on repeated saves)
+    if (oldStatus && oldStatus !== status) {
+      const numDisplay = orderNum || orderId;
+      if (status === 'Processing') {
+        addCustomerNotification({
+          title: 'Order Processing',
+          message: `Your SBS order #${numDisplay} is being prepared.`,
+          type: 'order',
+          orderId
+        });
+      } else if (status === 'Shipped') {
+        addCustomerNotification({
+          title: 'Order Shipped / Out for Delivery 🚚',
+          message: `Your SBS order #${numDisplay} is on the way! ${trackingNum ? `Tracking: ${trackingNum}` : ''}`,
+          type: 'order',
+          orderId
+        });
+      } else if (status === 'Delivered') {
+        addCustomerNotification({
+          title: 'Order Delivered ✓',
+          message: `Your SBS order #${numDisplay} has been delivered ✓`,
+          type: 'order',
+          orderId
+        });
+      } else if (status === 'Cancelled') {
+        addCustomerNotification({
+          title: 'Order Cancelled',
+          message: `Your SBS order #${numDisplay} has been cancelled.`,
+          type: 'alert',
+          orderId
+        });
+      }
+    }
+
     showToast(`Order status updated to ${status}`);
 
     if (isSupabaseConfigured && supabase) {
@@ -2506,6 +2854,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         removeCoupon,
         placeOrder,
         updateOrderStatus,
+        updateOrderPaymentStatus,
+        addCustomerNotification,
+        refreshOrders,
 
         updateUserProfile,
         addAddress,

@@ -1431,7 +1431,7 @@ export const INITIAL_PRODUCTS: Product[] = [
 
 export const INITIAL_USER: UserProfile = {
   id: '',
-  name: 'Shopper',
+  name: '',
   email: '',
   phone: '',
   ordersCount: 0,

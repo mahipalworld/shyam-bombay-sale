@@ -32,10 +32,12 @@ export const CustomerNotificationsModal: React.FC = () => {
     clearAllUserNotifications,
     setActiveTab,
     setSelectedCategoryFilter,
+    setSelectedOrderForModal,
+    orders,
     showToast
   } = useStore();
 
-  const [activeFilter, setActiveFilter] = useState<'ALL' | 'deal' | 'promo' | 'system'>('ALL');
+  const [activeFilter, setActiveFilter] = useState<'ALL' | 'deal' | 'promo' | 'order' | 'system'>('ALL');
   const [permissionState, setPermissionState] = useState<NotificationPermission | 'unsupported'>('default');
 
   useEffect(() => {
@@ -48,6 +50,9 @@ export const CustomerNotificationsModal: React.FC = () => {
 
   const filteredNotifications = userNotifications.filter(n => {
     if (activeFilter === 'ALL') return true;
+    if (activeFilter === 'order' || activeFilter === 'system') {
+      return n.type === 'order' || n.type === 'system';
+    }
     return n.type === activeFilter;
   });
 
@@ -63,6 +68,16 @@ export const CustomerNotificationsModal: React.FC = () => {
 
   const handleNotificationClick = (notif: UserBroadcastNotification) => {
     markUserNotificationRead(notif.id);
+
+    if (notif.orderId || notif.actionUrl === 'orders' || notif.type === 'order') {
+      setIsUserNotificationsModalOpen(false);
+      if (notif.orderId) {
+        const found = orders.find(o => o.id === notif.orderId || o.orderNumber === notif.orderId);
+        if (found) setSelectedOrderForModal(found);
+      }
+      setActiveTab('profile');
+      return;
+    }
 
     if (notif.actionUrl) {
       setIsUserNotificationsModalOpen(false);
@@ -206,7 +221,7 @@ export const CustomerNotificationsModal: React.FC = () => {
             { id: 'ALL', label: 'All' },
             { id: 'deal', label: '🔥 Flash Deals' },
             { id: 'promo', label: '🎁 Offers' },
-            { id: 'system', label: '📦 Orders' }
+            { id: 'order', label: '📦 Orders' }
           ].map(tab => (
             <button
               key={tab.id}

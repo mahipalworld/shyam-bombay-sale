@@ -90,7 +90,9 @@ export interface Address {
   type: 'HOME' | 'WORK' | 'OTHER';
 }
 
-export type OrderStatus = 'To Pay' | 'Processing' | 'Shipped' | 'Delivered' | 'Returns';
+export type OrderStatus = 'To Pay' | 'Processing' | 'Shipped' | 'Delivered' | 'Returns' | 'Cancelled';
+
+export type PaymentStatus = 'PENDING' | 'CUSTOMER_CONFIRMED' | 'PAYMENT_VERIFIED' | 'PAYMENT_FAILED';
 
 export interface OrderItem {
   productId: string;
@@ -112,6 +114,9 @@ export interface Order {
   total: number;
   shippingAddress: Address;
   paymentMethod: string;
+  paymentStatus?: PaymentStatus;
+  paymentConfirmedAt?: string;
+  whatsappConfirmedAt?: string;
   trackingNumber?: string;
   estimatedDelivery?: string;
 }
@@ -171,6 +176,7 @@ export interface UserBroadcastNotification {
   message: string;
   type: 'promo' | 'deal' | 'order' | 'system' | 'alert';
   targetAudience: 'ALL' | 'CUSTOMERS' | 'GUESTS';
+  orderId?: string;
   actionUrl?: string;
   imageUrl?: string;
   read: boolean;
@@ -199,7 +205,7 @@ export interface PaymentRecord {
   customerName: string;
   amount: number;
   method: 'UPI' | 'Card' | 'Net Banking' | 'COD';
-  status: 'Success' | 'Pending' | 'Failed' | 'Refunded';
+  status: 'Success' | 'Pending' | 'Failed' | 'Refunded' | 'Customer Confirmed' | 'Verified';
   timestamp: string;
 }
 

@@ -17,6 +17,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { StoreSettings, AdminRole } from '@/types';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export const SettingsView: React.FC = () => {
   const { storeSettings, setStoreSettings, adminRole, setAdminRole, showToast } = useStore();
@@ -30,9 +31,25 @@ export const SettingsView: React.FC = () => {
     ...storeSettings 
   });
 
-  const handleSave = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      ...storeSettings
+    }));
+  }, [storeSettings]);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setStoreSettings(formData);
+
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('store_settings').upsert({
+        id: 'store_settings',
+        data: formData,
+        updated_at: new Date().toISOString()
+      });
+    }
+
     showToast('Store settings saved successfully! ⚙️');
   };
 
