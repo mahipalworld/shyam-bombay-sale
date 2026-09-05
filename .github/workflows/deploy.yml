@@ -31,7 +31,10 @@ jobs:
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: 'edd91b475554f5d1c8d6baf7200f9c0d'
-        run: npx wrangler pages deploy out --project-name=sbs-store --commit-dirty=true
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: 'edd91b475554f5d1c8d6baf7200f9c0d'
+          projectName: 'sbs-store'
+          directory: 'out'
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
