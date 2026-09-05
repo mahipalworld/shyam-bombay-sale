@@ -56,14 +56,14 @@ export const NotificationRewardCard: React.FC<{ variant?: 'compact' | 'full' }> 
               {isClaimedOrGranted ? <CheckCircle2 className="w-5 h-5" /> : <BellRing className="w-5 h-5 animate-bounce" />}
             </div>
             <div className="min-w-0">
-              <h5 className="text-xs font-black text-gray-900 leading-tight flex items-center gap-1.5">
+              <h2 className="text-xs font-black text-gray-900 leading-tight flex items-center gap-1.5">
                 <span>{isClaimedOrGranted ? 'Notifications & VIP Alerts Active' : 'Enable Alerts & Get 250 Points'}</span>
                 {!isClaimedOrGranted && (
                   <span className="px-1.5 py-0.5 bg-amber-400/90 text-amber-950 font-black text-[9px] rounded-md flex items-center gap-0.5">
                     <Coins className="w-2.5 h-2.5" /> +250 Pts
                   </span>
                 )}
-              </h5>
+              </h2>
               <p className="text-[10px] text-gray-600 truncate mt-0.5">
                 {isClaimedOrGranted ? 'You receive live price drop alerts on your device.' : 'Get real-time flash sales, order tracking & 250 reward points.'}
               </p>

@@ -114,21 +114,21 @@ export default function App() {
 
               <div className="space-y-2 text-xs">
                 <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Quick Links</h4>
-                <ul className="space-y-1.5 text-gray-400">
-                  <li><button onClick={() => { setSelectedCategoryFilter(null); setActiveTab('home'); }} className="hover:text-[#F95721]">Home</button></li>
-                  <li><button onClick={() => { setSelectedCategoryFilter(null); setActiveTab('categories'); }} className="hover:text-[#F95721]">All Categories</button></li>
-                  <li><button onClick={() => { setSelectedCategoryFilter('offers'); setActiveTab('categories'); }} className="hover:text-[#F95721]">Today&apos;s Deals</button></li>
-                  <li><button onClick={() => setActiveTab('wishlist')} className="hover:text-[#F95721]">Wishlist</button></li>
+                <ul className="space-y-1 text-gray-400">
+                  <li><button onClick={() => { setSelectedCategoryFilter(null); setActiveTab('home'); }} className="py-1 inline-block hover:text-[#F95721] transition-colors">Home</button></li>
+                  <li><button onClick={() => { setSelectedCategoryFilter(null); setActiveTab('categories'); }} className="py-1 inline-block hover:text-[#F95721] transition-colors">All Categories</button></li>
+                  <li><button onClick={() => { setSelectedCategoryFilter('offers'); setActiveTab('categories'); }} className="py-1 inline-block hover:text-[#F95721] transition-colors">Today&apos;s Deals</button></li>
+                  <li><button onClick={() => setActiveTab('wishlist')} className="py-1 inline-block hover:text-[#F95721] transition-colors">Wishlist</button></li>
                 </ul>
               </div>
 
               <div className="space-y-2 text-xs">
                 <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Customer Support</h4>
-                <ul className="space-y-1.5 text-gray-400">
-                  <li>Help Center & FAQs</li>
-                  <li>Track Your Order</li>
-                  <li>Return & Refund Policy</li>
-                  <li>Shipping Policy</li>
+                <ul className="space-y-1 text-gray-400">
+                  <li className="py-1">Help Center & FAQs</li>
+                  <li className="py-1">Track Your Order</li>
+                  <li className="py-1">Return & Refund Policy</li>
+                  <li className="py-1">Shipping Policy</li>
                 </ul>
               </div>
 

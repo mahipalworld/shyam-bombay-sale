@@ -131,10 +131,10 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
         {/* Desktop Search Bar */}
         <div 
           onClick={() => setIsSearchOpen(true)}
-          className="hidden md:flex flex-1 max-w-sm items-center gap-2 bg-gray-100/90 hover:bg-gray-100 rounded-2xl px-3.5 py-2 cursor-pointer border border-transparent hover:border-gray-200 transition-all text-gray-500"
+          className="hidden md:flex flex-1 max-w-sm items-center gap-2 bg-gray-100 hover:bg-gray-100/90 rounded-2xl px-3.5 py-2 cursor-pointer border border-transparent hover:border-gray-200 transition-all text-gray-700"
         >
-          <Search className="w-4 h-4 text-gray-400" />
-          <span className="text-xs font-medium">Search essentials, trimmers, sealers...</span>
+          <Search className="w-4 h-4 text-gray-500" />
+          <span className="text-xs font-semibold text-gray-600">Search essentials, trimmers, sealers...</span>
         </div>
 
         {/* Right Actions */}
@@ -152,7 +152,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           <button
             onClick={() => setIsUserNotificationsModalOpen(true)}
             className="p-2 sm:p-2.5 text-gray-700 hover:text-[#F95721] hover:bg-orange-50 rounded-2xl transition-colors relative flex items-center tap-active"
-            aria-label={unreadNotifCount > 0 ? `Notifications (${unreadNotifCount > 9 ? '9+' : unreadNotifCount} unread)` : 'Notifications'}
+            aria-label={unreadNotifCount > 0 ? `Notifications ${unreadNotifCount > 9 ? '9+' : unreadNotifCount}` : 'Notifications'}
           >
             <div className="relative">
               <Bell className="w-5 h-5 stroke-[2.2px]" />
@@ -171,7 +171,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
             className={`p-2 sm:p-2.5 rounded-2xl text-gray-700 hover:text-[#F95721] hover:bg-orange-50 transition-colors relative flex items-center tap-active ${
               activeTab === 'cart' ? 'text-[#F95721] bg-orange-50' : ''
             }`}
-            aria-label={totalCartCount > 0 ? `Shopping Cart (${totalCartCount} items)` : 'Shopping Cart'}
+            aria-label={`Shopping Cart ₹${cartTotal.toLocaleString('en-IN')}${totalCartCount > 0 ? ` (${totalCartCount} items)` : ''}`}
           >
             <div className="relative">
               <ShoppingCart className="w-5 h-5 stroke-[2.2px]" />
@@ -235,7 +235,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           ) : (
             <button
               onClick={() => openAuthModal('login')}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-[#F95721] text-white text-xs font-bold rounded-xl hover:bg-[#E44813] active:scale-95 transition-all shadow-sm shadow-orange-200"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-[#D43D0A] hover:bg-[#B83407] text-white text-xs font-bold rounded-xl active:scale-95 transition-all shadow-sm"
             >
               <LogIn className="w-3.5 h-3.5" />
               Sign In
