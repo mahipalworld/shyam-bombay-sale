@@ -75,10 +75,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
           </h3>
 
           {/* Rating */}
-          <div className="flex items-center gap-1 text-[11px] text-gray-500">
+          <div className="flex items-center gap-1 text-[11px] text-gray-600">
             <Star className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
             <span className="font-extrabold text-gray-900">{product.rating}</span>
-            <span className="text-gray-400">({product.reviewCount})</span>
+            <span className="text-gray-500 font-medium">({product.reviewCount})</span>
           </div>
 
           {/* Pricing Row */}
@@ -99,7 +99,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
         {quantityInCart > 0 ? (
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="mt-2.5 w-full h-9 sm:h-10 px-1 bg-gradient-to-r from-[#F95721] to-[#FF7038] text-white rounded-xl flex items-center justify-between shadow-xs select-none animate-scaleUp"
+            className="mt-2.5 w-full h-9 sm:h-10 px-1 bg-gradient-to-r from-[#D43D0A] to-[#E44813] text-white rounded-xl flex items-center justify-between shadow-xs select-none animate-scaleUp"
           >
             <button
               onClick={(e) => {
@@ -137,7 +137,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
               e.stopPropagation();
               addToCart(product, 1, e.currentTarget);
             }}
-            className="mt-2.5 w-full h-9 sm:h-10 px-3 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
+            className="mt-2.5 w-full h-9 sm:h-10 px-3 bg-[#D43D0A] hover:bg-[#B83407] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
           >
             <Plus className="w-4 h-4 stroke-[2.5px]" />
             <span>Add to Cart</span>

@@ -462,18 +462,22 @@ export const HomeView: React.FC = () => {
           )}
 
           {/* Dots Carousel Navigation */}
-          <div className="relative z-10 flex justify-center gap-2 mt-4">
+          <div className="relative z-10 flex justify-center items-center gap-1 mt-4">
             {[0, 1, 2].map((idx) => (
               <button
                 key={idx}
                 onClick={() => setActiveHeroSlide(idx)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  activeHeroSlide === idx
-                    ? 'w-6 bg-[#F95721]'
-                    : 'w-2 bg-orange-200/80 hover:bg-orange-300'
-                }`}
+                className="w-7 h-7 flex items-center justify-center p-1 cursor-pointer tap-active"
                 aria-label={`Slide ${idx + 1}`}
-              />
+              >
+                <span
+                  className={`h-1.5 rounded-full transition-all duration-300 block ${
+                    activeHeroSlide === idx
+                      ? 'w-6 bg-[#F95721]'
+                      : 'w-2.5 bg-orange-200/80 hover:bg-orange-300'
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </div>

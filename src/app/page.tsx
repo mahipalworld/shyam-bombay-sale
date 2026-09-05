@@ -144,7 +144,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="pt-6 border-t border-gray-800 flex justify-between items-center text-xs text-gray-500">
+            <div className="pt-6 border-t border-gray-800 flex justify-between items-center text-xs text-gray-400">
               <p>© {new Date().getFullYear()} SBS Store. All rights reserved.</p>
               <p className="flex items-center gap-1">Made with <Heart className="w-3.5 h-3.5 fill-[#F95721] text-[#F95721]" /> for Smart Living</p>
             </div>
