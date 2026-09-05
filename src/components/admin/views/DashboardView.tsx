@@ -37,12 +37,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   const { 
     orders, 
+    adminOrders,
     products, 
     user, 
     storeSettings, 
     updateProduct,
     showToast 
   } = useStore();
+
+  const allOrdersList = adminOrders && adminOrders.length > 0 ? adminOrders : orders;
 
   const [dateRange, setDateRange] = useState<'today' | '7d' | '30d'>('today');
 
@@ -51,14 +54,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const greeting = currentHour < 12 ? 'Good morning' : currentHour < 17 ? 'Good afternoon' : 'Good evening';
 
   // Metrics
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+  const totalRevenue = allOrdersList.reduce((sum, o) => sum + o.total, 0);
   const lowStockProducts = products.filter(p => p.stockCount <= storeSettings.lowStockThreshold);
   const topSellingProducts = [...products].sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0)).slice(0, 4);
 
   // Dynamic multipliers for time ranges
   const rangeMultiplier = dateRange === 'today' ? 0.35 : dateRange === '7d' ? 0.75 : 1.0;
   const displayRevenue = Math.round(totalRevenue * rangeMultiplier);
-  const displayOrders = Math.max(1, Math.round(orders.length * rangeMultiplier));
+  const displayOrders = Math.round(allOrdersList.length * rangeMultiplier);
 
   // Quick Restock helper
   const handleQuickRestock = (p: Product) => {
@@ -304,13 +307,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               onClick={() => onNavigateToTab('orders')}
               className="text-xs font-bold text-[#F95721] hover:underline flex items-center gap-0.5"
             >
-              <span>View All ({orders.length})</span>
+              <span>View All ({allOrdersList.length})</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
           <div className="space-y-2.5">
-            {orders.slice(0, 4).map((o) => (
+            {allOrdersList.slice(0, 4).map((o) => (
               <div
                 key={o.id}
                 onClick={() => onOpenOrderDetails(o)}

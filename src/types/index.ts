@@ -119,6 +119,7 @@ export interface Order {
   whatsappConfirmedAt?: string;
   trackingNumber?: string;
   estimatedDelivery?: string;
+  userId?: string;
 }
 
 export interface Coupon {

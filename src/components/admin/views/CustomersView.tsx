@@ -18,7 +18,8 @@ import {
 import { UserProfile } from '@/types';
 
 export const CustomersView: React.FC = () => {
-  const { user, addresses, orders, wishlist } = useStore();
+  const { user, addresses, orders, adminOrders, wishlist } = useStore();
+  const allOrdersList = adminOrders && adminOrders.length > 0 ? adminOrders : orders;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<UserProfile | null>(null);
@@ -203,7 +204,7 @@ export const CustomersView: React.FC = () => {
             <div className="space-y-2 text-xs">
               <span className="font-bold text-gray-800">Recent Order History</span>
               <div className="space-y-1.5">
-                {orders.slice(0, 2).map(o => (
+                {allOrdersList.slice(0, 2).map(o => (
                   <div key={o.id} className="p-2.5 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
                     <div>
                       <p className="font-bold text-gray-900">{o.orderNumber}</p>

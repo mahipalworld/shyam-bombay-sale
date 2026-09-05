@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import {
   Product,
   CartItem,
@@ -63,6 +63,7 @@ interface StoreContextType {
   user: UserProfile;
   addresses: Address[];
   orders: Order[];
+  adminOrders: Order[];
   coupons: Coupon[];
   appliedCoupon: Coupon | null;
   activeTab: string;
@@ -257,6 +258,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [user, setUser] = useState<UserProfile>(INITIAL_USER);
   const [addresses, setAddresses] = useState<Address[]>(INITIAL_ADDRESSES);
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
+  const [adminOrders, setAdminOrders] = useState<Order[]>([]);
+  const currentUserIdRef = useRef<string | null>(null);
   const [coupons, setCoupons] = useState<Coupon[]>(INITIAL_COUPONS);
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
 
@@ -569,12 +572,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedOrders) {
         try {
           const parsed = JSON.parse(savedOrders);
-          const isLegacyMockOrders = Array.isArray(parsed) && parsed.length > 0 && parsed.every((item: any) => ['ord_101', 'ord_102', 'ord_103', 'ord_104'].includes(item.id));
-          if (isLegacyMockOrders) {
+          const hasStaleOrTestOrders = Array.isArray(parsed) && parsed.some((item: any) => 
+            !item.orderNumber || 
+            item.id?.startsWith('ord_10') || 
+            item.id?.startsWith('ord_17885') || 
+            item.id?.startsWith('ord_17886')
+          );
+          if (hasStaleOrTestOrders) {
             localStorage.removeItem('sbs_orders');
             setOrders([]);
-          } else {
+          } else if (Array.isArray(parsed)) {
             setOrders(parsed);
+          } else {
+            setOrders([]);
           }
         } catch {
           setOrders([]);
@@ -805,14 +815,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           { data: cats },
           { data: prods },
           { data: coups },
-          { data: settings },
-          { data: allOrders }
+          { data: settings }
         ] = await Promise.all([
           supabase.from('categories').select('*').order('name'),
           supabase.from('products').select('*').order('name'),
           supabase.from('coupons').select('*').order('created_at'),
           supabase.from('store_settings').select('*'),
-          supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(50),
         ]);
 
         if (cats && cats.length > 0) {
@@ -889,27 +897,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             if (s.id === 'hero_banners' && Array.isArray(s.data)) setHeroBanners(s.data);
             if (s.id === 'store_settings' && s.data) setStoreSettings(s.data);
           });
-        }
-
-        if (allOrders && allOrders.length > 0) {
-          setOrders(allOrders.map((o: any) => ({
-            id: o.id,
-            orderNumber: o.order_number,
-            createdAt: o.created_at,
-            status: o.status,
-            paymentStatus: o.payment_status || (o.payment_method?.includes('UPI') ? 'PENDING' : 'PAYMENT_VERIFIED'),
-            paymentConfirmedAt: o.payment_confirmed_at,
-            whatsappConfirmedAt: o.whatsapp_confirmed_at,
-            items: o.items || [],
-            subtotal: Number(o.subtotal),
-            discount: Number(o.discount),
-            deliveryCharge: Number(o.delivery_charge),
-            total: Number(o.total),
-            shippingAddress: o.shipping_address,
-            paymentMethod: o.payment_method,
-            trackingNumber: o.tracking_number,
-            estimatedDelivery: o.estimated_delivery,
-          })));
         }
       } catch (err) {
         console.error('Failed to load catalog from Supabase:', err);
@@ -1052,28 +1039,37 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           paymentMethod: o.payment_method,
           trackingNumber: o.tracking_number,
           estimatedDelivery: o.estimated_delivery,
+          userId: o.user_id,
         };
-        setOrders((prev) => (prev.some((x) => x.id === newOrd.id) ? prev : [newOrd, ...prev]));
+        // Always add to adminOrders stream for admin management
+        setAdminOrders((prev) => (prev.some((x) => x.id === newOrd.id) ? prev : [newOrd, ...prev]));
+        // Only append to customer's personal orders if it belongs to current authenticated user
+        if (currentUserIdRef.current && newOrd.userId === currentUserIdRef.current) {
+          setOrders((prev) => (prev.some((x) => x.id === newOrd.id) ? prev : [newOrd, ...prev]));
+        }
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
         const o = payload.new as any;
         if (!o || !o.id) return;
-        setOrders((prev) =>
-          prev.map((ord) => (ord.id === o.id ? { 
-            ...ord, 
-            status: o.status || ord.status,
-            paymentStatus: o.payment_status || ord.paymentStatus,
-            paymentConfirmedAt: o.payment_confirmed_at || ord.paymentConfirmedAt,
-            whatsappConfirmedAt: o.whatsapp_confirmed_at || ord.whatsappConfirmedAt,
-            trackingNumber: o.tracking_number || ord.trackingNumber 
-          } : ord))
-        );
+        const updateFn = (ord: Order) => (ord.id === o.id ? { 
+          ...ord, 
+          status: o.status || ord.status,
+          paymentStatus: o.payment_status || ord.paymentStatus,
+          paymentConfirmedAt: o.payment_confirmed_at || ord.paymentConfirmedAt,
+          whatsappConfirmedAt: o.whatsapp_confirmed_at || ord.whatsappConfirmedAt,
+          trackingNumber: o.tracking_number || ord.trackingNumber 
+        } : ord);
+        setOrders((prev) => prev.map(updateFn));
+        setAdminOrders((prev) => prev.map(updateFn));
       })
       // Direct Cross-Device Broadcast Sync for Instant Screen Updates
       .on('broadcast', { event: 'cross_device_order_placed' }, (payload) => {
         const o = payload.payload as any;
         if (!o || !o.id) return;
-        setOrders((prev) => (prev.some((x) => x.id === o.id) ? prev : [o, ...prev]));
+        setAdminOrders((prev) => (prev.some((x) => x.id === o.id) ? prev : [o, ...prev]));
+        if (currentUserIdRef.current && o.userId === currentUserIdRef.current) {
+          setOrders((prev) => (prev.some((x) => x.id === o.id) ? prev : [o, ...prev]));
+        }
         setPaymentRecords((prev) => (prev.some((p) => p.orderId === o.id) ? prev : [{
           id: `pay_${Date.now()}_${Math.floor(Math.random() * 100)}`,
           orderId: o.id,
@@ -1087,15 +1083,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .on('broadcast', { event: 'cross_device_payment_updated' }, (payload) => {
         const { orderId, paymentStatus, paymentConfirmedAt, whatsappConfirmedAt } = payload.payload;
         if (!orderId) return;
-        setOrders((prev) =>
-          prev.map((ord) => (ord.id === orderId ? {
-            ...ord,
-            paymentStatus,
-            paymentConfirmedAt: paymentConfirmedAt || ord.paymentConfirmedAt,
-            whatsappConfirmedAt: whatsappConfirmedAt || ord.whatsappConfirmedAt,
-            status: paymentStatus === 'PAYMENT_VERIFIED' && (ord.status === 'To Pay' as any) ? 'Processing' : ord.status
-          } : ord))
-        );
+        const paymentUpdateFn = (ord: Order) => (ord.id === orderId ? {
+          ...ord,
+          paymentStatus,
+          paymentConfirmedAt: paymentConfirmedAt || ord.paymentConfirmedAt,
+          whatsappConfirmedAt: whatsappConfirmedAt || ord.whatsappConfirmedAt,
+          status: paymentStatus === 'PAYMENT_VERIFIED' && (ord.status === 'To Pay' as any) ? 'Processing' : ord.status
+        } : ord);
+        setOrders((prev) => prev.map(paymentUpdateFn));
+        setAdminOrders((prev) => prev.map(paymentUpdateFn));
         setPaymentRecords((prev) =>
           prev.map((p) => (p.orderId === orderId ? {
             ...p,
@@ -1149,6 +1145,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const handleAuthChange = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
+
+      currentUserIdRef.current = userId || null;
 
       if (userId) {
         // Load user's cart from Supabase and merge with guest cart
@@ -1209,16 +1207,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           })));
         }
 
-        // Load orders
-        const userEmail = session.user.email?.toLowerCase();
+        // Load strictly this customer's own orders
+        const userEmail = session?.user?.email?.toLowerCase();
         const isUserAdmin = userEmail === 'mahipalstudent71@gmail.com' || adminTeamMembers.some(m => m.email.toLowerCase() === userEmail && m.status === 'ACTIVE');
 
-        let ordersQuery = supabase.from('orders').select('*').order('created_at', { ascending: false });
-        if (!isUserAdmin) {
-          ordersQuery = ordersQuery.eq('user_id', userId);
-        }
-
-        const { data: dbOrders } = await ordersQuery;
+        const { data: dbOrders } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
 
         if (dbOrders && dbOrders.length > 0) {
           setOrders(dbOrders.map((o: any) => ({
@@ -1238,8 +1235,50 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             paymentMethod: o.payment_method,
             trackingNumber: o.tracking_number,
             estimatedDelivery: o.estimated_delivery,
+            userId: o.user_id,
           })));
+        } else {
+          // Zero orders for new user or clean account
+          setOrders([]);
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('sbs_orders');
+          }
         }
+
+        // If user is Admin, load all store orders for Admin management views
+        if (isUserAdmin) {
+          const { data: allAdminOrders } = await supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+          if (allAdminOrders) {
+            setAdminOrders(allAdminOrders.map((o: any) => ({
+              id: o.id,
+              orderNumber: o.order_number,
+              createdAt: o.created_at,
+              status: o.status,
+              paymentStatus: o.payment_status || (o.payment_method?.includes('UPI') ? 'PENDING' : 'PAYMENT_VERIFIED'),
+              paymentConfirmedAt: o.payment_confirmed_at,
+              whatsappConfirmedAt: o.whatsapp_confirmed_at,
+              items: o.items || [],
+              subtotal: Number(o.subtotal),
+              discount: Number(o.discount),
+              deliveryCharge: Number(o.delivery_charge),
+              total: Number(o.total),
+              shippingAddress: o.shipping_address,
+              paymentMethod: o.payment_method,
+              trackingNumber: o.tracking_number,
+              estimatedDelivery: o.estimated_delivery,
+              userId: o.user_id,
+            })));
+          }
+        }
+      } else {
+        // Guest user: purge any stale orders with registered userId
+        setOrders((prev) => prev.filter(o => !o.userId));
+        setAdminOrders([]);
       }
     };
 
@@ -1247,7 +1286,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     handleAuthChange();
 
     // Also listen to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        currentUserIdRef.current = null;
+        setOrders([]);
+        setAdminOrders([]);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('sbs_orders');
+        }
+      }
       handleAuthChange();
     });
 
@@ -1719,9 +1766,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       whatsappConfirmedAt: options?.whatsappConfirmedAt,
       trackingNumber: `TRK-SBS-${Math.floor(100000 + Math.random() * 900000)}`,
       estimatedDelivery: '3-4 Business Days',
+      userId: currentUserIdRef.current || undefined,
     };
 
     setOrders((prev) => [newOrder, ...prev]);
+    setAdminOrders((prev) => [newOrder, ...prev]);
 
     // Add Customer Notification: Order Placed
     addCustomerNotification({
@@ -1734,10 +1783,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Persist order to Supabase
     if (isSupabaseConfigured && supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
+        const sessionUserId = session?.user?.id || null;
+        if (sessionUserId && !newOrder.userId) {
+          newOrder.userId = sessionUserId;
+          setOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, userId: sessionUserId } : o));
+          setAdminOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, userId: sessionUserId } : o));
+        }
         const orderPayload: any = {
           id: newOrder.id,
           order_number: newOrder.orderNumber,
-          user_id: session?.user?.id || null,
+          user_id: sessionUserId,
           status: newOrder.status,
           items: newOrder.items,
           subtotal: newOrder.subtotal,
@@ -1879,6 +1934,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       })
     );
 
+    setAdminOrders((prev) =>
+      prev.map((ord) => {
+        if (ord.id === orderId) {
+          return {
+            ...ord,
+            paymentStatus,
+            paymentConfirmedAt: extra?.paymentConfirmedAt || ord.paymentConfirmedAt,
+            whatsappConfirmedAt: extra?.whatsappConfirmedAt || ord.whatsappConfirmedAt,
+            status: paymentStatus === 'PAYMENT_VERIFIED' && (ord.status === 'To Pay' as any) ? 'Processing' : ord.status
+          };
+        }
+        return ord;
+      })
+    );
+
     // Update payment record in ledger
     setPaymentRecords((prevPays) =>
       prevPays.map((p) => {
@@ -1905,12 +1975,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         });
       } else if (paymentStatus === 'PAYMENT_VERIFIED') {
         addCustomerNotification({
-          title: 'Payment Verified ✓',
-          message: `Payment for order #${numDisplay} has been verified ✓`,
+          title: 'Payment Verified 🎉',
+          message: `Your payment for order #${numDisplay} has been confirmed. Your order is now processing.`,
           type: 'order',
           orderId
         });
-        showToast(`Payment for ${numDisplay} verified! ✓`, 'success');
       } else if (paymentStatus === 'PAYMENT_FAILED') {
         addCustomerNotification({
           title: 'Payment Verification Failed',
@@ -1922,15 +1991,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }
 
+    // Persist to Supabase if configured
     if (isSupabaseConfigured && supabase) {
       const updateData: any = { payment_status: paymentStatus };
+      if (paymentStatus === 'PAYMENT_VERIFIED') {
+        updateData.status = 'Processing';
+      }
       if (extra?.paymentConfirmedAt) updateData.payment_confirmed_at = extra.paymentConfirmedAt;
       if (extra?.whatsappConfirmedAt) updateData.whatsapp_confirmed_at = extra.whatsappConfirmedAt;
+
       supabase.from('orders').update(updateData).eq('id', orderId).then(({ error }) => {
-        if (error) console.error('Supabase payment status update error:', error);
+        if (error) console.error('Supabase update order payment error:', error);
       });
 
-      // Broadcast payment update to all open client and admin devices
+      // Broadcast to other open admin screens
       try {
         const broadcastCh = supabase.channel('sbs_catalog_realtime');
         broadcastCh.subscribe((status) => {
@@ -1949,38 +2023,75 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const refreshOrders = async () => {
     if (!isSupabaseConfigured || !supabase) return;
     try {
-      const { data: allOrders, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      const userEmail = session?.user?.email?.toLowerCase();
+      const isUserAdmin = userEmail === 'mahipalstudent71@gmail.com' || adminTeamMembers.some(m => m.email.toLowerCase() === userEmail && m.status === 'ACTIVE');
 
-      if (error) {
-        console.error('Error refreshing orders from Supabase:', error);
-        return;
+      // 1. Fetch full store orders for admin management
+      if (isUserAdmin) {
+        const { data: allOrders, error } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (!error && allOrders) {
+          setAdminOrders(allOrders.map((o: any) => ({
+            id: o.id,
+            orderNumber: o.order_number,
+            createdAt: o.created_at,
+            status: o.status,
+            paymentStatus: o.payment_status || (o.payment_method?.includes('UPI') ? 'PENDING' : 'PAYMENT_VERIFIED'),
+            paymentConfirmedAt: o.payment_confirmed_at,
+            whatsappConfirmedAt: o.whatsapp_confirmed_at,
+            items: o.items || [],
+            subtotal: Number(o.subtotal),
+            discount: Number(o.discount),
+            deliveryCharge: Number(o.delivery_charge),
+            total: Number(o.total),
+            shippingAddress: o.shipping_address,
+            paymentMethod: o.payment_method,
+            trackingNumber: o.tracking_number,
+            estimatedDelivery: o.estimated_delivery,
+            userId: o.user_id,
+          })));
+        }
       }
 
-      if (allOrders && allOrders.length > 0) {
-        setOrders(allOrders.map((o: any) => ({
-          id: o.id,
-          orderNumber: o.order_number,
-          createdAt: o.created_at,
-          status: o.status,
-          paymentStatus: o.payment_status || (o.payment_method?.includes('UPI') ? 'PENDING' : 'PAYMENT_VERIFIED'),
-          paymentConfirmedAt: o.payment_confirmed_at,
-          whatsappConfirmedAt: o.whatsapp_confirmed_at,
-          items: o.items || [],
-          subtotal: Number(o.subtotal),
-          discount: Number(o.discount),
-          deliveryCharge: Number(o.delivery_charge),
-          total: Number(o.total),
-          shippingAddress: o.shipping_address,
-          paymentMethod: o.payment_method,
-          trackingNumber: o.tracking_number,
-          estimatedDelivery: o.estimated_delivery,
-        })));
-        showToast('Orders refreshed from cloud! 🔄', 'success');
+      // 2. Fetch customer's own orders
+      if (userId) {
+        const { data: myOrders } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+
+        if (myOrders && myOrders.length > 0) {
+          setOrders(myOrders.map((o: any) => ({
+            id: o.id,
+            orderNumber: o.order_number,
+            createdAt: o.created_at,
+            status: o.status,
+            paymentStatus: o.payment_status || (o.payment_method?.includes('UPI') ? 'PENDING' : 'PAYMENT_VERIFIED'),
+            paymentConfirmedAt: o.payment_confirmed_at,
+            whatsappConfirmedAt: o.whatsapp_confirmed_at,
+            items: o.items || [],
+            subtotal: Number(o.subtotal),
+            discount: Number(o.discount),
+            deliveryCharge: Number(o.delivery_charge),
+            total: Number(o.total),
+            shippingAddress: o.shipping_address,
+            paymentMethod: o.payment_method,
+            trackingNumber: o.tracking_number,
+            estimatedDelivery: o.estimated_delivery,
+            userId: o.user_id,
+          })));
+        } else {
+          setOrders([]);
+        }
       }
+      showToast('Orders refreshed! 🔄', 'success');
     } catch (e) {
       console.error('Failed to refresh orders:', e);
     }
@@ -1997,6 +2108,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           orderNum = ord.orderNumber;
           trackingNum = ord.trackingNumber || '';
           oldStatus = ord.status;
+          return { ...ord, status };
+        }
+        return ord;
+      })
+    );
+
+    setAdminOrders((prev) =>
+      prev.map((ord) => {
+        if (ord.id === orderId) {
           return { ...ord, status };
         }
         return ord;
@@ -2836,6 +2956,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         user,
         addresses,
         orders,
+        adminOrders,
         coupons,
         appliedCoupon,
         activeTab,

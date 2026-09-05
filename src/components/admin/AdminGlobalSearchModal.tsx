@@ -30,7 +30,8 @@ export const AdminGlobalSearchModal: React.FC<AdminGlobalSearchModalProps> = ({
   onOpenProductEdit,
   onOpenOrderDetails,
 }) => {
-  const { products, orders, categories, user } = useStore();
+  const { products, orders, adminOrders, categories, user } = useStore();
+  const allOrdersList = adminOrders && adminOrders.length > 0 ? adminOrders : orders;
   const [query, setQuery] = useState('');
 
   const searchResults = useMemo(() => {
@@ -43,7 +44,7 @@ export const AdminGlobalSearchModal: React.FC<AdminGlobalSearchModalProps> = ({
            (p.description && p.description.toLowerCase().includes(q))
     );
 
-    const matchedOrders = orders.filter(
+    const matchedOrders = allOrdersList.filter(
       o => o.orderNumber.toLowerCase().includes(q) ||
            (o.trackingNumber && o.trackingNumber.toLowerCase().includes(q)) ||
            o.items.some(i => i.name.toLowerCase().includes(q))
@@ -67,7 +68,7 @@ export const AdminGlobalSearchModal: React.FC<AdminGlobalSearchModalProps> = ({
       customers: matchedCustomers,
       totalCount: matchedProducts.length + matchedOrders.length + matchedCategories.length + matchedCustomers.length
     };
-  }, [query, products, orders, categories, user]);
+  }, [query, products, orders, adminOrders, categories, user]);
 
   if (!isOpen) return null;
 

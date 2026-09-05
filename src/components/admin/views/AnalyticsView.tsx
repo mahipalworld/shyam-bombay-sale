@@ -16,12 +16,13 @@ import {
 } from 'lucide-react';
 
 export const AnalyticsView: React.FC = () => {
-  const { orders, products } = useStore();
+  const { orders, adminOrders, products } = useStore();
+  const allOrdersList = adminOrders && adminOrders.length > 0 ? adminOrders : orders;
 
   const [dateFilter, setDateFilter] = useState<'7d' | '30d' | '3m' | '1y'>('30d');
 
-  const totalRev = orders.reduce((sum, o) => sum + o.total, 0);
-  const avgOrderVal = orders.length > 0 ? Math.round(totalRev / orders.length) : 0;
+  const totalRev = allOrdersList.reduce((sum, o) => sum + o.total, 0);
+  const avgOrderVal = allOrdersList.length > 0 ? Math.round(totalRev / allOrdersList.length) : 0;
 
   return (
     <div className="space-y-4 pb-28 animate-fadeIn">

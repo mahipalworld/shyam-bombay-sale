@@ -29,7 +29,8 @@ interface OrdersViewProps {
 export const OrdersView: React.FC<OrdersViewProps> = ({
   onOpenOrderDetails,
 }) => {
-  const { orders, updateOrderStatus, updateOrderPaymentStatus, refreshOrders } = useStore();
+  const { orders, adminOrders, updateOrderStatus, updateOrderPaymentStatus, refreshOrders } = useStore();
+  const allOrdersList = adminOrders && adminOrders.length > 0 ? adminOrders : orders;
 
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,7 +46,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
     setTimeout(() => setIsRefreshing(false), 600);
   };
 
-  const filteredOrders = orders.filter((o) => {
+  const filteredOrders = allOrdersList.filter((o) => {
     // Search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
