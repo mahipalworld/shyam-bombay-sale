@@ -86,10 +86,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
             <span className="text-sm sm:text-base font-black text-gray-900">
               ₹{product.price.toLocaleString('en-IN')}
             </span>
-            <span className="text-[11px] text-gray-400 line-through">
+            <span className="text-[11px] text-gray-500 font-medium line-through">
               ₹{product.originalPrice.toLocaleString('en-IN')}
             </span>
-            <span className="text-[10px] font-extrabold text-[#F95721] bg-orange-50 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-extrabold text-[#C83B0E] bg-orange-100/70 px-1.5 py-0.5 rounded">
               {product.discountPercentage}% OFF
             </span>
           </div>

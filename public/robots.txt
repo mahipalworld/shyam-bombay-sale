@@ -1,10 +1,14 @@
-# robots.txt for SBS Store
+# robots.txt for SBS Store (https://www.sbsstore.in)
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /api/
 
-# Googlebot specific rules
 User-agent: Googlebot
 Allow: /
 
-# Sitemap
+User-agent: Bingbot
+Allow: /
+
+# XML Sitemaps
 Sitemap: https://www.sbsstore.in/sitemap.xml

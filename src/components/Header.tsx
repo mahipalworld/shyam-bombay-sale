@@ -152,7 +152,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           <button
             onClick={() => setIsUserNotificationsModalOpen(true)}
             className="p-2 sm:p-2.5 text-gray-700 hover:text-[#F95721] hover:bg-orange-50 rounded-2xl transition-colors relative flex items-center tap-active"
-            aria-label="Notifications"
+            aria-label={unreadNotifCount > 0 ? `Notifications (${unreadNotifCount > 9 ? '9+' : unreadNotifCount} unread)` : 'Notifications'}
           >
             <div className="relative">
               <Bell className="w-5 h-5 stroke-[2.2px]" />
@@ -171,7 +171,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
             className={`p-2 sm:p-2.5 rounded-2xl text-gray-700 hover:text-[#F95721] hover:bg-orange-50 transition-colors relative flex items-center tap-active ${
               activeTab === 'cart' ? 'text-[#F95721] bg-orange-50' : ''
             }`}
-            aria-label="Shopping Cart"
+            aria-label={totalCartCount > 0 ? `Shopping Cart (${totalCartCount} items)` : 'Shopping Cart'}
           >
             <div className="relative">
               <ShoppingCart className="w-5 h-5 stroke-[2.2px]" />

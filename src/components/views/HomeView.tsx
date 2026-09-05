@@ -393,12 +393,12 @@ export const HomeView: React.FC = () => {
                     alt={flashDealConfig?.productName || 'Flash Deal Item'}
                     className="w-28 h-28 object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
                   />
-                  <h4 className="text-xs font-extrabold text-gray-900 text-center line-clamp-1">
+                  <p className="text-xs font-extrabold text-gray-900 text-center line-clamp-1">
                     {flashDealConfig?.productName || 'Portable Food Packet Sealer'}
-                  </h4>
+                  </p>
                   <div className="flex items-baseline gap-1.5 mt-1">
                     <span className="text-sm font-black text-[#F95721]">₹{flashDealConfig?.dealPrice || 199}</span>
-                    <span className="text-[10px] text-gray-400 line-through">₹{flashDealConfig?.originalPrice || 499}</span>
+                    <span className="text-[10px] text-gray-500 font-medium line-through">₹{flashDealConfig?.originalPrice || 499}</span>
                   </div>
                 </div>
               </div>
@@ -440,7 +440,7 @@ export const HomeView: React.FC = () => {
                   onClick={() => handleHeroProductClick('p2')}
                   className="bg-white/95 rounded-2xl p-4 shadow-xl border border-purple-200 max-w-[260px] w-full flex flex-col items-center cursor-pointer group tap-active"
                 >
-                  <span className="self-start text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-600">
+                  <span className="self-start text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-extrabold">
                     Bestseller
                   </span>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -449,12 +449,12 @@ export const HomeView: React.FC = () => {
                     alt="Sunset Lamp"
                     className="w-28 h-28 object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
                   />
-                  <h4 className="text-xs font-extrabold text-gray-900 text-center line-clamp-1">
+                  <p className="text-xs font-extrabold text-gray-900 text-center line-clamp-1">
                     Romantic Sunset Projection Lamp
-                  </h4>
+                  </p>
                   <div className="flex items-baseline gap-1.5 mt-1">
                     <span className="text-sm font-black text-purple-600">₹399</span>
-                    <span className="text-[10px] text-gray-400 line-through">₹799</span>
+                    <span className="text-[10px] text-gray-500 font-medium line-through">₹799</span>
                   </div>
                 </div>
               </div>
@@ -498,10 +498,10 @@ export const HomeView: React.FC = () => {
             <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div className="min-w-0">
-            <h4 className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-900 leading-snug">
+            <p className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-900 leading-snug">
               <span className="sm:hidden">Free Delivery</span>
               <span className="hidden sm:inline">Free Express Delivery</span>
-            </h4>
+            </p>
             <p className="text-[9px] sm:text-[11px] md:text-xs text-gray-500 mt-0.5 leading-tight">
               <span className="sm:hidden">Above ₹1,700</span>
               <span className="hidden sm:inline">On all orders above ₹1,700</span>
@@ -515,10 +515,10 @@ export const HomeView: React.FC = () => {
             <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div className="min-w-0">
-            <h4 className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-900 leading-snug">
+            <p className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-900 leading-snug">
               <span className="sm:hidden">7 Days Return</span>
               <span className="hidden sm:inline">7 Days Easy Return</span>
-            </h4>
+            </p>
             <p className="text-[9px] sm:text-[11px] md:text-xs text-gray-500 mt-0.5 leading-tight">
               <span className="sm:hidden">Easy replacement</span>
               <span className="hidden sm:inline">Hassle-free replacement</span>
@@ -532,10 +532,10 @@ export const HomeView: React.FC = () => {
             <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div className="min-w-0">
-            <h4 className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-900 leading-snug">
+            <p className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-900 leading-snug">
               <span className="sm:hidden">100% Genuine</span>
               <span className="hidden sm:inline">SBS Quality Certified</span>
-            </h4>
+            </p>
             <p className="text-[9px] sm:text-[11px] md:text-xs text-gray-500 mt-0.5 leading-tight">
               <span className="sm:hidden">Quality verified</span>
               <span className="hidden sm:inline">100% Genuine products</span>
@@ -822,7 +822,7 @@ export const HomeView: React.FC = () => {
           >
             <div className="space-y-1.5">
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Flash Deal</span>
-              <h3 className="text-2xl md:text-3xl font-black text-[#F95721]">40% OFF</h3>
+              <span className="text-2xl md:text-3xl font-black text-[#F95721] block">40% OFF</span>
               <p className="text-sm font-bold text-gray-900">On Daily Essentials</p>
               <p className="text-xs text-gray-500">Limited time only!</p>
               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F95721] pt-1">
@@ -846,7 +846,7 @@ export const HomeView: React.FC = () => {
           >
             <div className="space-y-1.5">
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Top Offer</span>
-              <h3 className="text-2xl md:text-3xl font-black text-[#F95721]">35% OFF</h3>
+              <span className="text-2xl md:text-3xl font-black text-[#F95721] block">35% OFF</span>
               <p className="text-sm font-bold text-gray-900">On Personal Care</p>
               <p className="text-xs text-gray-500">Hurry, Limited Stock!</p>
               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F95721] pt-1">
