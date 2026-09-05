@@ -57,14 +57,14 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         <div className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo.png"
+            src="/logo.png?v=3"
             alt="SBS Logo"
-            className="h-8 object-contain"
+            className="h-6.5 w-auto object-contain flex-shrink-0"
           />
           <div>
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-black tracking-tight text-gray-900 leading-none">
-                {storeSettings.storeName || 'SBS Store'}
+                STORE
               </span>
               <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded bg-orange-100 text-[#F95721] leading-none">
                 Admin

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '@/context/StoreContext';
 import { useAuth } from '@/context/AuthContext';
 import { triggerConfetti } from '@/utils/confetti';
@@ -37,7 +37,11 @@ export const CheckoutModal: React.FC = () => {
     clearCart,
     addresses, 
     addAddress, 
+    cartOriginalMRP,
     cartSubtotal, 
+    cartDiscountMRP,
+    couponDiscount,
+    appliedCoupon,
     cartDiscount, 
     cartDeliveryCharge, 
     cartTotal, 
@@ -66,8 +70,9 @@ export const CheckoutModal: React.FC = () => {
   const [paymentConfirmedTime, setPaymentConfirmedTime] = useState<string>('');
   const [isWhatsAppOpened, setIsWhatsAppOpened] = useState<boolean>(false);
   const [copiedUpi, setCopiedUpi] = useState<boolean>(false);
+  const [showQrCodeOnMobile, setShowQrCodeOnMobile] = useState<boolean>(false);
 
-  // New address form state - starts empty with no default dummy data
+  // New address form state - starts with cached address if available
   const [newAddr, setNewAddr] = useState({
     name: '',
     phone: '',
@@ -78,8 +83,36 @@ export const CheckoutModal: React.FC = () => {
     type: 'HOME' as 'HOME' | 'WORK' | 'OTHER',
   });
 
+  const wasOpenRef = useRef(false);
+
+  // 1. Initialize checkout ONLY when modal opens (closed -> open transition)
   useEffect(() => {
-    if (isCheckoutOpen) {
+    const wasOpen = wasOpenRef.current;
+    wasOpenRef.current = isCheckoutOpen;
+
+    if (!wasOpen && isCheckoutOpen) {
+      if (typeof window !== 'undefined') {
+        const savedSession = sessionStorage.getItem('sbs_active_checkout_session');
+        if (savedSession) {
+          try {
+            const parsed = JSON.parse(savedSession);
+            const isRecent = parsed.updatedAt && (Date.now() - parsed.updatedAt < 20 * 60 * 1000);
+            if (isRecent && parsed.activeOrder && (parsed.step === 'UPI_PAYMENT' || parsed.step === 'WHATSAPP_CONFIRMATION')) {
+              setActiveOrder(parsed.activeOrder);
+              setCheckoutStep(parsed.step);
+              if (parsed.paymentConfirmedTime) setPaymentConfirmedTime(parsed.paymentConfirmedTime);
+              if (parsed.isWhatsAppOpened) setIsWhatsAppOpened(parsed.isWhatsAppOpened);
+              return;
+            } else {
+              sessionStorage.removeItem('sbs_active_checkout_session');
+            }
+          } catch {
+            sessionStorage.removeItem('sbs_active_checkout_session');
+          }
+        }
+      }
+
+      // Fresh Checkout Initialization for new order
       setCheckoutStep('FORM');
       setActiveOrder(null);
       setPaymentConfirmedTime('');
@@ -88,24 +121,36 @@ export const CheckoutModal: React.FC = () => {
 
       if (addresses.length === 0) {
         setIsAddingNewAddress(true);
-        // Start completely clean with no prefilled dummy values
-        setNewAddr({
-          name: (authUser?.name && authUser.name !== 'Shopper') ? authUser.name : '',
-          phone: (authUser?.phone && !authUser.phone.includes('7387467108')) ? authUser.phone : '',
-          street: '',
-          city: '',
-          state: '',
-          pincode: '',
-          type: 'HOME',
-        });
+        // Load last entered address from localStorage
+        if (typeof window !== 'undefined') {
+          const lastAddressStr = localStorage.getItem('sbs_last_entered_address');
+          if (lastAddressStr) {
+            try {
+              const parsedLast = JSON.parse(lastAddressStr);
+              setNewAddr(parsedLast);
+            } catch { }
+          } else {
+            setNewAddr({
+              name: (authUser?.name && authUser.name !== 'Shopper') ? authUser.name : '',
+              phone: (authUser?.phone && !authUser.phone.includes('7387467108')) ? authUser.phone : '',
+              street: '',
+              city: '',
+              state: '',
+              pincode: '',
+              type: 'HOME',
+            });
+          }
+        }
       } else {
         const defaultAddr = addresses.find((a) => a.isDefault)?.id || addresses[0]?.id || '';
         setSelectedAddressId(defaultAddr);
+        setIsAddingNewAddress(false);
       }
       setFormError(null);
     }
-  }, [isCheckoutOpen, addresses, authUser]);
+  }, [isCheckoutOpen]);
 
+  // 2. Auto-sync auth user name/phone into address form if not populated
   useEffect(() => {
     if (authUser || supabaseUser) {
       const realName = (authUser?.name && authUser.name !== 'Shopper')
@@ -122,6 +167,50 @@ export const CheckoutModal: React.FC = () => {
       }));
     }
   }, [authUser, supabaseUser]);
+
+  // 3. Listen for return to tab (visibility change / window focus) when returning from UPI or WhatsApp
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isCheckoutOpen) {
+        if (typeof window !== 'undefined') {
+          const savedSession = sessionStorage.getItem('sbs_active_checkout_session');
+          if (savedSession) {
+            try {
+              const parsed = JSON.parse(savedSession);
+              if (parsed && parsed.activeOrder) {
+                setActiveOrder(parsed.activeOrder);
+                if (parsed.step) setCheckoutStep(parsed.step);
+                if (parsed.paymentConfirmedTime) setPaymentConfirmedTime(parsed.paymentConfirmedTime);
+                if (parsed.isWhatsAppOpened) setIsWhatsAppOpened(parsed.isWhatsAppOpened);
+              }
+            } catch { }
+          }
+        }
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
+    };
+  }, [isCheckoutOpen]);
+
+  // Persist session whenever activeOrder exists and step is in progress
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (activeOrder && (checkoutStep === 'UPI_PAYMENT' || checkoutStep === 'WHATSAPP_CONFIRMATION')) {
+        sessionStorage.setItem('sbs_active_checkout_session', JSON.stringify({
+          activeOrder,
+          step: checkoutStep,
+          paymentConfirmedTime,
+          isWhatsAppOpened,
+          updatedAt: Date.now()
+        }));
+      }
+    }
+  }, [activeOrder, checkoutStep, paymentConfirmedTime, isWhatsAppOpened]);
 
   if (!isCheckoutOpen) return null;
 
@@ -180,53 +269,50 @@ export const CheckoutModal: React.FC = () => {
 
     let targetAddress = currentAddress;
 
-    // 1. If user has no address saved, try to auto-save from form
-    if (!targetAddress && addresses.length === 0) {
+    // If adding a new address or no address saved, auto-save from the input fields
+    if (isAddingNewAddress || !targetAddress) {
       const saved = handleAddNewAddress();
       if (!saved) {
         setIsAddingNewAddress(true);
-        setFormError('⚠️ Please fill and save your delivery address to proceed.');
-        showToast('Please enter your delivery address first to proceed!', 'error');
+        setFormError('⚠️ Please complete all required delivery address fields.');
         return;
       }
       targetAddress = saved;
     }
 
     if (!targetAddress) {
-      showToast('Please select a delivery address first!', 'error');
+      showToast('Please select or enter a delivery address first!', 'error');
       setIsAddingNewAddress(true);
       return;
     }
 
     setIsProcessingOrder(true);
 
-    setTimeout(() => {
-      try {
-        if (selectedPayment === 'UPI') {
-          // Rule 1: Create SBS Order BEFORE payment
-          const order = placeOrder('UPI (GPay / PhonePe)', targetAddress, {
-            paymentStatus: 'PENDING',
-            keepCart: true // Rule 4: Do not clear cart too early
-          });
-          setActiveOrder(order);
-          setIsProcessingOrder(false);
-          setCheckoutStep('UPI_PAYMENT');
-        } else {
-          // COD or Card
-          const order = placeOrder(selectedPayment, targetAddress);
-          setIsProcessingOrder(false);
-          setIsCheckoutOpen(false);
-          try {
-            triggerConfetti({ particleCount: 150, duration: 3500 });
-          } catch { }
-          setSelectedOrderForModal(order);
-          setActiveTab('profile');
-        }
-      } catch (err) {
+    try {
+      if (selectedPayment === 'UPI') {
+        // Create SBS Order BEFORE payment
+        const order = placeOrder('UPI (GPay / PhonePe)', targetAddress, {
+          paymentStatus: 'PENDING',
+          keepCart: true
+        });
+        setActiveOrder(order);
         setIsProcessingOrder(false);
-        showToast('Unable to process order. Please try again.', 'error');
+        setCheckoutStep('UPI_PAYMENT');
+      } else {
+        // COD or Card
+        const order = placeOrder(selectedPayment, targetAddress);
+        setIsProcessingOrder(false);
+        setIsCheckoutOpen(false);
+        try {
+          triggerConfetti({ particleCount: 150, duration: 3500 });
+        } catch { }
+        setSelectedOrderForModal(order);
+        setActiveTab('profile');
       }
-    }, 400);
+    } catch (err) {
+      setIsProcessingOrder(false);
+      showToast('Unable to process order. Please try again.', 'error');
+    }
   };
 
   // Step 2 -> "✓ I've Completed Payment"
@@ -271,13 +357,17 @@ export const CheckoutModal: React.FC = () => {
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
-  // Step 4 -> "Return to Home"
+  // Step 4 -> "Return to Home / Start New Order"
   const handleReturnToHome = () => {
-    // Rule 4: Clear cart only after reaching final confirmation state
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('sbs_active_checkout_session');
+    }
     clearCart();
     setIsCheckoutOpen(false);
     setCheckoutStep('FORM');
     setActiveOrder(null);
+    setPaymentConfirmedTime('');
+    setIsWhatsAppOpened(false);
     setActiveTab('home');
 
     try {
@@ -285,6 +375,44 @@ export const CheckoutModal: React.FC = () => {
     } catch { }
 
     showToast('Thank you! Your order is placed and waiting for payment verification 📦', 'success');
+  };
+
+  const handleViewOrdersAndTrack = () => {
+    const placedOrder = activeOrder;
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('sbs_active_checkout_session');
+    }
+    clearCart();
+    setIsCheckoutOpen(false);
+    setCheckoutStep('FORM');
+    setActiveOrder(null);
+    setPaymentConfirmedTime('');
+    setIsWhatsAppOpened(false);
+
+    try {
+      triggerConfetti({ particleCount: 120, duration: 3000 });
+    } catch { }
+
+    showToast('Order confirmed! Tracking details loaded 📦', 'success');
+    if (placedOrder) {
+      setSelectedOrderForModal(placedOrder);
+    }
+    setActiveTab('profile');
+  };
+
+  const handleCloseModal = () => {
+    if (checkoutStep === 'WHATSAPP_CONFIRMATION') {
+      // Completed order flow - clear active checkout session and reset
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('sbs_active_checkout_session');
+      }
+      clearCart();
+      setActiveOrder(null);
+      setCheckoutStep('FORM');
+      setPaymentConfirmedTime('');
+      setIsWhatsAppOpened(false);
+    }
+    setIsCheckoutOpen(false);
   };
 
   const storeUpiId = (storeSettings?.upiId && !storeSettings.upiId.includes('fam@') && !storeSettings.upiId.includes('sbsstore@')) ? storeSettings.upiId : 'suhanarajpurohit3@oksbi';
@@ -300,7 +428,14 @@ export const CheckoutModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center animate-fadeIn">
+    <div 
+      className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center animate-fadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleCloseModal();
+        }
+      }}
+    >
       <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col relative no-scrollbar">
         
         {/* Header */}
@@ -329,7 +464,7 @@ export const CheckoutModal: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => setIsCheckoutOpen(false)}
+            onClick={handleCloseModal}
             className="p-1.5 text-gray-400 hover:text-black rounded-full hover:bg-gray-100 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -636,13 +771,26 @@ export const CheckoutModal: React.FC = () => {
               {/* Amount Breakdown */}
               <div className="border-t border-gray-100 pt-2 space-y-1.5 text-xs">
                 <div className="flex justify-between text-gray-500">
-                  <span>Items Total</span>
+                  <span>Items Total ({selectedCartItems.length} items)</span>
                   <span>₹{cartSubtotal.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between text-gray-500">
-                  <span>Savings</span>
-                  <span className="text-[#00A859]">-₹{cartDiscount.toLocaleString('en-IN')}</span>
-                </div>
+                {cartDiscountMRP > 0 && (
+                  <div className="flex justify-between text-gray-500">
+                    <span>Product Savings (on MRP)</span>
+                    <span className="text-[#00A859] font-semibold">-₹{cartDiscountMRP.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+                {appliedCoupon && couponDiscount > 0 && (
+                  <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 font-semibold text-[11px]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-emerald-600 text-white rounded-md">
+                        {appliedCoupon.code}
+                      </span>
+                      <span>Coupon Discount</span>
+                    </div>
+                    <span className="font-black text-[#00A859]">-₹{couponDiscount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-gray-500">
                   <span>Delivery Charges</span>
                   <span>{cartDeliveryCharge === 0 ? <span className="text-[#00A859] font-bold">FREE</span> : `₹${cartDeliveryCharge}`}</span>
@@ -671,7 +819,7 @@ export const CheckoutModal: React.FC = () => {
                 ) : (
                   <>
                     <ShieldCheck className="w-4 h-4" />
-                    <span>{selectedPayment === 'UPI' ? `Proceed to UPI Pay • ₹${cartTotal.toLocaleString('en-IN')}` : `Place Order • ₹${cartTotal.toLocaleString('en-IN')}`}</span>
+                    <span>{selectedPayment === 'UPI' ? `Pay ₹${cartTotal.toLocaleString('en-IN')} via UPI` : `Place Order • ₹${cartTotal.toLocaleString('en-IN')}`}</span>
                   </>
                 )}
               </button>
@@ -680,7 +828,7 @@ export const CheckoutModal: React.FC = () => {
         )}
 
         {/* ======================================================== */}
-        {/* STEP 2: UPI PAYMENT SCREEN (QR + Deep Link + Confirm)     */}
+        {/* STEP 2: UPI PAYMENT SCREEN (1-Tap Apps + QR Code)         */}
         {/* ======================================================== */}
         {checkoutStep === 'UPI_PAYMENT' && (
           <div className="p-4 space-y-4 animate-fadeIn">
@@ -693,83 +841,157 @@ export const CheckoutModal: React.FC = () => {
               </div>
             </div>
 
-            {/* UPI QR Code Container */}
-            <div className="bg-white border-2 border-orange-100 rounded-3xl p-4 text-center space-y-3 shadow-2xs">
-              <div className="flex items-center justify-center gap-1.5 text-xs font-black text-gray-800">
-                <QrCode className="w-4 h-4 text-[#F95721]" />
-                <span>Scan & Pay with Any UPI App</span>
-              </div>
+            {/* 1-Tap Mobile UPI App Launchers */}
+            <div className="space-y-2.5">
+              <span className="text-xs font-black text-gray-800 uppercase tracking-wider block">
+                ⚡ 1-Tap Pay with UPI App:
+              </span>
 
-              {/* QR Image Container */}
-              <div className="flex justify-center py-1">
-                <div className="p-2.5 bg-white rounded-2xl border-2 border-gray-100 shadow-xs inline-block">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={qrCodeUrl}
-                    alt="UPI Payment QR Code"
-                    className="w-48 h-48 sm:w-52 sm:h-52 object-contain rounded-lg"
-                    loading="eager"
-                  />
-                </div>
-              </div>
-
-              {/* UPI ID Info & Copy */}
-              <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-2.5 flex items-center justify-between gap-2 text-xs">
-                <div className="text-left min-w-0">
-                  <span className="text-[10px] text-gray-400 font-bold block uppercase">UPI ID</span>
-                  <span className="font-mono font-bold text-gray-900 truncate block">{storeUpiId}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={copyUpiId}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 hover:border-gray-400 rounded-xl font-bold text-gray-700 text-[11px] shadow-2xs active:scale-95 transition-all flex-shrink-0"
+              <div className="grid grid-cols-2 gap-2">
+                {/* Google Pay */}
+                <a
+                  href={`intent://pay?pa=${encodeURIComponent(storeUpiId)}&pn=SBS&am=${orderAmount.toFixed(2)}&cu=INR#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`}
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && activeOrder) {
+                      sessionStorage.setItem('sbs_active_checkout_session', JSON.stringify({ activeOrder, step: 'UPI_PAYMENT' }));
+                    }
+                  }}
+                  className="p-3 rounded-2xl bg-white border-2 border-gray-200 hover:border-[#F95721] hover:bg-orange-50/50 flex items-center gap-2.5 shadow-2xs active:scale-95 transition-all text-left"
                 >
-                  {copiedUpi ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-emerald-600">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-gray-500" />
-                      <span>Copy ID</span>
-                    </>
-                  )}
-                </button>
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center font-black text-blue-600 text-xs">
+                    G
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-gray-900 block leading-tight">Google Pay</span>
+                    <span className="text-[9px] text-gray-500">Instant</span>
+                  </div>
+                </a>
+
+                {/* PhonePe */}
+                <a
+                  href={`phonepe://pay?pa=${encodeURIComponent(storeUpiId)}&pn=SBS&am=${orderAmount.toFixed(2)}&cu=INR`}
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && activeOrder) {
+                      sessionStorage.setItem('sbs_active_checkout_session', JSON.stringify({ activeOrder, step: 'UPI_PAYMENT' }));
+                    }
+                  }}
+                  className="p-3 rounded-2xl bg-white border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50/50 flex items-center gap-2.5 shadow-2xs active:scale-95 transition-all text-left"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center font-black text-purple-600 text-xs">
+                    Pe
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-gray-900 block leading-tight">PhonePe</span>
+                    <span className="text-[9px] text-gray-500">Fast Pay</span>
+                  </div>
+                </a>
+
+                {/* Paytm */}
+                <a
+                  href={`paytmmp://pay?pa=${encodeURIComponent(storeUpiId)}&pn=SBS&am=${orderAmount.toFixed(2)}&cu=INR`}
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && activeOrder) {
+                      sessionStorage.setItem('sbs_active_checkout_session', JSON.stringify({ activeOrder, step: 'UPI_PAYMENT' }));
+                    }
+                  }}
+                  className="p-3 rounded-2xl bg-white border-2 border-gray-200 hover:border-cyan-600 hover:bg-cyan-50/50 flex items-center gap-2.5 shadow-2xs active:scale-95 transition-all text-left"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-cyan-50 flex items-center justify-center font-black text-cyan-600 text-xs">
+                    Py
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-gray-900 block leading-tight">Paytm</span>
+                    <span className="text-[9px] text-gray-500">Direct</span>
+                  </div>
+                </a>
+
+                {/* Any UPI App / BHIM / CRED */}
+                <a
+                  href={upiDeepLink}
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && activeOrder) {
+                      sessionStorage.setItem('sbs_active_checkout_session', JSON.stringify({ activeOrder, step: 'UPI_PAYMENT' }));
+                    }
+                  }}
+                  className="p-3 rounded-2xl bg-white border-2 border-gray-200 hover:border-emerald-600 hover:bg-emerald-50/50 flex items-center gap-2.5 shadow-2xs active:scale-95 transition-all text-left"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center font-black text-emerald-600 text-xs">
+                    UPI
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-gray-900 block leading-tight">Any UPI App</span>
+                    <span className="text-[9px] text-gray-500">CRED / BHIM</span>
+                  </div>
+                </a>
               </div>
-
-              <p className="text-[10px] text-gray-500 font-medium">
-                Supports Google Pay, PhonePe, Paytm, BHIM, CRED, Amazon Pay & all banking UPI apps
-              </p>
             </div>
 
-            {/* Mobile "Pay through UPI App" Button (Deep Link) */}
-            <div>
-              <a
-                href={upiDeepLink}
-                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-md active:scale-98 transition-all"
+            {/* UPI ID Copy Card */}
+            <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-2.5 flex items-center justify-between gap-2 text-xs">
+              <div className="text-left min-w-0">
+                <span className="text-[10px] text-gray-400 font-bold block uppercase">UPI ID</span>
+                <span className="font-mono font-bold text-gray-900 truncate block">{storeUpiId}</span>
+              </div>
+              <button
+                type="button"
+                onClick={copyUpiId}
+                className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 hover:border-gray-400 rounded-xl font-bold text-gray-700 text-[11px] shadow-2xs active:scale-95 transition-all flex-shrink-0"
               >
-                <Smartphone className="w-4 h-4" />
-                <span>Pay through UPI App</span>
-                <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-              </a>
-              <p className="text-[10px] text-gray-400 text-center mt-1.5 font-medium">
-                Tap above to open installed UPI apps directly on mobile
-              </p>
+                {copiedUpi ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-emerald-600">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-gray-500" />
+                    <span>Copy ID</span>
+                  </>
+                )}
+              </button>
             </div>
 
-            {/* Completion Button */}
-            <div className="pt-2 border-t border-gray-100">
+            {/* QR Code Toggle for Scanning */}
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setShowQrCodeOnMobile(prev => !prev)}
+                className="w-full py-2 px-3 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <QrCode className="w-3.5 h-3.5 text-[#F95721]" />
+                <span>{showQrCodeOnMobile ? 'Hide QR Code' : '📷 Show QR Code to Scan'}</span>
+              </button>
+
+              {showQrCodeOnMobile && (
+                <div className="bg-white border-2 border-orange-100 rounded-3xl p-4 text-center space-y-2 shadow-2xs mt-2 animate-fadeIn">
+                  <div className="flex justify-center py-1">
+                    <div className="p-2.5 bg-white rounded-2xl border-2 border-gray-100 shadow-xs inline-block">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={qrCodeUrl}
+                        alt="UPI Payment QR Code"
+                        className="w-44 h-44 object-contain rounded-lg"
+                        loading="eager"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-gray-500 font-medium">Scan with camera or payment scanner app</p>
+                </div>
+              )}
+            </div>
+
+            {/* Completed Payment Button */}
+            <div className="pt-2 border-t border-gray-100 space-y-2">
               <button
                 type="button"
                 onClick={handleCustomerConfirmedPayment}
                 className="w-full py-3.5 bg-[#F95721] hover:bg-[#E44813] text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
               >
                 <CheckCircle2 className="w-5 h-5" />
-                <span>✓ I&apos;ve Completed Payment</span>
+                <span>✓ I&apos;ve Paid • Confirm on WhatsApp</span>
               </button>
-              <p className="text-[10px] text-gray-400 text-center mt-1.5 font-medium">
-                Click after transferring ₹{orderAmount.toLocaleString('en-IN')} in your UPI app
+              <p className="text-[10px] text-gray-400 text-center font-medium">
+                Tap after sending ₹{orderAmount.toLocaleString('en-IN')} to finish verification
               </p>
             </div>
           </div>
@@ -785,9 +1007,9 @@ export const CheckoutModal: React.FC = () => {
               <div className="w-14 h-14 bg-orange-100 text-[#F95721] rounded-3xl flex items-center justify-center mx-auto shadow-inner">
                 <MessageCircle className="w-7 h-7" />
               </div>
-              <h3 className="text-lg font-black text-gray-900">Payment confirmation</h3>
+              <h3 className="text-lg font-black text-gray-900">Payment Confirmation</h3>
               <p className="text-xs text-gray-600 leading-relaxed px-2 font-medium">
-                Send us a quick WhatsApp message after completing your payment. We&apos;ll verify your payment and respond as quickly as possible.
+                Send us a quick WhatsApp message with your Order ID. We will verify your payment and update your order immediately!
               </p>
             </div>
 
@@ -803,7 +1025,7 @@ export const CheckoutModal: React.FC = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 font-bold flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-gray-400" /> Payment Confirmation Time
+                  <Clock className="w-3.5 h-3.5 text-gray-400" /> Confirmation Time
                 </span>
                 <span className="font-bold text-gray-800">{paymentConfirmedTime || 'Just now'}</span>
               </div>
@@ -830,24 +1052,24 @@ export const CheckoutModal: React.FC = () => {
                 <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 flex items-center gap-3 text-emerald-900">
                   <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0" />
                   <div>
-                    <span className="font-black block text-emerald-950 text-xs">WhatsApp confirmation opened ✓</span>
+                    <span className="font-black block text-emerald-950 text-xs">WhatsApp message opened ✓</span>
                     <span className="text-[11px] text-emerald-800">
-                      We will verify your UPI payment and update your order timeline shortly.
+                      We will verify your UPI payment and update your tracking timeline shortly.
                     </span>
                   </div>
                 </div>
 
-                {/* Return to Home Button */}
+                {/* Primary Button */}
                 <button
                   type="button"
-                  onClick={handleReturnToHome}
+                  onClick={handleViewOrdersAndTrack}
                   className="w-full py-3.5 bg-[#F95721] hover:bg-[#E44813] text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
                 >
-                  <Home className="w-4 h-4" />
-                  <span>Return to Home</span>
+                  <Check className="w-4 h-4" />
+                  <span>Done • View My Orders</span>
                 </button>
 
-                <div className="text-center">
+                <div className="text-center pt-1">
                   <button
                     type="button"
                     onClick={handleSendWhatsAppConfirmation}

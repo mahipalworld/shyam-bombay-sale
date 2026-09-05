@@ -80,16 +80,16 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo.png"
+              src="/logo.png?v=3"
               alt="SBS Logo"
-              className="h-7 sm:h-8 md:h-9 object-contain group-hover:scale-105 transition-transform"
+              className="h-7 sm:h-8.5 w-auto object-contain group-hover:scale-105 transition-transform flex-shrink-0"
             />
-            <div className="flex flex-col items-start leading-none">
-              <span className="text-[10px] sm:text-xs font-black tracking-widest text-gray-900 uppercase">
+            <div className="flex flex-col items-start justify-center leading-none">
+              <span className="text-base sm:text-lg font-black tracking-tight text-gray-900 group-hover:text-[#F95721] transition-colors">
                 STORE
               </span>
-              <span className="hidden sm:block text-[8px] font-semibold text-gray-400 tracking-wider uppercase">
-                Everyday Essentials
+              <span className="hidden sm:block text-[8.5px] font-bold text-gray-400 tracking-wider uppercase mt-0.5">
+                Smart Products • Better Prices
               </span>
             </div>
           </div>

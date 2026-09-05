@@ -53,35 +53,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isPhonePromptOpen, setIsPhonePromptOpen] = useState(false);
 
   // Helper to check if phone prompt should be shown
-  const checkShouldPromptPhone = (phone?: string | null) => {
+  const checkShouldPromptPhone = (phone?: string | null, userId?: string) => {
     if (typeof window === 'undefined') return;
-    const isDismissed = sessionStorage.getItem('sbs_phone_prompt_dismissed') === 'true';
-    const hasPhone = phone && phone.trim().length >= 10;
-    if (!hasPhone && !isDismissed) {
+    const uId = userId || supabaseUser?.id;
+    const cachedPhone = uId ? localStorage.getItem(`sbs_user_phone_${uId}`) : null;
+    const effectivePhone = (phone && phone.trim().length >= 10) ? phone : cachedPhone;
+    
+    // Check if dismissed previously on this device
+    const isDismissed = uId ? localStorage.getItem(`sbs_phone_dismissed_${uId}`) === 'true' : false;
+
+    if (!effectivePhone && !isDismissed) {
       setIsPhonePromptOpen(true);
+    } else {
+      setIsPhonePromptOpen(false);
     }
   };
 
   // Load profile from Supabase
   const loadProfile = async (user: User) => {
     if (!supabase) return;
+    const cachedPhone = (typeof window !== 'undefined') ? (localStorage.getItem(`sbs_user_phone_${user.id}`) || '') : '';
+    const metadataPhone = user.user_metadata?.phone || '';
+
     const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    const phone = data?.phone || metadataPhone || cachedPhone || '';
+    
+    if (phone && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`sbs_user_phone_${user.id}`, phone);
+      } catch { }
+    }
+
     if (data) {
       const profileUser: AuthUser = {
         id: data.id,
         email: data.email || user.email || '',
         name: data.name || user.user_metadata?.full_name || user.user_metadata?.name || 'User',
-        phone: data.phone || '',
+        phone,
         avatar_url: data.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture,
         reward_points: data.reward_points ?? 250,
       };
       setAuthUser(profileUser);
-      checkShouldPromptPhone(data.phone);
+      checkShouldPromptPhone(phone, user.id);
     } else {
       // Auto-create profile for Google / OAuth login
       const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
       const avatar_url = user.user_metadata?.avatar_url || user.user_metadata?.picture;
-      const phone = user.user_metadata?.phone || '';
       await supabase.from('profiles').upsert({
         id: user.id,
         name,
@@ -99,8 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         reward_points: 250,
       };
       setAuthUser(newAuthUser);
-      // Automatically prompt new OAuth user for mobile number with default +91
-      checkShouldPromptPhone(phone);
+      checkShouldPromptPhone(phone, user.id);
     }
   };
 
@@ -144,8 +160,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const openPhonePrompt = () => setIsPhonePromptOpen(true);
   const closePhonePrompt = () => setIsPhonePromptOpen(false);
   const dismissPhonePrompt = () => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('sbs_phone_prompt_dismissed', 'true');
+    if (supabaseUser && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`sbs_phone_dismissed_${supabaseUser.id}`, 'true');
+      } catch { }
     }
     setIsPhonePromptOpen(false);
   };
@@ -168,16 +186,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       finalPhone = `+91 ${finalPhone}`;
     }
 
+    // 1. Save to local storage immediately
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`sbs_user_phone_${supabaseUser.id}`, finalPhone);
+        localStorage.setItem(`sbs_phone_dismissed_${supabaseUser.id}`, 'true');
+      } catch { }
+    }
+
+    // 2. Update auth user_metadata
+    try {
+      await supabase.auth.updateUser({ data: { phone: finalPhone } });
+    } catch { }
+
+    // 3. Update profiles table
     const { error } = await supabase.from('profiles').update({ phone: finalPhone }).eq('id', supabaseUser.id);
     if (error) {
-      return { error: error.message };
+      console.warn('Profiles update warning:', error.message);
     }
 
     setAuthUser(prev => prev ? { ...prev, phone: finalPhone } : null);
     setIsPhonePromptOpen(false);
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('sbs_phone_prompt_dismissed', 'true');
-    }
     return { error: null };
   };
 

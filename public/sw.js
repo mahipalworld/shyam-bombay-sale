@@ -1,5 +1,5 @@
 // SBS Store Service Worker
-const CACHE_NAME = 'sbs-pwa-v4';
+const CACHE_NAME = 'sbs-pwa-v6';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',

@@ -30,6 +30,8 @@ export const CartView: React.FC = () => {
     applyCoupon,
     removeCoupon,
     cartSubtotal,
+    cartDiscountMRP,
+    couponDiscount,
     cartDiscount,
     cartDeliveryCharge,
     cartTotal,
@@ -347,12 +349,28 @@ export const CartView: React.FC = () => {
                 </span>
               </div>
 
-              <div className="flex justify-between text-gray-600">
-                <span>Discount on MRP</span>
-                <span className="font-bold text-[#00A859]">
-                  -₹{cartDiscount.toLocaleString('en-IN')}
-                </span>
-              </div>
+              {cartDiscountMRP > 0 && (
+                <div className="flex justify-between text-gray-600">
+                  <span>Product Discount (on MRP)</span>
+                  <span className="font-bold text-[#00A859]">
+                    -₹{cartDiscountMRP.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              )}
+
+              {appliedCoupon && couponDiscount > 0 && (
+                <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-100 font-semibold">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-black uppercase px-1.5 py-0.5 bg-emerald-600 text-white rounded-md">
+                      {appliedCoupon.code}
+                    </span>
+                    <span>Coupon Discount</span>
+                  </div>
+                  <span className="font-black text-[#00A859]">
+                    -₹{couponDiscount.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              )}
 
               <div className="flex justify-between text-gray-600">
                 <span>Delivery Charges</span>

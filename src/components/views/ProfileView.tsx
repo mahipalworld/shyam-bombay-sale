@@ -306,15 +306,17 @@ export const ProfileView: React.FC = () => {
           }`}>
             <div className="flex items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-xs ${
-                  isInstalled ? 'bg-emerald-100 text-[#00A859]' : 'bg-gradient-to-br from-[#F95721] to-[#FF7A3D] text-white'
-                }`}>
-                  {isInstalled ? (
+                {isInstalled ? (
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-xs bg-emerald-100 text-[#00A859]">
                     <Check className="w-6 h-6 stroke-[2.5px]" />
-                  ) : (
-                    <Smartphone className="w-6 h-6 stroke-[2.2px]" />
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <img 
+                    src="/icon-192x192.png" 
+                    alt="SBS App Icon" 
+                    className="w-12 h-12 rounded-2xl shadow-xs border border-orange-100 object-cover flex-shrink-0" 
+                  />
+                )}
                 <div className="min-w-0">
                   <h4 className="text-xs sm:text-sm font-extrabold text-gray-900 flex items-center gap-1.5">
                     <span>{isInstalled ? '✓ SBS App Installed' : '📱 Add SBS to Home Screen'}</span>

@@ -231,7 +231,10 @@ interface StoreContextType {
   updateFlashDealConfig: (updates: Partial<FlashDealConfig>) => void;
 
   // Calculation helpers
+  cartOriginalMRP: number;
   cartSubtotal: number;
+  cartDiscountMRP: number;
+  couponDiscount: number;
   cartDiscount: number;
   cartDeliveryCharge: number;
   cartTotal: number;
@@ -765,6 +768,25 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         } catch {
           // ignore parsing error
         }
+      }
+
+      // Saved customer addresses (One-time entry persistence)
+      const savedAddresses = localStorage.getItem('sbs_saved_addresses');
+      if (savedAddresses) {
+        try {
+          const parsed = JSON.parse(savedAddresses);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAddresses(parsed);
+          }
+        } catch { }
+      }
+
+      // Notification permission state (Never re-prompt if already granted)
+      const isNotifClaimed = localStorage.getItem('sbs_notif_reward_claimed') === 'true';
+      const isPermGranted = typeof Notification !== 'undefined' && Notification.permission === 'granted';
+      if (isNotifClaimed || isPermGranted) {
+        setIsNotificationRewardClaimed(true);
+        setIsNotificationPromptOpen(false);
       }
 
     } catch (e) {
@@ -1669,6 +1691,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const isUpi = paymentMethod.includes('UPI') || paymentMethod === 'UPI';
     const initialPaymentStatus: PaymentStatus = options?.paymentStatus || (isUpi ? 'PENDING' : 'PAYMENT_VERIFIED');
 
+    // Auto-save address permanently if provided
+    if (address && address.street) {
+      addAddress(address);
+    }
+
     const newOrder: Order = {
       id: `ord_${Date.now()}`,
       orderNumber: orderNum,
@@ -2028,32 +2055,63 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // User Profile & Addresses
   const updateUserProfile = (updates: Partial<UserProfile>) => {
-    setUser((prev) => ({ ...prev, ...updates }));
+    setUser((prev) => {
+      const updated = { ...prev, ...updates };
+      try {
+        localStorage.setItem('sbs_user', JSON.stringify(updated));
+      } catch { }
+      return updated;
+    });
     showToast('Profile updated successfully!');
   };
 
-  const addAddress = (newAddr: Omit<Address, 'id'>) => {
+  const addAddress = (newAddr: Omit<Address, 'id'> & { id?: string }) => {
     const address: Address = {
       ...newAddr,
-      id: `addr_${Date.now()}`,
+      id: newAddr.id || `addr_${Date.now()}`,
     };
-    if (address.isDefault) {
-      setAddresses((prev) => prev.map((a) => ({ ...a, isDefault: false })).concat(address));
-    } else {
-      setAddresses((prev) => [...prev, address]);
-    }
-    showToast('Address added!');
+    setAddresses((prev) => {
+      // Check if address with same street & pincode already exists -> update it
+      const existingIdx = prev.findIndex(a => 
+        (a.id === address.id) || 
+        (a.street && address.street && a.street.trim().toLowerCase() === address.street.trim().toLowerCase() && a.pincode === address.pincode)
+      );
+      let updated: Address[];
+      if (existingIdx >= 0) {
+        updated = [...prev];
+        updated[existingIdx] = { ...updated[existingIdx], ...address, isDefault: address.isDefault ?? updated[existingIdx].isDefault };
+      } else if (address.isDefault || prev.length === 0) {
+        updated = prev.map((a) => ({ ...a, isDefault: false })).concat({ ...address, isDefault: true });
+      } else {
+        updated = [...prev, address];
+      }
+      try {
+        localStorage.setItem('sbs_saved_addresses', JSON.stringify(updated));
+      } catch { }
+      return updated;
+    });
+    showToast('Address saved! 📍');
   };
 
   const setDefaultAddress = (addressId: string) => {
-    setAddresses((prev) =>
-      prev.map((a) => ({ ...a, isDefault: a.id === addressId }))
-    );
+    setAddresses((prev) => {
+      const updated = prev.map((a) => ({ ...a, isDefault: a.id === addressId }));
+      try {
+        localStorage.setItem('sbs_saved_addresses', JSON.stringify(updated));
+      } catch { }
+      return updated;
+    });
     showToast('Default address updated');
   };
 
   const deleteAddress = (addressId: string) => {
-    setAddresses((prev) => prev.filter((a) => a.id !== addressId));
+    setAddresses((prev) => {
+      const updated = prev.filter((a) => a.id !== addressId);
+      try {
+        localStorage.setItem('sbs_saved_addresses', JSON.stringify(updated));
+      } catch { }
+      return updated;
+    });
     showToast('Address deleted');
   };
 
@@ -2917,7 +2975,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setHomepageSections,
         setStoreSettings,
 
+        cartOriginalMRP,
         cartSubtotal,
+        cartDiscountMRP,
+        couponDiscount,
         cartDiscount: cartDiscount,
         cartDeliveryCharge,
         cartTotal,

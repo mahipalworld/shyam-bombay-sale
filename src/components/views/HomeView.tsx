@@ -293,23 +293,34 @@ export const HomeView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Collage Image Showcase */}
-              <div className="relative flex items-center justify-center md:justify-end mt-1 md:mt-0">
-                <div className="relative w-full max-w-[320px] h-40 md:h-52 flex items-center justify-center">
+              {/* Mascot & Product Showcase */}
+              <div className="relative flex items-center justify-center md:justify-end mt-2 md:mt-0">
+                <div className="relative w-full max-w-[340px] h-44 sm:h-52 md:h-60 flex items-center justify-center">
+                  {/* Central Waving Mascot */}
+                  <div className="relative z-10 flex flex-col items-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/icon-512x512.png?v=2"
+                      alt="SBS Mascot"
+                      className="w-32 sm:w-40 md:w-48 h-32 sm:h-40 md:h-48 object-contain rounded-3xl drop-shadow-2xl hover:scale-105 transition-transform duration-300 pointer-events-none"
+                    />
+                  </div>
+                  {/* Floating deal 1 */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=500&auto=format&fit=crop&q=80"
                     alt="Washing Machine"
                     onClick={() => handleHeroProductClick('p1')}
-                    className="w-24 sm:w-28 md:w-34 h-24 sm:h-28 md:h-34 object-contain rounded-2xl drop-shadow-xl transform -rotate-6 hover:scale-105 active:scale-95 transition-transform bg-white/90 p-2 cursor-pointer tap-active"
+                    className="absolute -left-2 sm:left-0 top-1/2 -translate-y-1/2 w-16 sm:w-20 md:w-24 h-16 sm:h-20 md:h-24 object-contain rounded-2xl drop-shadow-lg transform -rotate-12 hover:scale-110 active:scale-95 transition-transform bg-white/95 p-1.5 cursor-pointer tap-active border border-orange-100/80"
                     title="View Mini Washing Machine"
                   />
+                  {/* Floating deal 2 */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="https://images.unsplash.com/photo-1621607512214-68297480165e?w=500&auto=format&fit=crop&q=80"
                     alt="Trimmer"
                     onClick={() => handleHeroProductClick('p4')}
-                    className="w-22 sm:w-26 md:w-30 h-24 sm:h-28 md:h-34 object-contain -ml-6 rounded-2xl drop-shadow-xl transform rotate-6 hover:scale-105 active:scale-95 transition-transform bg-white/90 p-2 cursor-pointer tap-active"
+                    className="absolute -right-2 sm:right-0 top-1/2 -translate-y-1/2 w-16 sm:w-20 md:w-24 h-16 sm:h-20 md:h-24 object-contain rounded-2xl drop-shadow-lg transform rotate-12 hover:scale-110 active:scale-95 transition-transform bg-white/95 p-1.5 cursor-pointer tap-active border border-orange-100/80"
                     title="View Cordless Trimmer"
                   />
                 </div>

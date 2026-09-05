@@ -161,8 +161,9 @@ export const NotificationRewardModal: React.FC = () => {
   } = useStore();
 
   const [loading, setLoading] = useState(false);
+  const isGranted = (typeof window !== 'undefined' && typeof Notification !== 'undefined' && Notification.permission === 'granted') || (typeof window !== 'undefined' && localStorage.getItem('sbs_notif_reward_claimed') === 'true');
 
-  if (!isNotificationPromptOpen || isNotificationRewardClaimed) return null;
+  if (!isNotificationPromptOpen || isNotificationRewardClaimed || isGranted) return null;
 
   const handleClaim = async () => {
     setLoading(true);

@@ -89,14 +89,13 @@ export const AuthModal: React.FC = () => {
           >
             <X className="w-4 h-4" />
           </button>
-          <div className="flex items-center gap-2 mb-3 bg-white/90 px-3 py-1.5 rounded-2xl w-fit">
+          <div className="flex items-center gap-2 mb-3 bg-white/95 px-3 py-1.5 rounded-2xl w-fit shadow-xs">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo.png"
+              src="/logo.png?v=3"
               alt="SBS Logo"
-              className="h-7 object-contain"
+              className="h-6 w-auto object-contain flex-shrink-0"
             />
-            <span className="text-gray-900 font-black text-sm tracking-tight">STORE</span>
           </div>
           <h2 className="text-white font-bold text-2xl leading-tight">
             {isLogin ? 'Welcome back!' : 'Create account'}

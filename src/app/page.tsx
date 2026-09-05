@@ -96,14 +96,16 @@ export default function App() {
           <div className="max-w-6xl mx-auto px-4 md:px-8 space-y-8">
             <div className="grid grid-cols-4 gap-8">
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/logo.png"
+                    src="/logo.png?v=3"
                     alt="SBS Logo"
-                    className="h-8 object-contain brightness-110"
+                    className="h-8 w-auto object-contain flex-shrink-0 bg-white/10 p-1 rounded-lg"
                   />
-                  <span className="text-xs font-extrabold text-white uppercase tracking-widest">STORE</span>
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold">Everyday Essentials</span>
+                  </div>
                 </div>
                 <p className="text-xs text-gray-400 leading-relaxed">
                   Smart Products. Better Prices. Everyday essentials curated for a modern and smarter home.

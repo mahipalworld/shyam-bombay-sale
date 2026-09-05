@@ -25,10 +25,12 @@ export const IOSInstallGuideModal: React.FC<IOSInstallGuideModalProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200 text-[#F95721] flex items-center justify-center">
-              <Smartphone className="w-5 h-5" />
-            </div>
+          <div className="flex items-center gap-3">
+            <img 
+              src="/icon-192x192.png" 
+              alt="SBS App Icon" 
+              className="w-12 h-12 rounded-2xl shadow-xs border border-orange-100 object-cover flex-shrink-0" 
+            />
             <div>
               <h3 className="text-base font-extrabold text-gray-900">Install SBS on iOS</h3>
               <p className="text-xs text-gray-500">Add to your Home Screen in 3 easy steps</p>

@@ -19,6 +19,18 @@ interface StoryItem {
 
 const STORIES_DATA: StoryItem[] = [
   {
+    id: 's0',
+    productId: 'p1',
+    title: 'Meet SBS',
+    tag: 'Official',
+    thumbnail: '/icon-192x192.png?v=2',
+    videoImage: '/icon-512x512.png?v=2',
+    badge: '👋 Meet Your SBS Buddy',
+    headline: 'Smart Products. Better Prices. Guaranteed.',
+    bullet1: 'Everyday essentials curated directly for your lifestyle',
+    bullet2: 'Fast nationwide shipping with secure UPI & COD payments',
+  },
+  {
     id: 's1',
     productId: 'p1',
     title: 'Mini Washer',
