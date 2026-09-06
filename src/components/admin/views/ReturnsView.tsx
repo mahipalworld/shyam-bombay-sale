@@ -14,6 +14,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { ReturnRequest } from '@/types';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export const ReturnsView: React.FC = () => {
   const { returnRequests, updateReturnRequestStatus, showToast } = useStore();
@@ -100,8 +101,7 @@ export const ReturnsView: React.FC = () => {
 
               {/* Product & Customer Details */}
               <div className="flex items-center gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={ret.productImage} alt={ret.productName} className="w-12 h-12 rounded-2xl object-contain bg-gray-50 p-1 border border-gray-100" />
+                <ResolvedImage src={ret.productImage} alt={ret.productName} className="w-12 h-12 rounded-2xl object-contain bg-gray-50 p-1 border border-gray-100" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold text-gray-900 truncate">{ret.productName}</p>
                   <p className="text-[10px] text-gray-500">Customer: {ret.customerName}</p>

@@ -317,6 +317,19 @@ export interface StoreSettings {
   enableScratchCard?: boolean;
   enableFlashDeals?: boolean;
   enableConfetti?: boolean;
+  rewardPointsThreshold?: number; // e.g. 100 points
+  rewardDiscountAmount?: number; // e.g. ₹50 OFF
+  rewardProgramActive?: boolean;
+}
+
+export interface RewardTransaction {
+  id: string;
+  userId: string;
+  type: 'EARNED' | 'REDEEMED' | 'WELCOME';
+  points: number;
+  description: string;
+  orderId?: string;
+  createdAt: string;
 }
 
 export interface S3MediaItem {

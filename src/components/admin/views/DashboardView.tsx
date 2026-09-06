@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { AdminActiveTab } from '../AdminMobileNav';
 import { Product, Order } from '@/types';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 interface DashboardViewProps {
   onNavigateToTab: (tab: AdminActiveTab) => void;
@@ -374,8 +375,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="text-xs font-black text-gray-400 w-4 text-center">#{idx + 1}</span>
                   <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center flex-shrink-0 border border-gray-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.image} alt={p.name} className="w-full h-full object-contain" />
+                    <ResolvedImage src={p.image} alt={p.name} className="w-full h-full object-contain" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-gray-900 truncate">{p.name}</p>

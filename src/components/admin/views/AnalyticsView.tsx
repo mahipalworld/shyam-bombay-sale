@@ -14,6 +14,7 @@ import {
   RotateCcw,
   Sparkles
 } from 'lucide-react';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export const AnalyticsView: React.FC = () => {
   const { orders, adminOrders, products } = useStore();
@@ -137,8 +138,7 @@ export const AnalyticsView: React.FC = () => {
             <div key={p.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-2xl">
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="font-black text-gray-400 text-xs w-4">#{idx + 1}</span>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.image} alt={p.name} className="w-9 h-9 rounded-xl object-contain bg-white p-0.5" />
+                <ResolvedImage src={p.image} alt={p.name} className="w-9 h-9 rounded-xl object-contain bg-white p-0.5" />
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-gray-900 truncate">{p.name}</p>
                   <p className="text-[10px] text-gray-500">₹{p.price}</p>

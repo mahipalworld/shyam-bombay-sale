@@ -25,7 +25,10 @@ import {
   Cloud,
   Play,
   Lock,
-  RefreshCw
+  RefreshCw,
+  ArrowLeft,
+  ArrowRight,
+  AlertCircle
 } from 'lucide-react';
 import { Product, ProductDescriptionBlock, S3MediaItem } from '@/types';
 import { ResolvedImage, ResolvedVideo } from '../common/ResolvedMedia';
@@ -72,7 +75,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
     dimensions: '',
     material: '',
     color: '',
-    warranty: '6 Months Replacement',
+    warranty: '',
     // Publishing status
     publishStatus: 'active' as 'active' | 'draft' | 'out_of_stock',
     isTrending: false,
@@ -89,6 +92,11 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
   });
   const [showAddBlockForm, setShowAddBlockForm] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState('');
+
+  // Media Gallery Management States
+  const [previewMedia, setPreviewMedia] = useState<{ type: 'image' | 'video'; url: string; title?: string } | null>(null);
+  const [deleteConfirmIdx, setDeleteConfirmIdx] = useState<number | null>(null);
+  const [deleteVideoConfirm, setDeleteVideoConfirm] = useState(false);
 
   // AWS S3 Upload States
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -151,43 +159,32 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         isDealOfDay: !!productToEdit.isDealOfDay,
       });
     } else {
-      // Default reset
+      // Default reset - blank product without dummy presets
       setFormData({
         name: '',
         category: categories[0]?.id || 'home',
         subcategory: '',
         shortDescription: '',
         description: '',
-        image: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&auto=format&fit=crop&q=80',
-        images: [
-          'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=800&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80'
-        ],
+        image: '',
+        images: [],
         video: '',
         videos: [],
         videoThumbnail: '',
-        descriptionBlocks: [
-          {
-            id: 'db_default',
-            title: 'High Performance & Durability',
-            badge: 'Key Feature',
-            text: 'Crafted with premium grade components designed for prolonged daily utility and seamless operation.',
-            image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80'
-          }
-        ],
-        mrp: '999',
-        price: '599',
-        discountPercentage: 40,
+        descriptionBlocks: [],
+        mrp: '',
+        price: '',
+        discountPercentage: 0,
         sku: `SKU-${Date.now().toString().slice(-5)}`,
-        stockCount: '25',
-        lowStockThreshold: '5',
+        stockCount: '10',
+        lowStockThreshold: (storeSettings.lowStockThreshold || 5).toString(),
         stockStatus: 'In Stock',
-        capacity: '500 ml',
-        weight: '400 g',
-        dimensions: '20 x 12 x 8 cm',
-        material: 'Premium ABS Plastic & Microfiber',
-        color: 'Pastel Peach / White',
-        warranty: '1 Year Brand Warranty',
+        capacity: '',
+        weight: '',
+        dimensions: '',
+        material: '',
+        color: '',
+        warranty: '',
         publishStatus: 'active',
         isTrending: false,
         isBestSeller: false,
@@ -311,6 +308,34 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
     showToast('Gallery image added! 📸');
   };
 
+  const handleMoveImage = (index: number, direction: 'left' | 'right') => {
+    const targetIndex = direction === 'left' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= formData.images.length) return;
+
+    setFormData(prev => {
+      const updated = [...prev.images];
+      const [moved] = updated.splice(index, 1);
+      updated.splice(targetIndex, 0, moved);
+      return {
+        ...prev,
+        images: updated,
+        image: prev.image === moved && targetIndex === 0 ? moved : (prev.image || updated[0] || '')
+      };
+    });
+  };
+
+  const handleSetPrimaryImage = (url: string) => {
+    setFormData(prev => {
+      const filtered = prev.images.filter(item => item !== url);
+      return {
+        ...prev,
+        image: url,
+        images: [url, ...filtered]
+      };
+    });
+    showToast('Set as primary cover image (Position 1)! ⭐');
+  };
+
   const handleRemoveGalleryImage = (index: number) => {
     setFormData(prev => {
       const updated = prev.images.filter((_, idx) => idx !== index);
@@ -320,11 +345,8 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         image: updated.length > 0 ? (prev.image === prev.images[index] ? updated[0] : prev.image) : ''
       };
     });
-  };
-
-  const handleSetPrimaryImage = (url: string) => {
-    setFormData(prev => ({ ...prev, image: url }));
-    showToast('Set as cover image! ⭐');
+    setDeleteConfirmIdx(null);
+    showToast('Photo removed from gallery');
   };
 
   const handleAddDescriptionBlock = () => {
@@ -660,64 +682,151 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                 </div>
 
                 {/* Active Gallery Strip & Primary Selector */}
-                <div className="border border-gray-200 rounded-2xl p-3.5 bg-gray-50/80 space-y-3">
+                <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50/80 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-gray-700">
-                      Product Gallery Photos ({formData.images.length})
-                    </span>
-                    <span className="text-[10px] text-gray-500 font-medium">
-                      ⭐ Click star to set cover image
-                    </span>
+                    <div>
+                      <span className="text-xs font-black text-gray-800">
+                        Product Gallery ({formData.images.length} Photos)
+                      </span>
+                      <p className="text-[10px] text-gray-500">
+                        Tap photo to preview • Reorder with arrows • Star to set cover
+                      </p>
+                    </div>
+                    {formData.images.length > 0 && (
+                      <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
+                        Cover = Position 1
+                      </span>
+                    )}
                   </div>
 
                   {formData.images.length === 0 ? (
-                    <p className="text-xs text-gray-400 text-center py-4">
-                      No gallery photos added yet. Upload photos to AWS S3 above.
-                    </p>
+                    <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-2xl bg-white/60">
+                      <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-1.5" />
+                      <p className="text-xs font-bold text-gray-700">No gallery photos added yet</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        Upload photos directly to AWS S3 above or select from S3 Media library.
+                      </p>
+                    </div>
                   ) : (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {formData.images.map((imgUrl, idx) => {
                         const isPrimary = formData.image === imgUrl || (idx === 0 && !formData.image);
+                        const isConfirming = deleteConfirmIdx === idx;
+
                         return (
                           <div
                             key={idx}
-                            className={`relative aspect-square rounded-2xl bg-white p-1.5 border-2 overflow-hidden flex flex-col justify-between group shadow-2xs ${
-                              isPrimary ? 'border-[#F95721] ring-2 ring-orange-200' : 'border-gray-200'
+                            className={`relative rounded-2xl bg-white border-2 overflow-hidden flex flex-col shadow-xs transition-all ${
+                              isPrimary ? 'border-[#F95721] ring-2 ring-orange-200/60' : 'border-gray-200 hover:border-gray-300'
                             }`}
                           >
-                            <ResolvedImage
-                              src={imgUrl}
-                              alt={`Gallery ${idx + 1}`}
-                              className="w-full h-full object-contain mix-blend-multiply"
-                            />
-
-                            {/* Primary Badge */}
-                            {isPrimary && (
-                              <span className="absolute top-1 left-1 text-[8px] font-black uppercase text-white bg-[#F95721] px-1.5 py-0.5 rounded-md shadow-xs">
-                                Cover
+                            {/* Card Header: Position badge & Cover indicator */}
+                            <div className="px-2 py-1 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                              <span className="text-[10px] font-black text-gray-700 flex items-center gap-1">
+                                <span className="w-4 h-4 rounded-full bg-gray-200 text-gray-800 flex items-center justify-center text-[9px] font-black">
+                                  {idx + 1}
+                                </span>
+                                {isPrimary ? 'Cover' : 'Photo'}
                               </span>
-                            )}
-
-                            {/* Action Overlay */}
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 transition-opacity rounded-xl p-1">
-                              {!isPrimary && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleSetPrimaryImage(imgUrl)}
-                                  className="p-1 rounded-lg bg-white text-[#F95721] hover:bg-orange-50"
-                                  title="Set as cover image"
-                                >
-                                  <Star className="w-3.5 h-3.5" />
-                                </button>
+                              {isPrimary ? (
+                                <span className="text-[9px] font-black uppercase text-white bg-[#F95721] px-1.5 py-0.2 rounded shadow-xs">
+                                  ★ Primary
+                                </span>
+                              ) : (
+                                <span className="text-[9px] text-gray-400 font-medium">#{idx + 1}</span>
                               )}
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveGalleryImage(idx)}
-                                className="p-1 rounded-lg bg-white text-red-500 hover:bg-red-50"
-                                title="Delete photo"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                            </div>
+
+                            {/* Image Container: Tapping ONLY opens full-screen preview, NEVER deletes */}
+                            <div
+                              onClick={() => setPreviewMedia({ type: 'image', url: imgUrl, title: `Product Photo #${idx + 1}` })}
+                              className="relative aspect-square w-full p-2 cursor-pointer group bg-[#F9FAFB] flex items-center justify-center overflow-hidden"
+                              title="Tap to preview photo"
+                            >
+                              <ResolvedImage
+                                src={imgUrl}
+                                alt={`Gallery ${idx + 1}`}
+                                className="w-full h-full object-contain mix-blend-multiply transition-transform group-hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <span className="px-2 py-1 bg-white/95 rounded-xl text-[10px] font-bold text-gray-900 shadow-md flex items-center gap-1">
+                                  <Eye className="w-3 h-3 text-[#F95721]" />
+                                  Preview
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Control Bar: Reordering, Cover, and Safe Delete */}
+                            <div className="p-1.5 bg-gray-50/90 border-t border-gray-100 flex items-center justify-between gap-1">
+                              {isConfirming ? (
+                                <div className="w-full flex items-center justify-between gap-1 animate-fadeIn">
+                                  <span className="text-[9px] font-black text-red-600">Delete?</span>
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveGalleryImage(idx)}
+                                      className="px-2 py-0.5 bg-red-600 text-white rounded-lg text-[9px] font-black hover:bg-red-700"
+                                    >
+                                      Yes
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setDeleteConfirmIdx(null)}
+                                      className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded-lg text-[9px] font-bold hover:bg-gray-300"
+                                    >
+                                      No
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="flex items-center gap-1">
+                                    {/* Move Left */}
+                                    <button
+                                      type="button"
+                                      disabled={idx === 0}
+                                      onClick={() => handleMoveImage(idx, 'left')}
+                                      className="p-1 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-black hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                      title="Move Left"
+                                    >
+                                      <ArrowLeft className="w-3 h-3" />
+                                    </button>
+
+                                    {/* Move Right */}
+                                    <button
+                                      type="button"
+                                      disabled={idx === formData.images.length - 1}
+                                      onClick={() => handleMoveImage(idx, 'right')}
+                                      className="p-1 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-black hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                      title="Move Right"
+                                    >
+                                      <ArrowRight className="w-3 h-3" />
+                                    </button>
+
+                                    {/* Set as Cover */}
+                                    {!isPrimary && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleSetPrimaryImage(imgUrl)}
+                                        className="p-1 rounded-lg bg-white border border-orange-200 text-[#F95721] hover:bg-orange-50 transition-colors"
+                                        title="Make primary cover"
+                                      >
+                                        <Star className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  {/* Delete Button (triggers confirmation state) */}
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteConfirmIdx(idx)}
+                                    className="p-1 rounded-lg bg-white border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                                    title="Delete photo"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </div>
                         );
@@ -737,7 +846,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     <div>
                       <h4 className="text-xs font-bold text-gray-900">Product Demo Video (AWS S3)</h4>
                       <p className="text-[10px] text-gray-500">
-                        Plays seamlessly in Product Details modal with seek & byte-range streaming.
+                        Tap preview to watch. Streams via byte-range in customer gallery.
                       </p>
                     </div>
                   </div>
@@ -748,47 +857,79 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
 
                 {formData.video ? (
                   <div className="bg-white border border-purple-200 rounded-2xl p-3 flex flex-col sm:flex-row gap-3 items-center justify-between">
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                      <div className="w-24 h-16 rounded-xl bg-slate-900 overflow-hidden relative flex-shrink-0 flex items-center justify-center">
+                    {/* Tapping video thumbnail triggers full preview */}
+                    <div 
+                      onClick={() => setPreviewMedia({ type: 'video', url: formData.video, title: 'Product Video Demo' })}
+                      className="flex items-center gap-3 w-full sm:w-auto cursor-pointer group"
+                      title="Tap to preview video"
+                    >
+                      <div className="w-24 h-16 rounded-xl bg-slate-900 overflow-hidden relative flex-shrink-0 flex items-center justify-center shadow-xs">
                         <ResolvedVideo
                           src={formData.video}
                           className="w-full h-full object-cover"
                           controls={false}
                           muted
                         />
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                          <Play className="w-4 h-4 text-white" />
+                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 flex items-center justify-center transition-colors">
+                          <Play className="w-5 h-5 text-white fill-white drop-shadow-md" />
                         </div>
                       </div>
                       <div className="overflow-hidden">
-                        <p className="text-xs font-bold text-gray-900 truncate">
+                        <p className="text-xs font-bold text-gray-900 truncate group-hover:text-purple-700 transition-colors">
                           {formData.video.split('/').pop()}
                         </p>
                         <p className="text-[10px] text-purple-600 font-mono truncate">
                           {formData.video}
                         </p>
                         <span className="inline-block mt-1 text-[9px] bg-emerald-100 text-emerald-700 font-semibold px-1.5 py-0.5 rounded">
-                          ✓ S3 Video Attached
+                          ✓ S3 Video Attached • Tap to Play
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                      <button
-                        type="button"
-                        onClick={() => openLibraryPicker('VIDEO')}
-                        className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all"
-                      >
-                        Change
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, video: '', videos: [] }))}
-                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Remove</span>
-                      </button>
+                      {deleteVideoConfirm ? (
+                        <div className="flex items-center gap-1 animate-fadeIn">
+                          <span className="text-[10px] font-bold text-red-600">Remove?</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, video: '', videos: [] }));
+                              setDeleteVideoConfirm(false);
+                              showToast('Video removed');
+                            }}
+                            className="px-2.5 py-1 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteVideoConfirm(false)}
+                            className="px-2.5 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-300"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openLibraryPicker('VIDEO')}
+                            className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all"
+                          >
+                            Change
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteVideoConfirm(true)}
+                            className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                            title="Remove video"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Remove</span>
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -1469,6 +1610,68 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                 className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-xl"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full-screen Media Preview Modal */}
+      {previewMedia && (
+        <div 
+          className="fixed inset-0 z-[60] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setPreviewMedia(null)}
+        >
+          <div 
+            className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between text-white">
+              <div className="flex items-center gap-2">
+                {previewMedia.type === 'video' ? (
+                  <Film className="w-4 h-4 text-purple-400" />
+                ) : (
+                  <ImageIcon className="w-4 h-4 text-orange-400" />
+                )}
+                <span className="text-xs font-bold truncate">
+                  {previewMedia.title || (previewMedia.type === 'video' ? 'Video Preview' : 'Photo Preview')}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewMedia(null)}
+                className="w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 bg-black flex items-center justify-center p-2 min-h-[320px] max-h-[70vh] overflow-hidden">
+              {previewMedia.type === 'video' ? (
+                <ResolvedVideo
+                  src={previewMedia.url}
+                  className="max-h-[65vh] w-auto max-w-full rounded-2xl"
+                  controls
+                  autoPlay
+                  playsInline
+                />
+              ) : (
+                <ResolvedImage
+                  src={previewMedia.url}
+                  alt="Preview"
+                  className="max-h-[65vh] w-auto max-w-full object-contain rounded-2xl"
+                />
+              )}
+            </div>
+
+            <div className="p-3 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+              <span className="font-mono text-[10px] truncate max-w-xs">{previewMedia.url}</span>
+              <button
+                type="button"
+                onClick={() => setPreviewMedia(null)}
+                className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold"
+              >
+                Close Preview
               </button>
             </div>
           </div>

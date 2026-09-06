@@ -72,6 +72,9 @@ export const CheckoutModal: React.FC = () => {
   const [copiedUpi, setCopiedUpi] = useState<boolean>(false);
   const [showQrCodeOnMobile, setShowQrCodeOnMobile] = useState<boolean>(false);
 
+  // Rewards points redemption state
+  const [redeemPointsChecked, setRedeemPointsChecked] = useState<boolean>(false);
+
   // New address form state - starts with cached address if available
   const [newAddr, setNewAddr] = useState({
     name: '',
@@ -118,6 +121,7 @@ export const CheckoutModal: React.FC = () => {
       setPaymentConfirmedTime('');
       setIsWhatsAppOpened(false);
       setCopiedUpi(false);
+      setRedeemPointsChecked(false);
 
       if (addresses.length === 0) {
         setIsAddingNewAddress(true);
@@ -289,18 +293,24 @@ export const CheckoutModal: React.FC = () => {
     setIsProcessingOrder(true);
 
     try {
+      const checkoutOptions = {
+        pointsRedeemed: pointsDiscount > 0 ? pointsThreshold : undefined,
+        pointsDiscount: pointsDiscount > 0 ? pointsDiscount : undefined,
+      };
+
       if (selectedPayment === 'UPI') {
         // Create SBS Order BEFORE payment
         const order = placeOrder('UPI (GPay / PhonePe)', targetAddress, {
           paymentStatus: 'PENDING',
-          keepCart: true
+          keepCart: true,
+          ...checkoutOptions,
         });
         setActiveOrder(order);
         setIsProcessingOrder(false);
         setCheckoutStep('UPI_PAYMENT');
       } else {
         // COD or Card
-        const order = placeOrder(selectedPayment, targetAddress);
+        const order = placeOrder(selectedPayment, targetAddress, checkoutOptions);
         setIsProcessingOrder(false);
         setIsCheckoutOpen(false);
         try {
@@ -415,8 +425,15 @@ export const CheckoutModal: React.FC = () => {
     setIsCheckoutOpen(false);
   };
 
+  const pointsThreshold = storeSettings?.rewardPointsThreshold || 100;
+  const pointsDiscountAmount = storeSettings?.rewardDiscountAmount || 50;
+  const availablePoints = user?.rewardPoints || 0;
+  const canRedeemPoints = availablePoints >= pointsThreshold;
+  const pointsDiscount = (redeemPointsChecked && canRedeemPoints) ? pointsDiscountAmount : 0;
+  const payableTotal = Math.max(0, cartTotal - pointsDiscount);
+
   const storeUpiId = (storeSettings?.upiId && !storeSettings.upiId.includes('fam@') && !storeSettings.upiId.includes('sbsstore@')) ? storeSettings.upiId : 'suhanarajpurohit3@oksbi';
-  const orderAmount = activeOrder ? activeOrder.total : cartTotal;
+  const orderAmount = activeOrder ? activeOrder.total : payableTotal;
   const upiDeepLink = `upi://pay?pa=${encodeURIComponent(storeUpiId)}&pn=SBS&am=${orderAmount.toFixed(2)}&cu=INR`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(upiDeepLink)}&margin=10`;
 
@@ -768,6 +785,38 @@ export const CheckoutModal: React.FC = () => {
                 ))}
               </div>
 
+              {/* SBS Rewards Points Redemption Card */}
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl p-3 text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🎁</span>
+                    <div>
+                      <span className="font-extrabold text-amber-950 block text-xs">SBS Rewards</span>
+                      <span className="text-[11px] text-amber-800 font-medium">
+                        Balance: <strong className="text-amber-950 font-bold">{availablePoints}</strong> points
+                      </span>
+                    </div>
+                  </div>
+                  {canRedeemPoints ? (
+                    <label className="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1.5 rounded-xl border border-amber-300 shadow-2xs hover:bg-amber-50/50 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={redeemPointsChecked}
+                        onChange={(e) => setRedeemPointsChecked(e.target.checked)}
+                        className="accent-amber-600 rounded w-4 h-4 cursor-pointer"
+                      />
+                      <span className="text-[11px] font-bold text-amber-950">
+                        Use {pointsThreshold} pts (-₹{pointsDiscountAmount})
+                      </span>
+                    </label>
+                  ) : (
+                    <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/70 px-2 py-1 rounded-lg">
+                      Need {Math.max(0, pointsThreshold - availablePoints)} more pts for ₹{pointsDiscountAmount} OFF
+                    </span>
+                  )}
+                </div>
+              </div>
+
               {/* Amount Breakdown */}
               <div className="border-t border-gray-100 pt-2 space-y-1.5 text-xs">
                 <div className="flex justify-between text-gray-500">
@@ -791,13 +840,22 @@ export const CheckoutModal: React.FC = () => {
                     <span className="font-black text-[#00A859]">-₹{couponDiscount.toLocaleString('en-IN')}</span>
                   </div>
                 )}
+                {pointsDiscount > 0 && (
+                  <div className="flex justify-between items-center text-amber-800 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200 font-semibold text-[11px]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm">🎁</span>
+                      <span>SBS Rewards Discount</span>
+                    </div>
+                    <span className="font-black text-amber-700">-₹{pointsDiscount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-gray-500">
                   <span>Delivery Charges</span>
                   <span>{cartDeliveryCharge === 0 ? <span className="text-[#00A859] font-bold">FREE</span> : `₹${cartDeliveryCharge}`}</span>
                 </div>
                 <div className="flex justify-between items-baseline pt-2 border-t font-bold text-sm text-gray-900">
                   <span>Total Payable</span>
-                  <span className="text-lg text-[#F95721]">₹{cartTotal.toLocaleString('en-IN')}</span>
+                  <span className="text-lg text-[#F95721]">₹{payableTotal.toLocaleString('en-IN')}</span>
                 </div>
               </div>
             </div>
@@ -814,12 +872,12 @@ export const CheckoutModal: React.FC = () => {
                 ) : !supabaseUser ? (
                   <>
                     <LogIn className="w-4 h-4" />
-                    <span>Sign In to Place Order • ₹{cartTotal.toLocaleString('en-IN')}</span>
+                    <span>Sign In to Place Order • ₹{payableTotal.toLocaleString('en-IN')}</span>
                   </>
                 ) : (
                   <>
                     <ShieldCheck className="w-4 h-4" />
-                    <span>{selectedPayment === 'UPI' ? `Pay ₹${cartTotal.toLocaleString('en-IN')} via UPI` : `Place Order • ₹${cartTotal.toLocaleString('en-IN')}`}</span>
+                    <span>{selectedPayment === 'UPI' ? `Pay ₹${payableTotal.toLocaleString('en-IN')} via UPI` : `Place Order • ₹${payableTotal.toLocaleString('en-IN')}`}</span>
                   </>
                 )}
               </button>

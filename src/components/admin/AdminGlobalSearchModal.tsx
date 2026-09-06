@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Product, Order, Category } from '@/types';
 import { AdminActiveTab } from './AdminMobileNav';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 interface AdminGlobalSearchModalProps {
   isOpen: boolean;
@@ -157,8 +158,7 @@ export const AdminGlobalSearchModal: React.FC<AdminGlobalSearchModalProps> = ({
                     className="p-2.5 rounded-2xl bg-gray-50 hover:bg-orange-50/50 border border-gray-100 flex items-center justify-between cursor-pointer transition-colors"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.image} alt={p.name} className="w-9 h-9 rounded-xl object-contain bg-white p-0.5" />
+                      <ResolvedImage src={p.image} alt={p.name} className="w-9 h-9 rounded-xl object-contain bg-white p-0.5" />
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-gray-900 line-clamp-1">{p.name}</p>
                         <p className="text-[10px] text-gray-500">₹{p.price} • {p.stockCount} in stock</p>

@@ -214,6 +214,50 @@ export const SettingsView: React.FC = () => {
                 );
               })}
             </div>
+
+            {/* SBS Rewards Program Configuration */}
+            <div className="pt-3 border-t border-gray-100 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-gray-900 text-xs">SBS Rewards Point Program</h4>
+                  <p className="text-[10px] text-gray-500">Configure customer points threshold and checkout discount amount</p>
+                </div>
+                <div 
+                  onClick={() => setFormData({ ...formData, rewardProgramActive: formData.rewardProgramActive !== false ? false : true })}
+                  className={`w-10 h-6 rounded-full p-0.5 transition-colors flex items-center cursor-pointer ${
+                    formData.rewardProgramActive !== false ? 'bg-[#F95721] justify-end' : 'bg-gray-300 justify-start'
+                  }`}
+                >
+                  <div className="w-5 h-5 rounded-full bg-white shadow-xs" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block font-bold text-gray-700 text-[11px] mb-1">Points Required for Discount</label>
+                  <input
+                    type="number"
+                    min={10}
+                    value={formData.rewardPointsThreshold || 100}
+                    onChange={(e) => setFormData({ ...formData, rewardPointsThreshold: parseInt(e.target.value) || 100 })}
+                    className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721] font-bold"
+                  />
+                  <p className="text-[9px] text-gray-400 mt-0.5">e.g. 100 points</p>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 text-[11px] mb-1">Discount Amount (₹)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={formData.rewardDiscountAmount || 50}
+                    onChange={(e) => setFormData({ ...formData, rewardDiscountAmount: parseFloat(e.target.value) || 50 })}
+                    className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721] font-bold text-emerald-600"
+                  />
+                  <p className="text-[9px] text-gray-400 mt-0.5">e.g. ₹50 OFF</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

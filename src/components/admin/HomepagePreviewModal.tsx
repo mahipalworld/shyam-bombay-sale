@@ -3,6 +3,7 @@
 import React from 'react';
 import { useStore } from '@/context/StoreContext';
 import { X, Smartphone, Sparkles, Star, ShoppingBag, ShieldCheck, ChevronRight } from 'lucide-react';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 interface HomepagePreviewModalProps {
   isOpen: boolean;
@@ -147,8 +148,7 @@ export const HomepagePreviewModal: React.FC<HomepagePreviewModalProps> = ({
                   {trendingList.slice(0, 2).map((p) => (
                     <div key={p.id} className="bg-white rounded-2xl p-2.5 border border-gray-100 shadow-xs space-y-1">
                       <div className="w-full h-20 bg-gray-50 rounded-xl p-1 flex items-center justify-center">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={p.image} alt={p.name} className="w-full h-full object-contain" />
+                        <ResolvedImage src={p.image} alt={p.name} className="w-full h-full object-contain" />
                       </div>
                       <p className="font-bold text-gray-800 text-[11px] line-clamp-1">{p.name}</p>
                       <div className="flex items-center justify-between">
@@ -169,8 +169,7 @@ export const HomepagePreviewModal: React.FC<HomepagePreviewModalProps> = ({
                   {bestSellersList.slice(0, 2).map((p) => (
                     <div key={p.id} className="bg-white rounded-2xl p-2.5 border border-gray-100 shadow-xs space-y-1">
                       <div className="w-full h-20 bg-gray-50 rounded-xl p-1 flex items-center justify-center">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={p.image} alt={p.name} className="w-full h-full object-contain" />
+                        <ResolvedImage src={p.image} alt={p.name} className="w-full h-full object-contain" />
                       </div>
                       <p className="font-bold text-gray-800 text-[11px] line-clamp-1">{p.name}</p>
                       <div className="flex items-center justify-between">

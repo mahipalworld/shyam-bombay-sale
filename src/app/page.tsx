@@ -23,6 +23,8 @@ import { AddressesModal } from '@/components/modals/AddressesModal';
 import { CouponsModal } from '@/components/modals/CouponsModal';
 import { CustomerNotificationsModal } from '@/components/modals/CustomerNotificationsModal';
 import { NotificationRewardModal } from '@/components/modals/NotificationRewardPrompt';
+import { HelpCenterModal } from '@/components/modals/HelpCenterModal';
+import { RewardsModal } from '@/components/modals/RewardsModal';
 import { CheckCircle2, AlertCircle, Info, Heart, ShoppingBag, ShieldCheck } from 'lucide-react';
 
 export default function App() {
@@ -33,6 +35,10 @@ export default function App() {
     selectedSubcategoryFilter,
     setSelectedSubcategoryFilter,
     setActiveTab,
+    isHelpCenterOpen,
+    setIsHelpCenterOpen,
+    isRewardsOpen,
+    setIsRewardsOpen,
     toast 
   } = useStore();
 
@@ -125,10 +131,10 @@ export default function App() {
               <div className="space-y-2 text-xs">
                 <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Customer Support</h4>
                 <ul className="space-y-1 text-gray-400">
-                  <li className="py-1">Help Center & FAQs</li>
-                  <li className="py-1">Track Your Order</li>
-                  <li className="py-1">Return & Refund Policy</li>
-                  <li className="py-1">Shipping Policy</li>
+                  <li><button onClick={() => setIsHelpCenterOpen(true)} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Help Center & FAQs</button></li>
+                  <li><button onClick={() => setActiveTab('profile')} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Track Your Order</button></li>
+                  <li><button onClick={() => setIsHelpCenterOpen(true)} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Return & Refund Policy</button></li>
+                  <li><button onClick={() => setIsHelpCenterOpen(true)} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Store Location & Directions</button></li>
                 </ul>
               </div>
 
@@ -193,6 +199,8 @@ export default function App() {
       <CouponsModal />
       <CustomerNotificationsModal />
       <NotificationRewardModal />
+      <HelpCenterModal isOpen={isHelpCenterOpen} onClose={() => setIsHelpCenterOpen(false)} />
+      <RewardsModal isOpen={isRewardsOpen} onClose={() => setIsRewardsOpen(false)} />
     </div>
   );
 }

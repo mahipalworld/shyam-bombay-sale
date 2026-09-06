@@ -17,6 +17,7 @@ import {
   ArrowDownRight
 } from 'lucide-react';
 import { Product } from '@/types';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export const InventoryView: React.FC = () => {
   const { products, updateProduct, inventoryLogs, addInventoryLog, showToast, storeSettings } = useStore();
@@ -154,8 +155,7 @@ export const InventoryView: React.FC = () => {
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-12 h-12 rounded-2xl bg-gray-50 p-1 flex items-center justify-center flex-shrink-0 border border-gray-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.image} alt={p.name} className="w-full h-full object-contain" />
+                    <ResolvedImage src={p.image} alt={p.name} className="w-full h-full object-contain" />
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-xs font-black text-gray-900 truncate">{p.name}</h3>

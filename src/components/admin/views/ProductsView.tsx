@@ -17,6 +17,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { Product } from '@/types';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 interface ProductsViewProps {
   onOpenAddModal: () => void;
@@ -261,8 +262,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 <div className="flex items-start gap-3">
                   {/* Large Product Thumbnail */}
                   <div className="w-20 h-20 rounded-2xl bg-gray-50 p-1.5 flex items-center justify-center flex-shrink-0 border border-gray-100 relative">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.image} alt={p.name} className="w-full h-full object-contain" />
+                    <ResolvedImage src={p.image} alt={p.name} className="w-full h-full object-contain" />
                     {p.isTrending && (
                       <span className="absolute -top-1.5 -left-1.5 text-[9px] bg-red-500 text-white font-black px-1.5 py-0.2 rounded-full">
                         HOT

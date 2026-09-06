@@ -570,35 +570,6 @@ export const CategoriesView: React.FC = () => {
                     className="w-full border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F95721] text-xs"
                   />
                 </div>
-
-                {/* Quick Presets */}
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-600 mb-1.5">
-                    Or Pick from High-Quality Presets:
-                  </label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {SAMPLE_CATEGORY_IMAGES.map((preset) => (
-                      <button
-                        type="button"
-                        key={preset.label}
-                        onClick={() => setFormImage(preset.url)}
-                        className={`p-1.5 rounded-xl border flex flex-col items-center gap-1 transition-all ${
-                          formImage === preset.url 
-                            ? 'border-[#F95721] bg-orange-50/80 shadow-xs' 
-                            : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
-                        </div>
-                        <span className="text-[9px] font-bold text-gray-700 truncate w-full text-center">
-                          {preset.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
 
               {/* PASTEL CARD THEME COLOR */}

@@ -25,6 +25,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { ResolvedImage, ResolvedVideo } from '../common/ResolvedMedia';
+import { getProductMediaList, ProductMediaItem } from '@/lib/productMedia';
 
 export const ProductDetailModal: React.FC = () => {
   const { 
@@ -39,16 +40,17 @@ export const ProductDetailModal: React.FC = () => {
   } = useStore();
 
   const [quantity, setQuantity] = useState(1);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [activeMediaTab, setActiveMediaTab] = useState<'photos' | 'video'>('photos');
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [isZoomed, setIsZoomed] = useState(false);
 
   React.useEffect(() => {
     if (selectedProductDetail) {
       setQuantity(1);
-      setActiveImageIndex(0);
-      setActiveMediaTab('photos');
+      setActiveMediaIndex(0);
       setLightboxImage(null);
+      setIsZoomed(false);
     }
   }, [selectedProductDetail?.id]);
 
@@ -56,19 +58,48 @@ export const ProductDetailModal: React.FC = () => {
   const p = selectedProductDetail;
   const wishlisted = isInWishlist(p.id);
 
-  // Collect all gallery images
-  const allImages = p.images && p.images.length > 0 
-    ? p.images 
-    : [p.image];
-
-  const currentImage = allImages[activeImageIndex] || p.image;
-
-  const handleNextImage = () => {
-    setActiveImageIndex((prev) => (prev + 1) % allImages.length);
+  // Canonical ordered media list (Photos + Videos in exact sequence)
+  const mediaList = getProductMediaList(p);
+  const currentMedia: ProductMediaItem = mediaList[activeMediaIndex] || mediaList[0] || {
+    id: `fallback_${p.id}`,
+    type: 'image',
+    url: p.image,
+    isCover: true,
   };
 
-  const handlePrevImage = () => {
-    setActiveImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+  const handleNextMedia = () => {
+    if (mediaList.length <= 1) return;
+    setIsZoomed(false);
+    setActiveMediaIndex((prev) => (prev + 1) % mediaList.length);
+  };
+
+  const handlePrevMedia = () => {
+    if (mediaList.length <= 1) return;
+    setIsZoomed(false);
+    setActiveMediaIndex((prev) => (prev - 1 + mediaList.length) % mediaList.length);
+  };
+
+  // Touch swipe with angle threshold so vertical scrolling is unaffected
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchStartPos({ x: touch.clientX, y: touch.clientY });
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartPos) return;
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartPos.x;
+    const deltaY = touch.clientY - touchStartPos.y;
+    setTouchStartPos(null);
+
+    // Swipe horizontally if horizontal delta is dominant and > 35px
+    if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+      if (deltaX < 0) {
+        handleNextMedia();
+      } else {
+        handlePrevMedia();
+      }
+    }
   };
 
   const handleShare = () => {
@@ -130,64 +161,70 @@ export const ProductDetailModal: React.FC = () => {
 
           {/* Modal Body */}
           <div className="p-4 sm:p-5 space-y-5">
-            {/* Gallery Section */}
+            {/* Mobile-First Mixed Media Gallery Section */}
             <div className="space-y-3">
-              {/* Media Switcher Tab (if product has video) */}
-              {p.video && (
-                <div className="flex items-center justify-center gap-1.5 p-1 bg-gray-100 rounded-2xl w-fit mx-auto">
-                  <button
-                    type="button"
-                    onClick={() => setActiveMediaTab('photos')}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-                      activeMediaTab === 'photos'
-                        ? 'bg-white text-gray-900 shadow-xs'
-                        : 'text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span>Photos ({allImages.length})</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveMediaTab('video')}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-                      activeMediaTab === 'video'
-                        ? 'bg-purple-600 text-white shadow-xs'
-                        : 'text-purple-700 hover:text-purple-900'
-                    }`}
-                  >
-                    <Film className="w-3.5 h-3.5" />
-                    <span>Video Demo</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Main Media Stage */}
-              {activeMediaTab === 'video' && p.video ? (
-                <div className="relative aspect-square w-full rounded-2xl bg-black flex items-center justify-center border border-gray-200 overflow-hidden shadow-inner">
+              {/* Main Media Stage (Supports touch swipe & video/image rendering) */}
+              {currentMedia.type === 'video' ? (
+                <div 
+                  className="relative aspect-square w-full rounded-3xl bg-black flex items-center justify-center border border-gray-200 overflow-hidden shadow-inner"
+                  onTouchStart={handleTouchStart}
+                  onTouchEnd={handleTouchEnd}
+                >
                   <ResolvedVideo
-                    src={p.video}
+                    src={currentMedia.url}
                     className="w-full h-full object-contain"
                     controls
                     autoPlay
                     playsInline
                   />
-                  <span className="absolute top-3 left-3 text-[10px] font-extrabold text-white bg-purple-600/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs flex items-center gap-1">
-                    <Film className="w-3 h-3" /> S3 Video Stream
+                  <span className="absolute top-3 left-3 text-[10px] font-extrabold text-white bg-purple-600/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs flex items-center gap-1 z-10 pointer-events-none">
+                    <Film className="w-3 h-3" /> Product Video Demo
                   </span>
+                  {mediaList.length > 1 && (
+                    <span className="absolute top-3 right-3 text-[10px] font-extrabold text-white bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs z-10 pointer-events-none">
+                      {activeMediaIndex + 1} / {mediaList.length}
+                    </span>
+                  )}
+
+                  {/* Arrow controls if multiple media */}
+                  {mediaList.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handlePrevMedia}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 text-gray-800 flex items-center justify-center shadow-md border border-gray-200 hover:scale-105 active:scale-95 transition-all z-10"
+                        aria-label="Previous media"
+                      >
+                        <ChevronLeft className="w-4 h-4 stroke-[2.5px]" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleNextMedia}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 text-gray-800 flex items-center justify-center shadow-md border border-gray-200 hover:scale-105 active:scale-95 transition-all z-10"
+                        aria-label="Next media"
+                      >
+                        <ChevronRight className="w-4 h-4 stroke-[2.5px]" />
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : (
-                <div className="relative aspect-square w-full rounded-2xl bg-[#F9FAFB] p-4 flex items-center justify-center border border-gray-100 overflow-hidden group">
-                  {/* Image Counter Badge */}
-                  {allImages.length > 1 && (
-                    <span className="absolute top-3 left-3 z-10 text-[10px] font-extrabold text-gray-700 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-gray-100">
-                      {activeImageIndex + 1} / {allImages.length}
+                <div 
+                  className="relative aspect-square w-full rounded-3xl bg-[#F9FAFB] p-4 flex items-center justify-center border border-gray-100 overflow-hidden group select-none"
+                  onTouchStart={handleTouchStart}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  {/* Position Counter Badge */}
+                  {mediaList.length > 1 && (
+                    <span className="absolute top-3 left-3 z-10 text-[10px] font-extrabold text-gray-700 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-gray-100 flex items-center gap-1">
+                      <ImageIcon className="w-3 h-3 text-[#F95721]" />
+                      <span>{activeMediaIndex + 1} / {mediaList.length}</span>
                     </span>
                   )}
 
                   {/* Zoom / Lightbox Trigger */}
                   <button
-                    onClick={() => setLightboxImage(currentImage)}
+                    onClick={() => setLightboxImage(currentMedia.url)}
                     className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-600 hover:text-black flex items-center justify-center shadow-xs border border-gray-100 hover:scale-105 active:scale-95 transition-all"
                     title="View Fullscreen"
                   >
@@ -195,30 +232,35 @@ export const ProductDetailModal: React.FC = () => {
                   </button>
 
                   <div 
-                    className="w-full h-full cursor-pointer flex items-center justify-center"
-                    onClick={() => setLightboxImage(currentImage)}
+                    className="w-full h-full cursor-pointer flex items-center justify-center overflow-hidden"
+                    onDoubleClick={() => setIsZoomed(!isZoomed)}
+                    onClick={() => setLightboxImage(currentMedia.url)}
                   >
                     <ResolvedImage
-                      src={currentImage}
+                      src={currentMedia.url}
                       alt={p.name}
-                      className="w-full h-full object-contain mix-blend-multiply drop-shadow-md transition-all duration-300"
+                      className={`w-full h-full object-contain mix-blend-multiply drop-shadow-md transition-transform duration-300 ${
+                        isZoomed ? 'scale-150' : 'scale-100'
+                      }`}
                     />
                   </div>
 
-                  {/* Left/Right Arrow Controls (if multiple images) */}
-                  {allImages.length > 1 && (
+                  {/* Left/Right Arrow Controls (if multiple media) */}
+                  {mediaList.length > 1 && (
                     <>
                       <button
-                        onClick={handlePrevImage}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F95721] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all"
-                        aria-label="Previous image"
+                        type="button"
+                        onClick={handlePrevMedia}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F95721] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all z-10"
+                        aria-label="Previous media"
                       >
                         <ChevronLeft className="w-4 h-4 stroke-[2.5px]" />
                       </button>
                       <button
-                        onClick={handleNextImage}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F95721] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all"
-                        aria-label="Next image"
+                        type="button"
+                        onClick={handleNextMedia}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F95721] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all z-10"
+                        aria-label="Next media"
                       >
                         <ChevronRight className="w-4 h-4 stroke-[2.5px]" />
                       </button>
@@ -227,45 +269,73 @@ export const ProductDetailModal: React.FC = () => {
                 </div>
               )}
 
-              {/* Thumbnails Row */}
-              <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1">
-                {allImages.map((imgUrl, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setActiveMediaTab('photos');
-                      setActiveImageIndex(idx);
-                    }}
-                    className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gray-50 p-1 flex-shrink-0 border-2 overflow-hidden transition-all ${
-                      activeMediaTab === 'photos' && activeImageIndex === idx
-                        ? 'border-[#F95721] ring-2 ring-orange-200 scale-105 shadow-xs'
-                        : 'border-gray-200 hover:border-gray-300 opacity-70 hover:opacity-100'
-                    }`}
-                  >
-                    <ResolvedImage
-                      src={imgUrl}
-                      alt={`Thumb ${idx + 1}`}
-                      className="w-full h-full object-contain mix-blend-multiply"
+              {/* Pagination Dots */}
+              {mediaList.length > 1 && (
+                <div className="flex items-center justify-center gap-1.5 pt-0.5">
+                  {mediaList.map((item, idx) => (
+                    <button
+                      key={item.id || idx}
+                      type="button"
+                      onClick={() => {
+                        setIsZoomed(false);
+                        setActiveMediaIndex(idx);
+                      }}
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        activeMediaIndex === idx
+                          ? 'w-6 bg-[#F95721]'
+                          : item.type === 'video'
+                          ? 'w-2 bg-purple-400 hover:bg-purple-600'
+                          : 'w-2 bg-gray-300 hover:bg-gray-400'
+                      }`}
+                      aria-label={`Go to slide ${idx + 1}`}
                     />
-                  </button>
-                ))}
+                  ))}
+                </div>
+              )}
 
-                {/* Video thumbnail pill if present */}
-                {p.video && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveMediaTab('video')}
-                    className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-900 p-1 flex-shrink-0 border-2 overflow-hidden transition-all flex flex-col items-center justify-center ${
-                      activeMediaTab === 'video'
-                        ? 'border-purple-600 ring-2 ring-purple-200 scale-105 shadow-xs'
-                        : 'border-gray-300 opacity-80 hover:opacity-100'
-                    }`}
-                  >
-                    <Play className="w-5 h-5 text-purple-400 fill-purple-400" />
-                    <span className="text-[8px] font-bold text-white uppercase mt-0.5">Video</span>
-                  </button>
-                )}
-              </div>
+              {/* Thumbnails Row */}
+              {mediaList.length > 1 && (
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                  {mediaList.map((item, idx) => {
+                    const isActive = activeMediaIndex === idx;
+                    return (
+                      <button
+                        key={item.id || idx}
+                        type="button"
+                        onClick={() => {
+                          setIsZoomed(false);
+                          setActiveMediaIndex(idx);
+                        }}
+                        className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl p-1 flex-shrink-0 border-2 overflow-hidden transition-all ${
+                          isActive
+                            ? item.type === 'video'
+                              ? 'border-purple-600 ring-2 ring-purple-200 scale-105 shadow-xs'
+                              : 'border-[#F95721] ring-2 ring-orange-200 scale-105 shadow-xs'
+                            : 'border-gray-200 hover:border-gray-300 opacity-70 hover:opacity-100'
+                        } ${item.type === 'video' ? 'bg-slate-900' : 'bg-gray-50'}`}
+                      >
+                        {item.type === 'video' ? (
+                          <div className="w-full h-full flex flex-col items-center justify-center">
+                            <Play className="w-5 h-5 text-purple-400 fill-purple-400" />
+                            <span className="text-[8px] font-black text-white uppercase mt-0.5">Video</span>
+                          </div>
+                        ) : (
+                          <ResolvedImage
+                            src={item.url}
+                            alt={`Thumb ${idx + 1}`}
+                            className="w-full h-full object-contain mix-blend-multiply"
+                          />
+                        )}
+                        {item.isCover && (
+                          <span className="absolute top-0.5 left-0.5 text-[7px] font-black text-white bg-[#F95721] px-1 rounded shadow-xs">
+                            ★
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Title & Brand */}
@@ -461,13 +531,16 @@ export const ProductDetailModal: React.FC = () => {
           >
             <X className="w-6 h-6" />
           </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={lightboxImage}
-            alt="Enlarged preview"
-            className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
+          <div 
+            className="max-w-full max-h-[85vh] flex items-center justify-center p-2"
             onClick={(e) => e.stopPropagation()}
-          />
+          >
+            <ResolvedImage
+              src={lightboxImage}
+              alt="Enlarged preview"
+              className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
+            />
+          </div>
         </div>
       )}
     </>

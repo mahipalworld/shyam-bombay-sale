@@ -28,7 +28,8 @@ import {
   UserBroadcastNotification,
   ProductStory,
   ScratchCardConfig,
-  FlashDealConfig
+  FlashDealConfig,
+  RewardTransaction
 } from '@/types';
 import {
   INITIAL_CATEGORIES,
@@ -77,6 +78,8 @@ interface StoreContextType {
   isEditProfileOpen: boolean;
   isAddressesOpen: boolean;
   isCouponsOpen: boolean;
+  isHelpCenterOpen: boolean;
+  isRewardsOpen: boolean;
   orderListFilter: OrderStatus | 'ALL' | null;
   toast: { message: string; type?: 'success' | 'info' | 'error' } | null;
   flyingItems: { id: string; image: string; startX: number; startY: number; endX: number; endY: number }[];
@@ -123,6 +126,8 @@ interface StoreContextType {
   setIsEditProfileOpen: (open: boolean) => void;
   setIsAddressesOpen: (open: boolean) => void;
   setIsCouponsOpen: (open: boolean) => void;
+  setIsHelpCenterOpen: (open: boolean) => void;
+  setIsRewardsOpen: (open: boolean) => void;
   setOrderListFilter: (filter: OrderStatus | 'ALL' | null) => void;
   showToast: (message: string, type?: 'success' | 'info' | 'error') => void;
 
@@ -150,6 +155,8 @@ interface StoreContextType {
       paymentConfirmedAt?: string;
       whatsappConfirmedAt?: string;
       keepCart?: boolean;
+      pointsRedeemed?: number;
+      pointsDiscount?: number;
     }
   ) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
@@ -169,9 +176,15 @@ interface StoreContextType {
 
   // User Profile & Addresses
   updateUserProfile: (updates: Partial<UserProfile>) => void;
-  addAddress: (address: Omit<Address, 'id'>) => void;
-  setDefaultAddress: (addressId: string) => void;
-  deleteAddress: (addressId: string) => void;
+  addAddress: (address: Omit<Address, 'id'> & { id?: string }) => Promise<void>;
+  updateAddress: (id: string, updates: Partial<Address>) => Promise<void>;
+  setDefaultAddress: (addressId: string) => Promise<void>;
+  deleteAddress: (addressId: string) => Promise<void>;
+
+  // SBS Rewards System
+  rewardTransactions: RewardTransaction[];
+  redeemRewardPoints: (pointsToRedeem: number, orderId?: string) => Promise<{ success: boolean; discountAmount: number; error?: string }>;
+  awardOrderRewardPoints: (orderId: string, orderTotal: number) => Promise<void>;
 
   // Admin Catalog
   addProduct: (product: Omit<Product, 'id'>) => void;
@@ -257,6 +270,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [user, setUser] = useState<UserProfile>(INITIAL_USER);
   const [addresses, setAddresses] = useState<Address[]>(INITIAL_ADDRESSES);
+  const [rewardTransactions, setRewardTransactions] = useState<RewardTransaction[]>([]);
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
   const [adminOrders, setAdminOrders] = useState<Order[]>([]);
   const currentUserIdRef = useRef<string | null>(null);
@@ -280,6 +294,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isEditProfileOpen, setIsEditProfileOpen] = useState<boolean>(false);
   const [isAddressesOpen, setIsAddressesOpen] = useState<boolean>(false);
   const [isCouponsOpen, setIsCouponsOpen] = useState<boolean>(false);
+  const [isHelpCenterOpen, setIsHelpCenterOpen] = useState<boolean>(false);
+  const [isRewardsOpen, setIsRewardsOpen] = useState<boolean>(false);
   const [orderListFilter, setOrderListFilter] = useState<OrderStatus | 'ALL' | null>(null);
   const [toast, setToast] = useState<{ message: string; type?: 'success' | 'info' | 'error' } | null>(null);
   const [flyingItems, setFlyingItems] = useState<Array<{ id: string; image: string; startX: number; startY: number; endX: number; endY: number }>>([]);
@@ -856,6 +872,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               reviewCount: p.review_count,
               image: p.image,
               images: (p.images && p.images.length > 0) ? p.images : (initMatch?.images || [p.image]),
+              video: p.video || initMatch?.video || undefined,
+              videos: (p.videos && p.videos.length > 0) ? p.videos : (initMatch?.videos || []),
+              videoThumbnail: p.video_thumbnail || initMatch?.videoThumbnail || undefined,
               inStock: p.in_stock,
               stockCount: p.stock_count,
               description: p.description,
@@ -924,6 +943,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           reviewCount: p.review_count,
           image: p.image,
           images: p.images || [p.image],
+          video: p.video || undefined,
+          videos: p.videos || [],
+          videoThumbnail: p.video_thumbnail || undefined,
           inStock: p.in_stock,
           stockCount: p.stock_count,
           description: p.description,
@@ -956,6 +978,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   reviewCount: p.review_count ?? item.reviewCount,
                   image: p.image ?? item.image,
                   images: p.images ?? item.images,
+                  video: p.video !== undefined ? p.video : item.video,
+                  videos: p.videos !== undefined ? p.videos : item.videos,
+                  videoThumbnail: p.video_thumbnail !== undefined ? p.video_thumbnail : item.videoThumbnail,
                   inStock: p.in_stock ?? item.inStock,
                   stockCount: p.stock_count ?? item.stockCount,
                   description: p.description ?? item.description,
@@ -1183,28 +1208,91 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
         }
 
-        // Load wishlist
-        const { data: dbWishlist } = await supabase
-          .from('wishlist_items')
-          .select('*, products(*)')
-          .eq('user_id', userId);
+        // Load user addresses from Supabase user_addresses table
+        const { data: dbAddresses } = await supabase
+          .from('user_addresses')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
 
-        if (dbWishlist && dbWishlist.length > 0) {
-          setWishlist(dbWishlist.map((item: any) => ({
-            id: item.id,
-            productId: item.product_id,
-            addedAt: item.created_at,
-            product: {
-              id: item.products.id, name: item.products.name,
-              category: item.products.category, price: item.products.price,
-              originalPrice: item.products.original_price,
-              discountPercentage: item.products.discount_percentage,
-              rating: item.products.rating, reviewCount: item.products.review_count,
-              image: item.products.image, inStock: item.products.in_stock,
-              stockCount: item.products.stock_count, description: item.products.description || '',
-              features: item.products.features || [],
-            },
+        if (dbAddresses && dbAddresses.length > 0) {
+          const mappedAddr: Address[] = dbAddresses.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            phone: a.phone,
+            street: a.street,
+            city: a.city,
+            state: a.state,
+            pincode: a.pincode,
+            type: a.type || 'HOME',
+            isDefault: Boolean(a.is_default),
+          }));
+          setAddresses(mappedAddr);
+          try {
+            localStorage.setItem('sbs_saved_addresses', JSON.stringify(mappedAddr));
+          } catch { }
+        } else {
+          // Safe One-Time Migration: if user has addresses in localStorage, upload them to Supabase
+          const localSaved = typeof window !== 'undefined' ? localStorage.getItem('sbs_saved_addresses') : null;
+          if (localSaved) {
+            try {
+              const parsed: Address[] = JSON.parse(localSaved);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const toInsert = parsed.map(a => ({
+                  id: a.id.startsWith('addr_') ? a.id : `addr_${Date.now()}_${Math.floor(Math.random()*1000)}`,
+                  user_id: userId,
+                  name: a.name || 'Customer',
+                  phone: a.phone || '',
+                  street: a.street,
+                  city: a.city || 'City',
+                  state: a.state || 'State',
+                  pincode: a.pincode || '',
+                  type: a.type || 'HOME',
+                  is_default: Boolean(a.isDefault),
+                }));
+                await supabase.from('user_addresses').upsert(toInsert);
+                setAddresses(parsed);
+              }
+            } catch { }
+          }
+        }
+
+        // Load reward transactions and sync balance
+        const { data: dbTxns } = await supabase
+          .from('reward_transactions')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+
+        if (dbTxns && dbTxns.length > 0) {
+          setRewardTransactions(dbTxns.map((t: any) => ({
+            id: t.id,
+            userId: t.user_id,
+            type: t.type,
+            points: t.points,
+            description: t.description,
+            orderId: t.order_id,
+            createdAt: t.created_at,
           })));
+        } else {
+          // Record initial welcome points transaction if none exists
+          const welcomeTx: any = {
+            id: `rt_welcome_${userId}`,
+            user_id: userId,
+            type: 'WELCOME',
+            points: 250,
+            description: 'Welcome to SBS VIP Rewards 🎉',
+            created_at: new Date().toISOString(),
+          };
+          supabase.from('reward_transactions').upsert(welcomeTx).then();
+          setRewardTransactions([{
+            id: welcomeTx.id,
+            userId,
+            type: 'WELCOME',
+            points: 250,
+            description: welcomeTx.description,
+            createdAt: welcomeTx.created_at,
+          }]);
         }
 
         // Load strictly this customer's own orders
@@ -1732,11 +1820,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       paymentConfirmedAt?: string;
       whatsappConfirmedAt?: string;
       keepCart?: boolean;
+      pointsRedeemed?: number;
+      pointsDiscount?: number;
     }
   ) => {
     const orderNum = `SBS-${Math.floor(1000 + Math.random() * 9000)}`;
     const isUpi = paymentMethod.includes('UPI') || paymentMethod === 'UPI';
     const initialPaymentStatus: PaymentStatus = options?.paymentStatus || (isUpi ? 'PENDING' : 'PAYMENT_VERIFIED');
+    const finalDiscount = couponDiscount + (options?.pointsDiscount || 0);
+    const finalTotal = Math.max(0, cartTotal - (options?.pointsDiscount || 0));
 
     // Auto-save address permanently if provided
     if (address && address.street) {
@@ -1756,9 +1848,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         image: item.product.image,
       })),
       subtotal: cartSubtotal,
-      discount: couponDiscount,
+      discount: finalDiscount,
       deliveryCharge: cartDeliveryCharge,
-      total: cartTotal,
+      total: finalTotal,
       shippingAddress: address,
       paymentMethod,
       paymentStatus: initialPaymentStatus,
@@ -1903,8 +1995,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setUser((prev) => ({
       ...prev,
       ordersCount: prev.ordersCount + 1,
-      rewardPoints: prev.rewardPoints + Math.round(cartTotal * 0.05),
     }));
+
+    if (options?.pointsRedeemed && options.pointsRedeemed > 0) {
+      redeemRewardPoints(options.pointsRedeemed, orderNum);
+    }
+    awardOrderRewardPoints(orderNum, finalTotal);
 
     return newOrder;
   };
@@ -2185,13 +2281,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     showToast('Profile updated successfully!');
   };
 
-  const addAddress = (newAddr: Omit<Address, 'id'> & { id?: string }) => {
+  const addAddress = async (newAddr: Omit<Address, 'id'> & { id?: string }) => {
+    const addressId = newAddr.id || `addr_${Date.now()}`;
     const address: Address = {
       ...newAddr,
-      id: newAddr.id || `addr_${Date.now()}`,
+      id: addressId,
     };
+
     setAddresses((prev) => {
-      // Check if address with same street & pincode already exists -> update it
       const existingIdx = prev.findIndex(a => 
         (a.id === address.id) || 
         (a.street && address.street && a.street.trim().toLowerCase() === address.street.trim().toLowerCase() && a.pincode === address.pincode)
@@ -2211,9 +2308,82 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return updated;
     });
     showToast('Address saved! 📍');
+
+    // Persist to Supabase user_addresses
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const uId = session?.user?.id;
+        if (uId) {
+          if (address.isDefault) {
+            // Unset previous defaults in DB
+            await supabase.from('user_addresses').update({ is_default: false }).eq('user_id', uId);
+          }
+          await supabase.from('user_addresses').upsert({
+            id: address.id,
+            user_id: uId,
+            name: address.name,
+            phone: address.phone,
+            street: address.street,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+            type: address.type,
+            is_default: address.isDefault,
+            updated_at: new Date().toISOString()
+          });
+        }
+      } catch (err) {
+        console.error('Failed to sync address to Supabase:', err);
+      }
+    }
   };
 
-  const setDefaultAddress = (addressId: string) => {
+  const updateAddress = async (id: string, updates: Partial<Address>) => {
+    setAddresses((prev) => {
+      const updated = prev.map((a) => {
+        if (a.id === id) {
+          return { ...a, ...updates };
+        }
+        if (updates.isDefault) {
+          return { ...a, isDefault: false };
+        }
+        return a;
+      });
+      try {
+        localStorage.setItem('sbs_saved_addresses', JSON.stringify(updated));
+      } catch { }
+      return updated;
+    });
+    showToast('Address updated! 📍');
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const uId = session?.user?.id;
+        if (uId) {
+          if (updates.isDefault) {
+            await supabase.from('user_addresses').update({ is_default: false }).eq('user_id', uId);
+          }
+          const dbUpdates: any = { updated_at: new Date().toISOString() };
+          if (updates.name !== undefined) dbUpdates.name = updates.name;
+          if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+          if (updates.street !== undefined) dbUpdates.street = updates.street;
+          if (updates.city !== undefined) dbUpdates.city = updates.city;
+          if (updates.state !== undefined) dbUpdates.state = updates.state;
+          if (updates.pincode !== undefined) dbUpdates.pincode = updates.pincode;
+          if (updates.type !== undefined) dbUpdates.type = updates.type;
+          if (updates.isDefault !== undefined) dbUpdates.is_default = updates.isDefault;
+
+          await supabase.from('user_addresses').update(dbUpdates).eq('id', id);
+        }
+      } catch (err) {
+        console.error('Failed to update address in Supabase:', err);
+      }
+    }
+  };
+
+  const setDefaultAddress = async (addressId: string) => {
     setAddresses((prev) => {
       const updated = prev.map((a) => ({ ...a, isDefault: a.id === addressId }));
       try {
@@ -2222,9 +2392,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return updated;
     });
     showToast('Default address updated');
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const uId = session?.user?.id;
+        if (uId) {
+          await supabase.from('user_addresses').update({ is_default: false }).eq('user_id', uId);
+          await supabase.from('user_addresses').update({ is_default: true, updated_at: new Date().toISOString() }).eq('id', addressId);
+        }
+      } catch (err) {
+        console.error('Failed to set default address in Supabase:', err);
+      }
+    }
   };
 
-  const deleteAddress = (addressId: string) => {
+  const deleteAddress = async (addressId: string) => {
     setAddresses((prev) => {
       const updated = prev.filter((a) => a.id !== addressId);
       try {
@@ -2233,6 +2416,115 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return updated;
     });
     showToast('Address deleted');
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('user_addresses').delete().eq('id', addressId);
+      } catch (err) {
+        console.error('Failed to delete address from Supabase:', err);
+      }
+    }
+  };
+
+  // SBS Rewards Processing
+  const redeemRewardPoints = async (
+    pointsToRedeem: number, 
+    orderId?: string
+  ): Promise<{ success: boolean; discountAmount: number; error?: string }> => {
+    const threshold = storeSettings.rewardPointsThreshold || 100;
+    const discountVal = storeSettings.rewardDiscountAmount || 50;
+    const currentPoints = user.rewardPoints || 0;
+
+    if (currentPoints < threshold || currentPoints < pointsToRedeem) {
+      return { success: false, discountAmount: 0, error: `Need at least ${threshold} points to redeem.` };
+    }
+
+    const calculatedDiscount = Math.floor(pointsToRedeem / threshold) * discountVal;
+    if (calculatedDiscount <= 0) {
+      return { success: false, discountAmount: 0, error: 'Points not eligible for discount value.' };
+    }
+
+    // 1. Optimistically deduct points from user balance
+    const nextPoints = currentPoints - pointsToRedeem;
+    setUser(prev => ({ ...prev, rewardPoints: nextPoints }));
+
+    const txn: RewardTransaction = {
+      id: `rt_redeem_${Date.now()}`,
+      userId: currentUserIdRef.current || 'local_user',
+      type: 'REDEEMED',
+      points: -pointsToRedeem,
+      description: `Redeemed ${pointsToRedeem} points for ₹${calculatedDiscount} discount`,
+      orderId,
+      createdAt: new Date().toISOString(),
+    };
+    setRewardTransactions(prev => [txn, ...prev]);
+
+    // 2. Persist to Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const uId = session?.user?.id;
+        if (uId) {
+          await supabase.from('profiles').update({ reward_points: nextPoints }).eq('id', uId);
+          await supabase.from('reward_transactions').insert({
+            id: txn.id,
+            user_id: uId,
+            type: txn.type,
+            points: txn.points,
+            description: txn.description,
+            order_id: txn.orderId || null,
+            created_at: txn.createdAt
+          });
+        }
+      } catch (err) {
+        console.error('Failed to persist reward redemption:', err);
+      }
+    }
+
+    showToast(`Redeemed ${pointsToRedeem} points for ₹${calculatedDiscount} OFF! 🎁`);
+    return { success: true, discountAmount: calculatedDiscount };
+  };
+
+  const awardOrderRewardPoints = async (orderId: string, orderTotal: number) => {
+    // 5% cashback points on completed orders
+    const earnedPoints = Math.round(orderTotal * 0.05);
+    if (earnedPoints <= 0) return;
+
+    const currentPoints = user.rewardPoints || 0;
+    const nextPoints = currentPoints + earnedPoints;
+    setUser(prev => ({ ...prev, rewardPoints: nextPoints }));
+
+    const txn: RewardTransaction = {
+      id: `rt_earn_${Date.now()}`,
+      userId: currentUserIdRef.current || 'local_user',
+      type: 'EARNED',
+      points: earnedPoints,
+      description: `Earned 5% reward on Order ${orderId}`,
+      orderId,
+      createdAt: new Date().toISOString(),
+    };
+    setRewardTransactions(prev => [txn, ...prev]);
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const uId = session?.user?.id;
+        if (uId) {
+          await supabase.from('profiles').update({ reward_points: nextPoints }).eq('id', uId);
+          await supabase.from('reward_transactions').insert({
+            id: txn.id,
+            user_id: uId,
+            type: txn.type,
+            points: txn.points,
+            description: txn.description,
+            order_id: txn.orderId,
+            created_at: txn.createdAt
+          });
+        }
+      } catch (err) {
+        console.error('Failed to persist reward points earned:', err);
+      }
+    }
   };
 
   // Admin Catalog Actions
@@ -3027,6 +3319,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsEditProfileOpen,
         setIsAddressesOpen,
         setIsCouponsOpen,
+        isHelpCenterOpen,
+        setIsHelpCenterOpen,
+        isRewardsOpen,
+        setIsRewardsOpen,
         setOrderListFilter,
         showToast,
 
@@ -3051,8 +3347,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         updateUserProfile,
         addAddress,
+        updateAddress,
         setDefaultAddress,
         deleteAddress,
+
+        rewardTransactions,
+        redeemRewardPoints,
+        awardOrderRewardPoints,
 
         addProduct,
         updateProduct,

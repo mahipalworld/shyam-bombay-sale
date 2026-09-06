@@ -15,9 +15,7 @@ import {
   RotateCcw, 
   ChevronRight, 
   MapPin, 
-  CreditCard, 
   HelpCircle, 
-  Settings, 
   LogOut,
   Phone,
   Mail,
@@ -44,6 +42,10 @@ export const ProfileView: React.FC = () => {
     setIsEditProfileOpen, 
     setIsAddressesOpen, 
     setIsCouponsOpen, 
+    isRewardsOpen,
+    setIsRewardsOpen,
+    isHelpCenterOpen,
+    setIsHelpCenterOpen,
     setOrderListFilter,
     showToast,
     isEmailAuthorizedAdmin,
@@ -186,7 +188,7 @@ export const ProfileView: React.FC = () => {
 
               {/* SBS Rewards */}
               <div
-                onClick={() => showToast(`You have ${user.rewardPoints} SBS Reward points!`)}
+                onClick={() => setIsRewardsOpen(true)}
                 className="bg-white/80 backdrop-blur-xs rounded-2xl p-2 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white transition-colors"
               >
                 <div className="w-6 h-6 rounded-full bg-[#FFF9E6] text-[#D97706] flex items-center justify-center mb-1">
@@ -402,7 +404,7 @@ export const ProfileView: React.FC = () => {
 
             {/* SBS Rewards */}
             <div
-              onClick={() => showToast(`You have ${user.rewardPoints} points! Earn 5% on every purchase.`)}
+              onClick={() => setIsRewardsOpen(true)}
               className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3.5">
@@ -410,8 +412,13 @@ export const ProfileView: React.FC = () => {
                   <Award className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs md:text-sm font-bold text-gray-900">SBS Rewards</h4>
-                  <p className="text-[11px] text-gray-500">View your reward points & benefits</p>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs md:text-sm font-bold text-gray-900">SBS Rewards</h4>
+                    <span className="text-[10px] font-extrabold text-[#D97706] bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded-md">
+                      {user.rewardPoints} pts
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-500">View points balance, milestones & activity</p>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -428,32 +435,15 @@ export const ProfileView: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-xs md:text-sm font-bold text-gray-900">Addresses</h4>
-                  <p className="text-[11px] text-gray-500">Manage your delivery addresses</p>
+                  <p className="text-[11px] text-gray-500">Manage saved delivery addresses</p>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-gray-400" />
             </div>
 
-            {/* Payment Methods */}
+            {/* Help Center & Support */}
             <div
-              onClick={() => showToast('Payment methods saved: UPI (GPay/PhonePe), Saved Cards')}
-              className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-[#EAF4FC] text-[#0284C7] flex items-center justify-center">
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs md:text-sm font-bold text-gray-900">Payment Methods</h4>
-                  <p className="text-[11px] text-gray-500">Manage cards, UPI & wallets</p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </div>
-
-            {/* Help Center */}
-            <div
-              onClick={() => showToast('SBS Customer Support: support@sbsstore.com | 1800-123-727')}
+              onClick={() => setIsHelpCenterOpen(true)}
               className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3.5">
@@ -461,25 +451,8 @@ export const ProfileView: React.FC = () => {
                   <HelpCircle className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs md:text-sm font-bold text-gray-900">Help Center</h4>
-                  <p className="text-[11px] text-gray-500">FAQs, contact us</p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </div>
-
-            {/* Settings */}
-            <div
-              onClick={() => showToast('App version 1.0.0 (Latest)')}
-              className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center">
-                  <Settings className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs md:text-sm font-bold text-gray-900">Settings</h4>
-                  <p className="text-[11px] text-gray-500">App settings and preferences</p>
+                  <h4 className="text-xs md:text-sm font-bold text-gray-900">Help Center & Support</h4>
+                  <p className="text-[11px] text-gray-500">WhatsApp, direct call, FAQs & store directions</p>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-gray-400" />

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useStore } from '@/context/StoreContext';
-import { X, MapPin, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { X, MapPin, Plus, Trash2, CheckCircle2, Edit2 } from 'lucide-react';
 
 export const AddressesModal: React.FC = () => {
   const { 
@@ -10,11 +10,13 @@ export const AddressesModal: React.FC = () => {
     isAddressesOpen, 
     setIsAddressesOpen, 
     addAddress, 
+    updateAddress,
     setDefaultAddress, 
     deleteAddress 
   } = useStore();
 
   const [isAdding, setIsAdding] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -28,11 +30,24 @@ export const AddressesModal: React.FC = () => {
 
   if (!isAddressesOpen) return null;
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.street || !formData.pincode) return;
-    addAddress(formData);
+  const handleStartEdit = (addr: any) => {
+    setEditingAddressId(addr.id);
+    setFormData({
+      name: addr.name || '',
+      phone: addr.phone || '',
+      street: addr.street || '',
+      city: addr.city || '',
+      state: addr.state || '',
+      pincode: addr.pincode || '',
+      type: addr.type || 'HOME',
+      isDefault: !!addr.isDefault,
+    });
+    setIsAdding(true);
+  };
+
+  const handleCancel = () => {
     setIsAdding(false);
+    setEditingAddressId(null);
     setFormData({
       name: '',
       phone: '',
@@ -43,6 +58,19 @@ export const AddressesModal: React.FC = () => {
       type: 'HOME',
       isDefault: false,
     });
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.street || !formData.pincode) return;
+
+    if (editingAddressId) {
+      await updateAddress(editingAddressId, formData);
+    } else {
+      await addAddress(formData);
+    }
+
+    handleCancel();
   };
 
   return (
@@ -138,7 +166,7 @@ export const AddressesModal: React.FC = () => {
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsAdding(false)}
+                  onClick={handleCancel}
                   className="flex-1 py-2 bg-gray-200 text-gray-700 font-semibold rounded-xl"
                 >
                   Cancel
@@ -147,7 +175,7 @@ export const AddressesModal: React.FC = () => {
                   type="submit"
                   className="flex-1 py-2 bg-[#F95721] text-white font-bold rounded-xl shadow-sm"
                 >
-                  Save Address
+                  {editingAddressId ? 'Update Address' : 'Save Address'}
                 </button>
               </div>
             </form>
@@ -186,17 +214,26 @@ export const AddressesModal: React.FC = () => {
                   </p>
                   <p className="text-[11px] text-gray-500">{addr.phone}</p>
 
-                  {addresses.length > 1 && (
-                    <div className="pt-2 border-t border-gray-100 flex justify-end">
+                  <div className="pt-2 border-t border-gray-100 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleStartEdit(addr)}
+                      className="text-xs text-gray-600 hover:text-[#F95721] flex items-center gap-1 transition-colors"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+                    {addresses.length > 1 && (
                       <button
+                        type="button"
                         onClick={() => deleteAddress(addr.id)}
-                        className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
+                        className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>Delete</span>
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
