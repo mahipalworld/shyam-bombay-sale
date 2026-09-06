@@ -19,6 +19,7 @@ import {
   Settings, 
   X,
   ShieldCheck,
+  Cloud,
   ChevronRight
 } from 'lucide-react';
 import { AdminRole } from '@/types';
@@ -37,6 +38,7 @@ export type AdminActiveTab =
   | 'analytics'
   | 'notifications'
   | 'roles'
+  | 'storage'
   | 'settings';
 
 interface AdminMobileNavProps {
@@ -87,6 +89,7 @@ export const AdminMobileNav: React.FC<AdminMobileNavProps> = ({
     badgeColor?: string;
   }[] = [
     { tab: 'categories', label: 'Categories & Taxonomy', category: 'Catalog', icon: Layers },
+    { tab: 'storage', label: 'Media & AWS Storage', category: 'Catalog', icon: Cloud },
     { tab: 'offers', label: 'Offers & Coupons', category: 'Marketing', icon: Tag },
     { tab: 'inventory', label: 'Stock & Inventory', category: 'Operations', icon: Boxes, badge: lowStockCount > 0 ? lowStockCount : undefined, badgeColor: 'bg-amber-500' },
     { tab: 'returns', label: 'Returns & Refunds', category: 'Operations', icon: RotateCcw, badge: pendingReturns > 0 ? pendingReturns : undefined, badgeColor: 'bg-red-500' },

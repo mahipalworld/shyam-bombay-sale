@@ -18,6 +18,9 @@ export interface Product {
   reviewCount: number;
   image: string;
   images?: string[]; // Multiple gallery images
+  video?: string; // S3 canonical key or video URL
+  videos?: string[]; // Additional demo video keys or URLs
+  videoThumbnail?: string; // S3 canonical key or poster thumbnail URL
   inStock: boolean;
   stockCount: number;
   description: string;
@@ -314,5 +317,23 @@ export interface StoreSettings {
   enableScratchCard?: boolean;
   enableFlashDeals?: boolean;
   enableConfetti?: boolean;
+}
+
+export interface S3MediaItem {
+  key: string;
+  url: string;
+  name: string;
+  size: number;
+  lastModified: string;
+  type: 'image' | 'video';
+}
+
+export interface StorageStatus {
+  configured: boolean;
+  status: 'connected' | 'not_configured' | 'error';
+  bucket: string;
+  region: string;
+  cloudfrontEnabled?: boolean;
+  message?: string;
 }
 

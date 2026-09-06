@@ -28,7 +28,8 @@ import {
   ChevronDown,
   Check,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Cloud
 } from 'lucide-react';
 import { AdminHeader } from '../admin/AdminHeader';
 import { AdminMobileNav, AdminActiveTab } from '../admin/AdminMobileNav';
@@ -42,6 +43,7 @@ import { DashboardView } from '../admin/views/DashboardView';
 import { ProductsView } from '../admin/views/ProductsView';
 import { CategoriesView } from '../admin/views/CategoriesView';
 import { HomepageManagerView } from '../admin/views/HomepageManagerView';
+import { MediaStorageView } from '../admin/views/MediaStorageView';
 import { OffersView } from '../admin/views/OffersView';
 import { InventoryView } from '../admin/views/InventoryView';
 import { OrdersView } from '../admin/views/OrdersView';
@@ -214,9 +216,9 @@ export const AdminView: React.FC = () => {
       case 'OWNER':
         return true;
       case 'MANAGER':
-        return ['dashboard', 'products', 'categories', 'inventory', 'orders', 'returns', 'customers', 'payments', 'notifications'].includes(tab);
+        return ['dashboard', 'products', 'categories', 'storage', 'inventory', 'orders', 'returns', 'customers', 'payments', 'notifications'].includes(tab);
       case 'MARKETING':
-        return ['dashboard', 'products', 'categories', 'homepage', 'offers', 'analytics', 'notifications'].includes(tab);
+        return ['dashboard', 'products', 'categories', 'storage', 'homepage', 'offers', 'analytics', 'notifications'].includes(tab);
       case 'STAFF':
         return ['dashboard', 'orders', 'inventory', 'notifications'].includes(tab);
       default:
@@ -240,6 +242,7 @@ export const AdminView: React.FC = () => {
         { tab: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { tab: 'products', label: 'Products Catalog', icon: Package },
         { tab: 'categories', label: 'Categories & Taxonomy', icon: Layers },
+        { tab: 'storage', label: 'Media & AWS Storage', icon: Cloud },
         { tab: 'homepage', label: 'Homepage Manager', icon: LayoutTemplate },
       ]
     },
@@ -310,6 +313,8 @@ export const AdminView: React.FC = () => {
         );
       case 'categories':
         return <CategoriesView />;
+      case 'storage':
+        return <MediaStorageView />;
       case 'homepage':
         return (
           <HomepageManagerView

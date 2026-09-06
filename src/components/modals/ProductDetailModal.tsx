@@ -19,8 +19,12 @@ import {
   ChevronRight,
   Maximize2,
   Sparkles,
-  Layers
+  Layers,
+  Play,
+  Film,
+  Image as ImageIcon
 } from 'lucide-react';
+import { ResolvedImage, ResolvedVideo } from '../common/ResolvedMedia';
 
 export const ProductDetailModal: React.FC = () => {
   const { 
@@ -36,12 +40,14 @@ export const ProductDetailModal: React.FC = () => {
 
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [activeMediaTab, setActiveMediaTab] = useState<'photos' | 'video'>('photos');
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (selectedProductDetail) {
       setQuantity(1);
       setActiveImageIndex(0);
+      setActiveMediaTab('photos');
       setLightboxImage(null);
     }
   }, [selectedProductDetail?.id]);
@@ -126,76 +132,140 @@ export const ProductDetailModal: React.FC = () => {
           <div className="p-4 sm:p-5 space-y-5">
             {/* Gallery Section */}
             <div className="space-y-3">
-              {/* Main Image Stage */}
-              <div className="relative aspect-square w-full rounded-2xl bg-[#F9FAFB] p-4 flex items-center justify-center border border-gray-100 overflow-hidden group">
-                {/* Image Counter Badge */}
-                {allImages.length > 1 && (
-                  <span className="absolute top-3 left-3 z-10 text-[10px] font-extrabold text-gray-700 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-gray-100">
-                    {activeImageIndex + 1} / {allImages.length}
-                  </span>
-                )}
-
-                {/* Zoom / Lightbox Trigger */}
-                <button
-                  onClick={() => setLightboxImage(currentImage)}
-                  className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-600 hover:text-black flex items-center justify-center shadow-xs border border-gray-100 hover:scale-105 active:scale-95 transition-all"
-                  title="View Fullscreen"
-                >
-                  <Maximize2 className="w-4 h-4" />
-                </button>
-
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={currentImage}
-                  alt={p.name}
-                  className="w-full h-full object-contain mix-blend-multiply drop-shadow-md transition-all duration-300 cursor-pointer"
-                  onClick={() => setLightboxImage(currentImage)}
-                />
-
-                {/* Left/Right Arrow Controls (if multiple images) */}
-                {allImages.length > 1 && (
-                  <>
-                    <button
-                      onClick={handlePrevImage}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F95721] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all"
-                      aria-label="Previous image"
-                    >
-                      <ChevronLeft className="w-4 h-4 stroke-[2.5px]" />
-                    </button>
-                    <button
-                      onClick={handleNextImage}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F95721] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all"
-                      aria-label="Next image"
-                    >
-                      <ChevronRight className="w-4 h-4 stroke-[2.5px]" />
-                    </button>
-                  </>
-                )}
-              </div>
-
-              {/* Thumbnails Row */}
-              {allImages.length > 1 && (
-                <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1">
-                  {allImages.map((imgUrl, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setActiveImageIndex(idx)}
-                      className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gray-50 p-1 flex-shrink-0 border-2 overflow-hidden transition-all ${
-                        activeImageIndex === idx
-                          ? 'border-[#F95721] ring-2 ring-orange-200 scale-105 shadow-xs'
-                          : 'border-gray-200 hover:border-gray-300 opacity-70 hover:opacity-100'
-                      }`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={imgUrl}
-                        alt={`Thumb ${idx + 1}`}
-                        className="w-full h-full object-contain mix-blend-multiply"
-                      />
-                    </button>
-                  ))}
+              {/* Media Switcher Tab (if product has video) */}
+              {p.video && (
+                <div className="flex items-center justify-center gap-1.5 p-1 bg-gray-100 rounded-2xl w-fit mx-auto">
+                  <button
+                    type="button"
+                    onClick={() => setActiveMediaTab('photos')}
+                    className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                      activeMediaTab === 'photos'
+                        ? 'bg-white text-gray-900 shadow-xs'
+                        : 'text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>Photos ({allImages.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveMediaTab('video')}
+                    className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                      activeMediaTab === 'video'
+                        ? 'bg-purple-600 text-white shadow-xs'
+                        : 'text-purple-700 hover:text-purple-900'
+                    }`}
+                  >
+                    <Film className="w-3.5 h-3.5" />
+                    <span>Video Demo</span>
+                  </button>
                 </div>
               )}
+
+              {/* Main Media Stage */}
+              {activeMediaTab === 'video' && p.video ? (
+                <div className="relative aspect-square w-full rounded-2xl bg-black flex items-center justify-center border border-gray-200 overflow-hidden shadow-inner">
+                  <ResolvedVideo
+                    src={p.video}
+                    className="w-full h-full object-contain"
+                    controls
+                    autoPlay
+                    playsInline
+                  />
+                  <span className="absolute top-3 left-3 text-[10px] font-extrabold text-white bg-purple-600/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs flex items-center gap-1">
+                    <Film className="w-3 h-3" /> S3 Video Stream
+                  </span>
+                </div>
+              ) : (
+                <div className="relative aspect-square w-full rounded-2xl bg-[#F9FAFB] p-4 flex items-center justify-center border border-gray-100 overflow-hidden group">
+                  {/* Image Counter Badge */}
+                  {allImages.length > 1 && (
+                    <span className="absolute top-3 left-3 z-10 text-[10px] font-extrabold text-gray-700 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-gray-100">
+                      {activeImageIndex + 1} / {allImages.length}
+                    </span>
+                  )}
+
+                  {/* Zoom / Lightbox Trigger */}
+                  <button
+                    onClick={() => setLightboxImage(currentImage)}
+                    className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-600 hover:text-black flex items-center justify-center shadow-xs border border-gray-100 hover:scale-105 active:scale-95 transition-all"
+                    title="View Fullscreen"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </button>
+
+                  <div 
+                    className="w-full h-full cursor-pointer flex items-center justify-center"
+                    onClick={() => setLightboxImage(currentImage)}
+                  >
+                    <ResolvedImage
+                      src={currentImage}
+                      alt={p.name}
+                      className="w-full h-full object-contain mix-blend-multiply drop-shadow-md transition-all duration-300"
+                    />
+                  </div>
+
+                  {/* Left/Right Arrow Controls (if multiple images) */}
+                  {allImages.length > 1 && (
+                    <>
+                      <button
+                        onClick={handlePrevImage}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F95721] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all"
+                        aria-label="Previous image"
+                      >
+                        <ChevronLeft className="w-4 h-4 stroke-[2.5px]" />
+                      </button>
+                      <button
+                        onClick={handleNextImage}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F95721] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all"
+                        aria-label="Next image"
+                      >
+                        <ChevronRight className="w-4 h-4 stroke-[2.5px]" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Thumbnails Row */}
+              <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1">
+                {allImages.map((imgUrl, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setActiveMediaTab('photos');
+                      setActiveImageIndex(idx);
+                    }}
+                    className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gray-50 p-1 flex-shrink-0 border-2 overflow-hidden transition-all ${
+                      activeMediaTab === 'photos' && activeImageIndex === idx
+                        ? 'border-[#F95721] ring-2 ring-orange-200 scale-105 shadow-xs'
+                        : 'border-gray-200 hover:border-gray-300 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <ResolvedImage
+                      src={imgUrl}
+                      alt={`Thumb ${idx + 1}`}
+                      className="w-full h-full object-contain mix-blend-multiply"
+                    />
+                  </button>
+                ))}
+
+                {/* Video thumbnail pill if present */}
+                {p.video && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveMediaTab('video')}
+                    className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-900 p-1 flex-shrink-0 border-2 overflow-hidden transition-all flex flex-col items-center justify-center ${
+                      activeMediaTab === 'video'
+                        ? 'border-purple-600 ring-2 ring-purple-200 scale-105 shadow-xs'
+                        : 'border-gray-300 opacity-80 hover:opacity-100'
+                    }`}
+                  >
+                    <Play className="w-5 h-5 text-purple-400 fill-purple-400" />
+                    <span className="text-[8px] font-bold text-white uppercase mt-0.5">Video</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Title & Brand */}

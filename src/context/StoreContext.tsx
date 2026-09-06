@@ -2260,6 +2260,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         review_count: newProduct.reviewCount,
         image: newProduct.image,
         images: newProduct.images || [newProduct.image],
+        video: newProduct.video || null,
+        videos: newProduct.videos || [],
+        video_thumbnail: newProduct.videoThumbnail || null,
         in_stock: newProduct.inStock,
         stock_count: newProduct.stockCount,
         description: newProduct.description,
@@ -2306,6 +2309,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (updates.reviewCount !== undefined) dbUpdates.review_count = updates.reviewCount;
       if (updates.image !== undefined) dbUpdates.image = updates.image;
       if (updates.images !== undefined) dbUpdates.images = updates.images;
+      if (updates.video !== undefined) dbUpdates.video = updates.video;
+      if (updates.videos !== undefined) dbUpdates.videos = updates.videos;
+      if (updates.videoThumbnail !== undefined) dbUpdates.video_thumbnail = updates.videoThumbnail;
       if (updates.inStock !== undefined) dbUpdates.in_stock = updates.inStock;
       if (updates.stockCount !== undefined) dbUpdates.stock_count = updates.stockCount;
       if (updates.description !== undefined) dbUpdates.description = updates.description;

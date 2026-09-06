@@ -3,7 +3,8 @@
 import React from 'react';
 import { Product } from '@/types';
 import { useStore } from '@/context/StoreContext';
-import { Star, Heart, Plus, Minus } from 'lucide-react';
+import { Star, Heart, Plus, Minus, Film } from 'lucide-react';
+import { ResolvedImage } from './common/ResolvedMedia';
 
 interface ProductCardProps {
   product: Product;
@@ -53,17 +54,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
         />
       </button>
 
+      {/* Video Indicator Pill */}
+      {product.video && (
+        <div className="absolute top-4 left-4 z-10 bg-slate-900/80 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+          <Film className="w-2.5 h-2.5 text-purple-400" />
+          <span>Video</span>
+        </div>
+      )}
+
       {/* Product Image Area */}
       <div 
         onClick={handleClick}
         className="cursor-pointer aspect-square w-full rounded-xl bg-[#F9FAFB] flex items-center justify-center p-3 overflow-hidden relative"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <ResolvedImage
           src={product.image}
           alt={product.name}
           className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
         />
       </div>
 

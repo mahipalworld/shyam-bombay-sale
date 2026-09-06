@@ -19,9 +19,17 @@ import {
   Trash2,
   Layers,
   Star,
-  Eye
+  Eye,
+  Video,
+  Film,
+  Cloud,
+  Play,
+  Lock,
+  RefreshCw
 } from 'lucide-react';
-import { Product, ProductDescriptionBlock } from '@/types';
+import { Product, ProductDescriptionBlock, S3MediaItem } from '@/types';
+import { ResolvedImage, ResolvedVideo } from '../common/ResolvedMedia';
+import { uploadMediaToS3, listS3Files } from '@/lib/mediaStorage';
 
 interface AddEditProductModalProps {
   isOpen: boolean;
@@ -47,6 +55,9 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
     description: '',
     image: '',
     images: [] as string[],
+    video: '',
+    videos: [] as string[],
+    videoThumbnail: '',
     descriptionBlocks: [] as ProductDescriptionBlock[],
     mrp: '',
     price: '',
@@ -79,6 +90,19 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
   const [showAddBlockForm, setShowAddBlockForm] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState('');
 
+  // AWS S3 Upload States
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageUploadPct, setImageUploadPct] = useState<number | null>(null);
+
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [videoUploadPct, setVideoUploadPct] = useState<number | null>(null);
+
+  // S3 Media Library Picker State
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [libraryItems, setLibraryItems] = useState<S3MediaItem[]>([]);
+  const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);
+  const [libraryFilter, setLibraryFilter] = useState<'ALL' | 'IMAGE' | 'VIDEO'>('ALL');
+
   // Calculate discount percentage automatically whenever mrp or price changes
   useEffect(() => {
     const mrpNum = parseFloat(formData.mrp);
@@ -104,6 +128,9 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         description: productToEdit.description,
         image: productToEdit.image,
         images: allImgs,
+        video: productToEdit.video || '',
+        videos: productToEdit.videos || [],
+        videoThumbnail: productToEdit.videoThumbnail || '',
         descriptionBlocks: productToEdit.descriptionBlocks || [],
         mrp: productToEdit.originalPrice.toString(),
         price: productToEdit.price.toString(),
@@ -136,6 +163,9 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
           'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=800&auto=format&fit=crop&q=80',
           'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80'
         ],
+        video: '',
+        videos: [],
+        videoThumbnail: '',
         descriptionBlocks: [
           {
             id: 'db_default',
@@ -180,6 +210,92 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
     { num: 6, title: 'Specs', icon: Sparkles },
     { num: 7, title: 'Publish', icon: Globe },
   ];
+
+  const handleUploadImagesToS3 = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
+    if (fileArray.length === 0) return;
+
+    setIsUploadingImage(true);
+    setImageUploadPct(0);
+
+    let completed = 0;
+    const uploadedKeys: string[] = [];
+
+    for (const file of fileArray) {
+      try {
+        const item = await uploadMediaToS3(file, 'images', (pct: number) => {
+          const overall = Math.round(((completed * 100) + pct) / fileArray.length);
+          setImageUploadPct(overall);
+        });
+        uploadedKeys.push(item.key);
+        completed++;
+      } catch (err: any) {
+        showToast(`Failed to upload ${file.name}: ${err?.message || 'Upload error'}`, 'error');
+      }
+    }
+
+    if (uploadedKeys.length > 0) {
+      setFormData(prev => {
+        const updated = [...prev.images, ...uploadedKeys];
+        return {
+          ...prev,
+          images: updated,
+          image: prev.image || updated[0] || ''
+        };
+      });
+      showToast(`Uploaded ${uploadedKeys.length} image(s) directly to AWS S3! ☁️`);
+    }
+
+    setIsUploadingImage(false);
+    setImageUploadPct(null);
+  };
+
+  const handleUploadVideoToS3 = async (file: File) => {
+    if (!file.type.startsWith('video/')) {
+      showToast('Please select a valid video file (MP4, WebM, MOV)', 'error');
+      return;
+    }
+
+    if (file.size > 250 * 1024 * 1024) {
+      showToast('Video exceeds 250MB limit', 'error');
+      return;
+    }
+
+    setIsUploadingVideo(true);
+    setVideoUploadPct(0);
+
+    try {
+      const item = await uploadMediaToS3(file, 'videos', (pct: number) => {
+        setVideoUploadPct(pct);
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        video: item.key,
+        videos: prev.videos.includes(item.key) ? prev.videos : [...prev.videos, item.key]
+      }));
+      showToast('Video uploaded securely to AWS S3! 🎥');
+    } catch (err: any) {
+      showToast(`Video upload failed: ${err?.message || 'Error'}`, 'error');
+    } finally {
+      setIsUploadingVideo(false);
+      setVideoUploadPct(null);
+    }
+  };
+
+  const openLibraryPicker = async (filter: 'ALL' | 'IMAGE' | 'VIDEO' = 'ALL') => {
+    setLibraryFilter(filter);
+    setIsLibraryOpen(true);
+    setIsLoadingLibrary(true);
+    try {
+      const res = await listS3Files();
+      setLibraryItems(res.items);
+    } catch (err: any) {
+      showToast(`Could not load S3 media: ${err?.message || 'Error'}`, 'error');
+    } finally {
+      setIsLoadingLibrary(false);
+    }
+  };
 
   const handleAddGalleryImage = (url: string) => {
     if (!url.trim()) return;
@@ -277,6 +393,9 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         discountPercentage: formData.discountPercentage,
         image: primaryImg,
         images: allGalleryImages,
+        video: formData.video || undefined,
+        videos: formData.videos.length > 0 ? formData.videos : undefined,
+        videoThumbnail: formData.videoThumbnail || undefined,
         descriptionBlocks: formData.descriptionBlocks,
         stockCount,
         inStock,
@@ -299,6 +418,9 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         reviewCount: 1,
         image: primaryImg,
         images: allGalleryImages,
+        video: formData.video || undefined,
+        videos: formData.videos.length > 0 ? formData.videos : undefined,
+        videoThumbnail: formData.videoThumbnail || undefined,
         descriptionBlocks: formData.descriptionBlocks,
         inStock,
         stockCount,
@@ -434,137 +556,285 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
             </div>
           )}
 
-          {/* STEP 2: Gallery Images & Device Upload */}
+          {/* STEP 2: Gallery Images & Product Video (AWS S3) */}
           {currentStep === 2 && (
-            <div className="space-y-4">
-              <div>
-                <label className="block font-bold text-gray-800 mb-1.5">
-                  Upload Gallery Photos from Device
-                </label>
+            <div className="space-y-5">
+              {/* Storage security notice */}
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900 text-white shadow-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center">
+                    <Cloud className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold">AWS S3 Private Storage</span>
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> ap-south-1
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400">Direct presigned uploads • Short-lived private signed delivery</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openLibraryPicker('ALL')}
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all"
+                >
+                  <Sparkles className="w-3 h-3 text-orange-400" />
+                  <span>Browse S3 Media</span>
+                </button>
+              </div>
 
-                {/* File Upload Dropzone */}
-                <label className="border-2 border-dashed border-orange-300 hover:border-[#F95721] bg-orange-50/40 hover:bg-orange-50 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all text-center group">
+              {/* 1. PRODUCT IMAGES SECTION */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block font-bold text-gray-800 text-xs">
+                    Product Photos (Images)
+                  </label>
+                  <span className="text-[10px] text-gray-500">Max 15MB each (JPG, PNG, WebP)</span>
+                </div>
+
+                {/* Direct S3 Upload Dropzone */}
+                <label className={`border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all text-center group ${
+                  isUploadingImage 
+                    ? 'border-orange-400 bg-orange-50/70 pointer-events-none' 
+                    : 'border-orange-300 hover:border-[#F95721] bg-orange-50/40 hover:bg-orange-50'
+                }`}>
                   <input
                     type="file"
                     accept="image/*"
                     multiple
+                    disabled={isUploadingImage}
                     className="hidden"
                     onChange={(e) => {
-                      const files = e.target.files;
-                      if (files && files.length > 0) {
-                        Array.from(files).forEach((file) => {
-                          if (!file.type.startsWith('image/')) return;
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            if (event.target?.result) {
-                              handleAddGalleryImage(event.target!.result as string);
-                            }
-                          };
-                          reader.readAsDataURL(file);
-                        });
+                      if (e.target.files && e.target.files.length > 0) {
+                        handleUploadImagesToS3(e.target.files);
                       }
                     }}
                   />
                   <div className="w-11 h-11 rounded-2xl bg-orange-100 text-[#F95721] group-hover:scale-110 flex items-center justify-center transition-transform shadow-xs">
-                    <Upload className="w-5 h-5" />
+                    {isUploadingImage ? (
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Upload className="w-5 h-5" />
+                    )}
                   </div>
                   <div>
                     <p className="text-xs font-bold text-gray-900">
-                      Tap to Choose Multiple Images from Device
+                      {isUploadingImage ? `Uploading Photos to S3 (${imageUploadPct ?? 0}%)...` : 'Tap to Upload Photos Directly to AWS S3'}
                     </p>
                     <p className="text-[10px] text-gray-500 mt-0.5">
-                      Add angle shots, lifestyle photos, packaging (Max 10MB each)
+                      Supports multiple photos at once. Stored in secure private bucket.
                     </p>
                   </div>
-                  <span className="px-3 py-1 bg-[#F95721] text-white text-[10px] font-bold rounded-xl shadow-xs">
-                    Browse & Add Photos
-                  </span>
+                  {isUploadingImage ? (
+                    <div className="w-48 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                      <div 
+                        className="bg-[#F95721] h-1.5 transition-all duration-200" 
+                        style={{ width: `${imageUploadPct || 0}%` }}
+                      />
+                    </div>
+                  ) : (
+                    <span className="px-3 py-1 bg-[#F95721] text-white text-[10px] font-bold rounded-xl shadow-xs">
+                      Choose Images from Device
+                    </span>
+                  )}
                 </label>
+
+                {/* Paste URL or S3 key Input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Or paste S3 key / external image URL..."
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    className="flex-1 border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F95721] text-xs font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddGalleryImage(newImageUrl)}
+                    className="px-4 py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-2xl active:scale-95 transition-all"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {/* Active Gallery Strip & Primary Selector */}
+                <div className="border border-gray-200 rounded-2xl p-3.5 bg-gray-50/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-gray-700">
+                      Product Gallery Photos ({formData.images.length})
+                    </span>
+                    <span className="text-[10px] text-gray-500 font-medium">
+                      ⭐ Click star to set cover image
+                    </span>
+                  </div>
+
+                  {formData.images.length === 0 ? (
+                    <p className="text-xs text-gray-400 text-center py-4">
+                      No gallery photos added yet. Upload photos to AWS S3 above.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+                      {formData.images.map((imgUrl, idx) => {
+                        const isPrimary = formData.image === imgUrl || (idx === 0 && !formData.image);
+                        return (
+                          <div
+                            key={idx}
+                            className={`relative aspect-square rounded-2xl bg-white p-1.5 border-2 overflow-hidden flex flex-col justify-between group shadow-2xs ${
+                              isPrimary ? 'border-[#F95721] ring-2 ring-orange-200' : 'border-gray-200'
+                            }`}
+                          >
+                            <ResolvedImage
+                              src={imgUrl}
+                              alt={`Gallery ${idx + 1}`}
+                              className="w-full h-full object-contain mix-blend-multiply"
+                            />
+
+                            {/* Primary Badge */}
+                            {isPrimary && (
+                              <span className="absolute top-1 left-1 text-[8px] font-black uppercase text-white bg-[#F95721] px-1.5 py-0.5 rounded-md shadow-xs">
+                                Cover
+                              </span>
+                            )}
+
+                            {/* Action Overlay */}
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 transition-opacity rounded-xl p-1">
+                              {!isPrimary && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetPrimaryImage(imgUrl)}
+                                  className="p-1 rounded-lg bg-white text-[#F95721] hover:bg-orange-50"
+                                  title="Set as cover image"
+                                >
+                                  <Star className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveGalleryImage(idx)}
+                                className="p-1 rounded-lg bg-white text-red-500 hover:bg-red-50"
+                                title="Delete photo"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Paste URL Input */}
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  placeholder="Or paste external image URL..."
-                  value={newImageUrl}
-                  onChange={(e) => setNewImageUrl(e.target.value)}
-                  className="flex-1 border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F95721] text-xs"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleAddGalleryImage(newImageUrl)}
-                  className="px-4 py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-2xl active:scale-95 transition-all"
-                >
-                  Add Image
-                </button>
-              </div>
-
-              {/* Active Gallery Strip & Primary Selector */}
-              <div className="border border-gray-200 rounded-2xl p-3.5 bg-gray-50/80 space-y-3">
+              {/* 2. PRODUCT VIDEO SECTION (AWS S3) */}
+              <div className="border border-purple-100 bg-purple-50/40 rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-gray-700">
-                    Product Gallery Images ({formData.images.length})
-                  </span>
-                  <span className="text-[10px] text-gray-500 font-medium">
-                    ⭐ Cover image is marked with badge
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+                      <Film className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900">Product Demo Video (AWS S3)</h4>
+                      <p className="text-[10px] text-gray-500">
+                        Plays seamlessly in Product Details modal with seek & byte-range streaming.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full font-bold">
+                    Max 250MB
                   </span>
                 </div>
 
-                {formData.images.length === 0 ? (
-                  <p className="text-xs text-gray-400 text-center py-4">
-                    No gallery images added yet. Upload from device or enter image URLs above.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-                    {formData.images.map((imgUrl, idx) => {
-                      const isPrimary = formData.image === imgUrl || (idx === 0 && !formData.image);
-                      return (
-                        <div
-                          key={idx}
-                          className={`relative aspect-square rounded-2xl bg-white p-1.5 border-2 overflow-hidden flex flex-col justify-between group shadow-2xs ${
-                            isPrimary ? 'border-[#F95721] ring-2 ring-orange-200' : 'border-gray-200'
-                          }`}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={imgUrl}
-                            alt={`Gallery ${idx + 1}`}
-                            className="w-full h-full object-contain mix-blend-multiply"
-                          />
-
-                          {/* Primary Badge */}
-                          {isPrimary && (
-                            <span className="absolute top-1 left-1 text-[8px] font-black uppercase text-white bg-[#F95721] px-1.5 py-0.5 rounded-md shadow-xs">
-                              Cover
-                            </span>
-                          )}
-
-                          {/* Action Overlay */}
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 transition-opacity rounded-xl p-1">
-                            {!isPrimary && (
-                              <button
-                                type="button"
-                                onClick={() => handleSetPrimaryImage(imgUrl)}
-                                className="p-1 rounded-lg bg-white text-[#F95721] hover:bg-orange-50"
-                                title="Set as cover image"
-                              >
-                                <Star className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveGalleryImage(idx)}
-                              className="p-1 rounded-lg bg-white text-red-500 hover:bg-red-50"
-                              title="Delete image"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                {formData.video ? (
+                  <div className="bg-white border border-purple-200 rounded-2xl p-3 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                      <div className="w-24 h-16 rounded-xl bg-slate-900 overflow-hidden relative flex-shrink-0 flex items-center justify-center">
+                        <ResolvedVideo
+                          src={formData.video}
+                          className="w-full h-full object-cover"
+                          controls={false}
+                          muted
+                        />
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                          <Play className="w-4 h-4 text-white" />
                         </div>
-                      );
-                    })}
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="text-xs font-bold text-gray-900 truncate">
+                          {formData.video.split('/').pop()}
+                        </p>
+                        <p className="text-[10px] text-purple-600 font-mono truncate">
+                          {formData.video}
+                        </p>
+                        <span className="inline-block mt-1 text-[9px] bg-emerald-100 text-emerald-700 font-semibold px-1.5 py-0.5 rounded">
+                          ✓ S3 Video Attached
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                      <button
+                        type="button"
+                        onClick={() => openLibraryPicker('VIDEO')}
+                        className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all"
+                      >
+                        Change
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, video: '', videos: [] }))}
+                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Remove</span>
+                      </button>
+                    </div>
                   </div>
+                ) : (
+                  <label className={`border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all text-center group ${
+                    isUploadingVideo
+                      ? 'border-purple-400 bg-purple-50/80 pointer-events-none'
+                      : 'border-purple-300 hover:border-purple-500 bg-white/70 hover:bg-white'
+                  }`}>
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm,video/quicktime"
+                      disabled={isUploadingVideo}
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadVideoToS3(file);
+                      }}
+                    />
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 group-hover:scale-110 flex items-center justify-center transition-transform">
+                      {isUploadingVideo ? (
+                        <RefreshCw className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Video className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-900">
+                        {isUploadingVideo ? `Uploading Video to S3 (${videoUploadPct ?? 0}%)...` : 'Upload Product Video to AWS S3'}
+                      </p>
+                      <p className="text-[10px] text-gray-500">
+                        MP4, WebM or MOV up to 250MB
+                      </p>
+                    </div>
+                    {isUploadingVideo ? (
+                      <div className="w-48 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-purple-600 h-1.5 transition-all duration-200"
+                          style={{ width: `${videoUploadPct || 0}%` }}
+                        />
+                      </div>
+                    ) : (
+                      <span className="px-3 py-1 bg-purple-600 text-white text-[10px] font-bold rounded-xl shadow-xs">
+                        Select Video File
+                      </span>
+                    )}
+                  </label>
                 )}
               </div>
             </div>
@@ -1068,6 +1338,142 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* S3 Media Library Picker Modal */}
+      {isLibraryOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-slate-900 text-white">
+              <div className="flex items-center gap-2">
+                <Cloud className="w-5 h-5 text-orange-400" />
+                <h3 className="text-sm font-bold">Select Media from AWS S3 Bucket</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLibraryOpen(false)}
+                className="p-1 rounded-xl bg-white/10 hover:bg-white/20 text-gray-300"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setLibraryFilter('ALL')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                  libraryFilter === 'ALL' ? 'bg-slate-900 text-white' : 'bg-white text-gray-700 border'
+                }`}
+              >
+                All Files
+              </button>
+              <button
+                type="button"
+                onClick={() => setLibraryFilter('IMAGE')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                  libraryFilter === 'IMAGE' ? 'bg-orange-500 text-white' : 'bg-white text-gray-700 border'
+                }`}
+              >
+                Photos Only
+              </button>
+              <button
+                type="button"
+                onClick={() => setLibraryFilter('VIDEO')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                  libraryFilter === 'VIDEO' ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 border'
+                }`}
+              >
+                Videos Only
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 min-h-[260px]">
+              {isLoadingLibrary ? (
+                <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-2">
+                  <RefreshCw className="w-6 h-6 animate-spin text-orange-500" />
+                  <p className="text-xs">Connecting to S3 bucket...</p>
+                </div>
+              ) : libraryItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-2">
+                  <Package className="w-8 h-8 stroke-1 text-gray-300" />
+                  <p className="text-xs">No media files found in your S3 bucket yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {libraryItems
+                    .filter(item => {
+                      if (libraryFilter === 'IMAGE') return item.type === 'image';
+                      if (libraryFilter === 'VIDEO') return item.type === 'video';
+                      return true;
+                    })
+                    .map(item => (
+                      <div
+                        key={item.key}
+                        onClick={() => {
+                          if (item.type === 'image') {
+                            setFormData(prev => ({
+                              ...prev,
+                              images: prev.images.includes(item.key) ? prev.images : [...prev.images, item.key],
+                              image: prev.image || item.key
+                            }));
+                            showToast('Photo added from S3! 📸');
+                          } else {
+                            setFormData(prev => ({
+                              ...prev,
+                              video: item.key,
+                              videos: prev.videos.includes(item.key) ? prev.videos : [...prev.videos, item.key]
+                            }));
+                            showToast('Video selected from S3! 🎥');
+                          }
+                          setIsLibraryOpen(false);
+                        }}
+                        className="group border border-gray-200 hover:border-orange-500 rounded-2xl p-2 cursor-pointer transition-all hover:shadow-md bg-white flex flex-col justify-between"
+                      >
+                        <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden relative flex items-center justify-center">
+                          {item.type === 'image' ? (
+                            <ResolvedImage
+                              src={item.key}
+                              alt={item.name}
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <div className="relative w-full h-full bg-slate-900 flex items-center justify-center">
+                              <ResolvedVideo
+                                src={item.key}
+                                className="w-full h-full object-cover opacity-70"
+                                controls={false}
+                                muted
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Play className="w-5 h-5 text-white" />
+                              </div>
+                            </div>
+                          )}
+                          <span className="absolute bottom-1 right-1 text-[8px] font-bold bg-black/60 text-white px-1.5 py-0.5 rounded uppercase">
+                            {item.type}
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-medium text-gray-700 truncate mt-1.5" title={item.name}>
+                          {item.name}
+                        </p>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-3 border-t border-gray-100 bg-gray-50 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsLibraryOpen(false)}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-xl"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
