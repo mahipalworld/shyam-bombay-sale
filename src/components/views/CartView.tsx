@@ -35,11 +35,12 @@ export const CartView: React.FC = () => {
     cartDiscount,
     cartDeliveryCharge,
     cartTotal,
+    storeSettings
   } = useStore();
 
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [isScratchOpen, setIsScratchOpen] = useState(false);
-  const freeShippingThreshold = 1700;
+  const freeShippingThreshold = storeSettings?.freeDeliveryThreshold ?? 499;
   const awayFromFreeShipping = Math.max(0, freeShippingThreshold - cartSubtotal);
   const freeShippingProgress = Math.min(100, (cartSubtotal / freeShippingThreshold) * 100);
 

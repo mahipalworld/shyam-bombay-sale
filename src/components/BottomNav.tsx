@@ -5,7 +5,7 @@ import { useStore } from '@/context/StoreContext';
 import { Home, LayoutGrid, ShoppingCart, Heart, User, ArrowRight, Sparkles } from 'lucide-react';
 
 export const BottomNav: React.FC = () => {
-  const { activeTab, setActiveTab, cart, wishlist, cartSubtotal } = useStore();
+  const { activeTab, setActiveTab, cart, wishlist, cartSubtotal, storeSettings } = useStore();
   const totalCartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   // Only show docked quick-cart header when on Home or Wishlist with items in cart
@@ -16,7 +16,7 @@ export const BottomNav: React.FC = () => {
     activeTab !== 'categories' && 
     activeTab !== 'profile';
 
-  const freeShippingThreshold = 1700;
+  const freeShippingThreshold = storeSettings?.freeDeliveryThreshold ?? 499;
   const isFreeDelivery = cartSubtotal >= freeShippingThreshold;
   const awayFromFree = Math.max(0, freeShippingThreshold - cartSubtotal);
   const progressPercent = Math.min(100, Math.round((cartSubtotal / freeShippingThreshold) * 100));

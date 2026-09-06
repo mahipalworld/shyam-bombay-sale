@@ -7,83 +7,42 @@
         http://www.google.com/schemas/sitemap-image/1.1
         http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
 
-  <!-- Homepage -->
+  <!--
+    SBS — Shyam Business Store | Sitemap
+    Phase 1: Brand Foundation — only real, public, canonical pages.
+
+    When products launch (Phase 3), add:
+      <url><loc>https://www.sbsstore.in/categories/[slug]</loc></url>
+      <url><loc>https://www.sbsstore.in/products/[slug]</loc></url>
+  -->
+
+  <!-- Homepage — Primary SEO target -->
   <url>
     <loc>https://www.sbsstore.in/</loc>
-    <lastmod>2026-09-05T00:00:00+00:00</lastmod>
-    <changefreq>daily</changefreq>
+    <lastmod>2026-09-06T00:00:00+05:30</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://www.sbsstore.in/logo.png</image:loc>
-      <image:title>SBS Store - Shyam Bombay Sale</image:title>
-      <image:caption>Smart Products. Better Prices. Everyday essentials shopping in India.</image:caption>
-    </image:image>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=800&amp;auto=format&amp;fit=crop&amp;q=80</image:loc>
-      <image:title>Mini Washing Machine</image:title>
-      <image:caption>Portable ultrasonic mini washing machine with turbo spin technology</image:caption>
-    </image:image>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&amp;auto=format&amp;fit=crop&amp;q=80</image:loc>
-      <image:title>Romantic Sunset Projection Lamp</image:title>
-      <image:caption>Aesthetic ambient mood lamp for bedrooms and cozy spaces</image:caption>
-    </image:image>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=800&amp;auto=format&amp;fit=crop&amp;q=80</image:loc>
-      <image:title>Portable Food Packet Sealer</image:title>
-      <image:caption>Handheld heat mini sealer with cutter</image:caption>
+      <image:title>SBS — Shyam Business Store</image:title>
+      <image:caption>Official logo of SBS — Shyam Business Store, Vadodara, Gujarat.</image:caption>
     </image:image>
   </url>
 
-  <!-- Special Offers & Flash Deals -->
+  <!-- About page -->
   <url>
-    <loc>https://www.sbsstore.in/?category=offers</loc>
-    <lastmod>2026-09-05T00:00:00+00:00</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
+    <loc>https://www.sbsstore.in/about</loc>
+    <lastmod>2026-09-06T00:00:00+05:30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 
-  <!-- Categories -->
+  <!-- Contact page -->
   <url>
-    <loc>https://www.sbsstore.in/?category=home</loc>
-    <lastmod>2026-09-05T00:00:00+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://www.sbsstore.in/contact</loc>
+    <lastmod>2026-09-06T00:00:00+05:30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
-  <url>
-    <loc>https://www.sbsstore.in/?category=kitchen</loc>
-    <lastmod>2026-09-05T00:00:00+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.sbsstore.in/?category=cleaning</loc>
-    <lastmod>2026-09-05T00:00:00+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.sbsstore.in/?category=personal-care</loc>
-    <lastmod>2026-09-05T00:00:00+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.sbsstore.in/?category=laundry</loc>
-    <lastmod>2026-09-05T00:00:00+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.sbsstore.in/?category=storage</loc>
-    <lastmod>2026-09-05T00:00:00+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.sbsstore.in/?category=travel-outdoors</loc>
-    <lastmod>2026-09-05T00:00:00+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
+
 </urlset>

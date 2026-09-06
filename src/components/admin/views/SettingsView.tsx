@@ -23,6 +23,7 @@ export const SettingsView: React.FC = () => {
   const { storeSettings, setStoreSettings, adminRole, setAdminRole, showToast } = useStore();
 
   const [activeSection, setActiveSection] = useState<'store' | 'features' | 'delivery' | 'payments' | 'notifications' | 'roles' | 'security'>('store');
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<StoreSettings>({ 
     enableStories: true,
     enableScratchCard: true,
@@ -40,17 +41,33 @@ export const SettingsView: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStoreSettings(formData);
+    setIsSaving(true);
+    try {
+      setStoreSettings(formData);
+      try {
+        localStorage.setItem('sbs_store_settings', JSON.stringify(formData));
+      } catch {}
 
-    if (isSupabaseConfigured && supabase) {
-      await supabase.from('store_settings').upsert({
-        id: 'store_settings',
-        data: formData,
-        updated_at: new Date().toISOString()
-      });
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase.from('store_settings').upsert({
+          id: 'store_settings',
+          data: formData,
+          updated_at: new Date().toISOString()
+        });
+        if (error) {
+          console.error('Supabase store settings save error:', error);
+          showToast(`Failed to save settings to cloud: ${error.message}`, 'error');
+          setIsSaving(false);
+          return;
+        }
+      }
+
+      showToast('Store settings saved successfully! ⚙️', 'success');
+    } catch (err: any) {
+      showToast(`Error saving settings: ${err?.message || 'Unknown error'}`, 'error');
+    } finally {
+      setIsSaving(false);
     }
-
-    showToast('Store settings saved successfully! ⚙️');
   };
 
   const sections: { key: typeof activeSection; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -429,10 +446,15 @@ export const SettingsView: React.FC = () => {
         {/* Sticky Save CTA Button */}
         <button
           type="submit"
-          className="w-full py-3 bg-[#F95721] hover:bg-[#E44813] text-white font-bold rounded-2xl shadow-sm shadow-orange-500/20 flex items-center justify-center gap-1.5 text-xs active:scale-98 transition-all"
+          disabled={isSaving}
+          className="w-full py-3 bg-[#F95721] hover:bg-[#E44813] disabled:bg-orange-300 text-white font-bold rounded-2xl shadow-sm shadow-orange-500/20 flex items-center justify-center gap-1.5 text-xs active:scale-98 transition-all"
         >
-          <Save className="w-4 h-4" />
-          <span>Save Settings</span>
+          {isSaving ? (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
+          <span>{isSaving ? 'Saving...' : 'Save Settings'}</span>
         </button>
       </form>
     </div>

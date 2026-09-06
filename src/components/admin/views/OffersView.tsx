@@ -511,6 +511,22 @@ export const OffersView: React.FC = () => {
                 </select>
               </div>
 
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div>
+                  <span className="block font-bold text-gray-800">Coupon Status</span>
+                  <span className="text-[10px] text-gray-500">Active coupons can be applied by customers at checkout</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors ${
+                    formData.isActive ? 'bg-[#00A859] text-white' : 'bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  {formData.isActive ? 'Active' : 'Disabled'}
+                </button>
+              </div>
+
               <div className="pt-2 flex gap-2">
                 <button
                   type="button"

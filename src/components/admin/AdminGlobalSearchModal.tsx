@@ -48,7 +48,9 @@ export const AdminGlobalSearchModal: React.FC<AdminGlobalSearchModalProps> = ({
     const matchedOrders = allOrdersList.filter(
       o => o.orderNumber.toLowerCase().includes(q) ||
            (o.trackingNumber && o.trackingNumber.toLowerCase().includes(q)) ||
-           o.items.some(i => i.name.toLowerCase().includes(q))
+           o.items.some(i => i.name.toLowerCase().includes(q)) ||
+           (o.shippingAddress?.name && o.shippingAddress.name.toLowerCase().includes(q)) ||
+           (o.shippingAddress?.phone && o.shippingAddress.phone.includes(q))
     );
 
     const matchedCategories = categories.filter(
@@ -56,10 +58,24 @@ export const AdminGlobalSearchModal: React.FC<AdminGlobalSearchModalProps> = ({
            c.subtitle.toLowerCase().includes(q)
     );
 
-    const matchedCustomers = [user].filter(
-      u => u.name.toLowerCase().includes(q) ||
-           u.email.toLowerCase().includes(q) ||
-           u.phone.toLowerCase().includes(q)
+    const customerCandidates: Array<{ id: string; name: string; email: string; phone: string }> = [
+      { id: user.id, name: user.name, email: user.email, phone: user.phone }
+    ];
+    allOrdersList.forEach(o => {
+      if (o.shippingAddress?.name && !customerCandidates.some(c => c.phone && c.phone === o.shippingAddress?.phone)) {
+        customerCandidates.push({
+          id: o.userId || `guest_${o.id}`,
+          name: o.shippingAddress.name,
+          email: '',
+          phone: o.shippingAddress.phone || '',
+        });
+      }
+    });
+
+    const matchedCustomers = customerCandidates.filter(
+      u => (u.name && u.name.toLowerCase().includes(q)) ||
+           (u.email && u.email.toLowerCase().includes(q)) ||
+           (u.phone && u.phone.includes(q))
     );
 
     return {

@@ -88,7 +88,11 @@ export const AdminView: React.FC = () => {
   const lowStockCount = products.filter(p => p.stockCount <= storeSettings.lowStockThreshold).length;
 
   const currentEmail = authUser?.email || supabaseUser?.email;
-  const isDevOrLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hash.includes('admin'));
+  const isDevOrLocal = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1' || 
+    window.location.hash.includes('admin')
+  );
   const isAuthorizedAdmin = isDevOrLocal || (isGoogleAuth && isEmailAuthorizedAdmin(currentEmail));
 
   const handleGoogleSignIn = async () => {

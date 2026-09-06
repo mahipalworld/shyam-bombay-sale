@@ -507,8 +507,8 @@ export const HomeView: React.FC = () => {
               <span className="hidden sm:inline">Free Express Delivery</span>
             </p>
             <p className="text-[9px] sm:text-[11px] md:text-xs text-gray-500 mt-0.5 leading-tight">
-              <span className="sm:hidden">Above ₹1,700</span>
-              <span className="hidden sm:inline">On all orders above ₹1,700</span>
+              <span className="sm:hidden">Above ₹{storeSettings?.freeDeliveryThreshold?.toLocaleString('en-IN') ?? '499'}</span>
+              <span className="hidden sm:inline">On all orders above ₹{storeSettings?.freeDeliveryThreshold?.toLocaleString('en-IN') ?? '499'}</span>
             </p>
           </div>
         </div>

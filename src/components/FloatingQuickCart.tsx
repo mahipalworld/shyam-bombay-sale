@@ -5,7 +5,7 @@ import { useStore } from '@/context/StoreContext';
 import { ShoppingBag, ArrowRight, Sparkles, Truck } from 'lucide-react';
 
 export const FloatingQuickCart: React.FC = () => {
-  const { cart, activeTab, setActiveTab, cartSubtotal } = useStore();
+  const { cart, activeTab, setActiveTab, cartSubtotal, storeSettings } = useStore();
 
   // Don't show if cart is empty or user is on Cart, Admin, Categories, or Profile view
   if (
@@ -19,7 +19,7 @@ export const FloatingQuickCart: React.FC = () => {
   }
 
   const totalQuantity = cart.reduce((acc, item) => acc + item.quantity, 0);
-  const freeShippingThreshold = 1700;
+  const freeShippingThreshold = storeSettings?.freeDeliveryThreshold ?? 499;
   const isFreeDelivery = cartSubtotal >= freeShippingThreshold;
   const awayFromFree = Math.max(0, freeShippingThreshold - cartSubtotal);
   const progressPercent = Math.min(100, Math.round((cartSubtotal / freeShippingThreshold) * 100));

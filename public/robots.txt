@@ -1,14 +1,24 @@
-# robots.txt for SBS Store (https://www.sbsstore.in)
+# robots.txt for SBS — Shyam Business Store (https://www.sbsstore.in)
+# Phase 1 — Brand Foundation
+
 User-agent: *
 Allow: /
+Allow: /about
+Allow: /contact
 Disallow: /admin
 Disallow: /api/
 
 User-agent: Googlebot
 Allow: /
+Allow: /about
+Allow: /contact
+Disallow: /admin
+Disallow: /api/
 
 User-agent: Bingbot
 Allow: /
+Allow: /about
+Allow: /contact
 
-# XML Sitemaps
+# XML Sitemap
 Sitemap: https://www.sbsstore.in/sitemap.xml

@@ -105,17 +105,21 @@ export const CustomersView: React.FC = () => {
         });
       }
 
-      // Also gather customers who may have placed orders with userId
+      // Also gather customers who placed orders (registered or guest checkout)
       allOrdersList.forEach(o => {
-        if (o.userId && !profilesMap.has(o.userId)) {
-          profilesMap.set(o.userId, {
-            id: o.userId,
-            name: o.shippingAddress?.name || 'Customer',
-            email: '',
-            phone: o.shippingAddress?.phone || '',
-            reward_points: 0,
-            created_at: o.createdAt || new Date().toISOString(),
-          });
+        const custKey = o.userId || (o.shippingAddress?.phone ? `guest_${o.shippingAddress.phone}` : `guest_${o.id}`);
+        if (!profilesMap.has(custKey)) {
+          const existingByPhone = Array.from(profilesMap.values()).find(p => p.phone && o.shippingAddress?.phone && p.phone === o.shippingAddress.phone);
+          if (!existingByPhone) {
+            profilesMap.set(custKey, {
+              id: custKey,
+              name: o.shippingAddress?.name || 'Customer',
+              email: '',
+              phone: o.shippingAddress?.phone || '',
+              reward_points: 0,
+              created_at: o.createdAt || new Date().toISOString(),
+            });
+          }
         }
       });
 
@@ -123,10 +127,11 @@ export const CustomersView: React.FC = () => {
       const compiled: CustomerRecord[] = [];
 
       profilesMap.forEach((prof, userId) => {
-        // Real orders belonging to this user
+        // Real orders belonging to this user or guest
         const userOrders = allOrdersList.filter(o => 
-          o.userId === userId || 
-          (prof.phone && o.shippingAddress?.phone === prof.phone)
+          (o.userId && o.userId === userId) || 
+          (prof.phone && o.shippingAddress?.phone === prof.phone) ||
+          (`guest_${o.id}` === userId)
         );
 
         const ordersCount = userOrders.length;

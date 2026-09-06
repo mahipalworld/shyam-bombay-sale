@@ -106,7 +106,7 @@ export default function App() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/logo.png?v=3"
-                    alt="SBS Logo"
+                    alt="SBS — Shyam Business Store"
                     className="h-8 w-auto object-contain flex-shrink-0 bg-white/10 p-1 rounded-lg"
                   />
                   <div className="flex flex-col leading-tight">
@@ -125,6 +125,9 @@ export default function App() {
                   <li><button onClick={() => { setSelectedCategoryFilter(null); setActiveTab('categories'); }} className="py-1 inline-block hover:text-[#F95721] transition-colors">All Categories</button></li>
                   <li><button onClick={() => { setSelectedCategoryFilter('offers'); setActiveTab('categories'); }} className="py-1 inline-block hover:text-[#F95721] transition-colors">Today&apos;s Deals</button></li>
                   <li><button onClick={() => setActiveTab('wishlist')} className="py-1 inline-block hover:text-[#F95721] transition-colors">Wishlist</button></li>
+                  {/* Crawlable anchor links for Google — do not replace with buttons */}
+                  <li><a href="/about" className="py-1 inline-block hover:text-[#F95721] transition-colors">About SBS</a></li>
+                  <li><a href="/contact" className="py-1 inline-block hover:text-[#F95721] transition-colors">Contact Us</a></li>
                 </ul>
               </div>
 

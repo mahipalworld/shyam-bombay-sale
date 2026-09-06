@@ -11,33 +11,14 @@ import { PWAProvider } from '@/context/PWAContext';
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.sbsstore.in'),
   title: {
-    default: 'SBS STORE | Smart Products. Better Prices.',
+    default: 'SBS — Shyam Business Store | Official Website',
     template: '%s | SBS Store',
   },
   description:
-    'Shop smart everyday home, kitchen, cleaning, personal care, and storage essentials at unbeatable prices. Fast delivery across India, genuine products & easy 7-day returns.',
-  keywords: [
-    'SBS Store',
-    'Shyam Bombay Sale',
-    'sbsstore.in',
-    'sbsshop',
-    'SBS Vadodara',
-    'SBS Store Vadodara',
-    'Smart home essentials India',
-    'Kitchen gadgets online India',
-    'Mini washing machine portable',
-    'Packet sealer machine handheld',
-    'Sunset lamp price India',
-    'Home cleaning products online',
-    'Affordable online shopping India',
-    'Daily utility gadgets',
-    'Online shopping Vadodara Gujarat',
-    'Cash on delivery shopping store',
-    'Best home organizers online'
-  ],
-  authors: [{ name: 'SBS Store (Shyam Bombay Sale)' }],
-  creator: 'Shyam Bombay Sale',
-  publisher: 'SBS Store',
+    'SBS — Shyam Business Store is your destination for smart everyday essentials: home, kitchen, cleaning, personal care, and more. Quality products, genuine service, delivered across India.',
+  authors: [{ name: 'SBS — Shyam Business Store' }],
+  creator: 'SBS — Shyam Business Store',
+  publisher: 'SBS — Shyam Business Store',
   applicationName: 'SBS Store',
   alternates: {
     canonical: 'https://www.sbsstore.in',
@@ -45,8 +26,6 @@ export const metadata: Metadata = {
   other: {
     'geo.region': 'IN-GJ',
     'geo.placename': 'Vadodara, Gujarat',
-    'geo.position': '22.3072;73.1812',
-    'ICBM': '22.3072, 73.1812',
   },
   manifest: '/manifest.json',
   appleWebApp: {
@@ -66,11 +45,11 @@ export const metadata: Metadata = {
     shortcut: '/favicon.ico?v=2',
   },
   openGraph: {
-    title: 'SBS STORE | Smart Products. Better Prices.',
+    title: 'SBS — Shyam Business Store | Official Website',
     description:
-      'Discover smart everyday essentials for home, kitchen, cleaning, and personal care with fast delivery and great discounts across India.',
+      'SBS — Shyam Business Store offers smart everyday essentials for home, kitchen, cleaning, and personal care. Genuine products, fair prices, delivered across India.',
     url: 'https://www.sbsstore.in',
-    siteName: 'SBS Store',
+    siteName: 'SBS — Shyam Business Store',
     locale: 'en_IN',
     type: 'website',
     images: [
@@ -78,15 +57,15 @@ export const metadata: Metadata = {
         url: 'https://www.sbsstore.in/logo.png',
         width: 800,
         height: 600,
-        alt: 'SBS Store - Shyam Bombay Sale',
+        alt: 'SBS — Shyam Business Store Logo',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SBS STORE | Smart Products. Better Prices.',
+    title: 'SBS — Shyam Business Store | Official Website',
     description:
-      'Shop smart everyday essentials for cleaning, kitchen, and home at unbeatable prices on SBS Store.',
+      'Smart everyday essentials for home, kitchen, cleaning, and personal care. Official website of SBS — Shyam Business Store.',
     images: ['https://www.sbsstore.in/logo.png'],
   },
   robots: {
@@ -110,6 +89,10 @@ export const viewport: Viewport = {
   themeColor: '#F95721',
 };
 
+// Structured data — Phase 1 (Brand Foundation).
+// Address kept at city-level until location conflict is resolved (see implementation_plan.md §3B).
+// Fake product ItemList removed — products are not ready.
+// Update this when: (a) location is confirmed, (b) social profiles exist, (c) products launch.
 const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -117,49 +100,36 @@ const jsonLd = {
       '@type': 'WebSite',
       '@id': 'https://www.sbsstore.in/#website',
       'url': 'https://www.sbsstore.in/',
-      'name': 'SBS Store',
-      'alternateName': ['Shyam Bombay Sale', 'SBS Store India', 'sbsstore.in'],
-      'description': 'Smart Products. Better Prices. Everyday essentials shopping online.',
-      'potentialAction': {
-        '@type': 'SearchAction',
-        'target': 'https://www.sbsstore.in/?q={search_term_string}',
-        'query-input': 'required name=search_term_string',
-      },
+      'name': 'SBS — Shyam Business Store',
+      'alternateName': ['SBS Store', 'sbsstore.in'],
+      'description': 'Official website of SBS — Shyam Business Store. Smart everyday essentials for home, kitchen, cleaning, and personal care.',
+      'inLanguage': 'en-IN',
     },
     {
-      '@type': ['Store', 'OnlineStore'],
+      '@type': 'Organization',
       '@id': 'https://www.sbsstore.in/#organization',
-      'name': 'SBS Store (Shyam Bombay Sale)',
+      'name': 'SBS — Shyam Business Store',
+      'alternateName': 'SBS',
       'url': 'https://www.sbsstore.in',
-      'logo': 'https://www.sbsstore.in/logo.png',
+      'logo': {
+        '@type': 'ImageObject',
+        'url': 'https://www.sbsstore.in/logo.png',
+        'width': 800,
+        'height': 600,
+      },
       'image': 'https://www.sbsstore.in/logo.png',
-      'description': 'SBS Store offers high quality everyday smart utility, kitchen, cleaning, and lifestyle products at fair prices with fast nationwide delivery.',
+      'description': 'SBS — Shyam Business Store offers quality everyday essentials for home, kitchen, cleaning, and personal care with genuine products and fair prices.',
       'telephone': '+91-9226294797',
       'email': 'shyambombaysale@gmail.com',
+      // NOTE: Full streetAddress, postalCode, and geo coordinates withheld
+      // pending resolution of location conflict (Gotri vs Laxmipura-Gorwa).
+      // Add confirmed values here once verified.
       'address': {
         '@type': 'PostalAddress',
-        'streetAddress': 'Shyam Bombay Sale, Laxmipura, Gorwa',
         'addressLocality': 'Vadodara',
         'addressRegion': 'Gujarat',
-        'postalCode': '390023',
         'addressCountry': 'IN',
       },
-      'geo': {
-        '@type': 'GeoCoordinates',
-        'latitude': 22.3072,
-        'longitude': 73.1812,
-      },
-      'openingHoursSpecification': [
-        {
-          '@type': 'OpeningHoursSpecification',
-          'dayOfWeek': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-          'opens': '09:00',
-          'closes': '21:00',
-        },
-      ],
-      'priceRange': '₹99 - ₹2999',
-      'currenciesAccepted': 'INR',
-      'paymentAccepted': 'Cash on Delivery, UPI, Credit Card, Debit Card, Net Banking',
     },
     {
       '@type': 'BreadcrumbList',
@@ -174,120 +144,14 @@ const jsonLd = {
         {
           '@type': 'ListItem',
           'position': 2,
-          'name': 'Categories',
-          'item': 'https://www.sbsstore.in/?category=all',
+          'name': 'About',
+          'item': 'https://www.sbsstore.in/about',
         },
         {
           '@type': 'ListItem',
           'position': 3,
-          'name': 'Special Deals',
-          'item': 'https://www.sbsstore.in/?category=offers',
-        },
-      ],
-    },
-    {
-      '@type': 'ItemList',
-      '@id': 'https://www.sbsstore.in/#popular-products',
-      'name': 'Bestsellers & Smart Everyday Essentials',
-      'itemListElement': [
-        {
-          '@type': 'ListItem',
-          'position': 1,
-          'item': {
-            '@type': 'Product',
-            'name': 'Mini Washing Machine',
-            'image': 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=800&auto=format&fit=crop&q=80',
-            'description': 'Compact portable ultrasonic mini washing machine with turbo spin technology.',
-            'sku': 'SBS-P1-WASH',
-            'brand': {
-              '@type': 'Brand',
-              'name': 'SBS Store',
-            },
-            'aggregateRating': {
-              '@type': 'AggregateRating',
-              'ratingValue': '4.6',
-              'reviewCount': '128',
-            },
-            'offers': {
-              '@type': 'Offer',
-              'url': 'https://www.sbsstore.in/',
-              'priceCurrency': 'INR',
-              'price': '1499',
-              'priceValidUntil': '2027-12-31',
-              'itemCondition': 'https://schema.org/NewCondition',
-              'availability': 'https://schema.org/InStock',
-              'seller': {
-                '@type': 'Organization',
-                'name': 'SBS Store',
-              },
-            },
-          },
-        },
-        {
-          '@type': 'ListItem',
-          'position': 2,
-          'item': {
-            '@type': 'Product',
-            'name': 'Romantic Sunset Projection Lamp',
-            'image': 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80',
-            'description': '360-degree rotation aesthetic ambient sunset projection mood lamp.',
-            'sku': 'SBS-P2-LAMP',
-            'brand': {
-              '@type': 'Brand',
-              'name': 'SBS Store',
-            },
-            'aggregateRating': {
-              '@type': 'AggregateRating',
-              'ratingValue': '4.8',
-              'reviewCount': '95',
-            },
-            'offers': {
-              '@type': 'Offer',
-              'url': 'https://www.sbsstore.in/',
-              'priceCurrency': 'INR',
-              'price': '399',
-              'priceValidUntil': '2027-12-31',
-              'itemCondition': 'https://schema.org/NewCondition',
-              'availability': 'https://schema.org/InStock',
-              'seller': {
-                '@type': 'Organization',
-                'name': 'SBS Store',
-              },
-            },
-          },
-        },
-        {
-          '@type': 'ListItem',
-          'position': 3,
-          'item': {
-            '@type': 'Product',
-            'name': 'Portable Food Packet Sealer',
-            'image': 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=800&auto=format&fit=crop&q=80',
-            'description': '2-in-1 handheld heat sealer and bag cutter with magnetic base.',
-            'sku': 'SBS-P3-SEALER',
-            'brand': {
-              '@type': 'Brand',
-              'name': 'SBS Store',
-            },
-            'aggregateRating': {
-              '@type': 'AggregateRating',
-              'ratingValue': '4.5',
-              'reviewCount': '210',
-            },
-            'offers': {
-              '@type': 'Offer',
-              'url': 'https://www.sbsstore.in/',
-              'priceCurrency': 'INR',
-              'price': '199',
-              'priceValidUntil': '2027-12-31',
-              'itemCondition': 'https://schema.org/NewCondition',
-              'availability': 'https://schema.org/InStock',
-              'seller': {
-                '@type': 'Organization',
-                'name': 'SBS Store',
-              },
-            },
-          },
+          'name': 'Contact',
+          'item': 'https://www.sbsstore.in/contact',
         },
       ],
     },

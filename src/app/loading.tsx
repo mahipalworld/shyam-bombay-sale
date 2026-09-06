@@ -9,7 +9,7 @@ export default function Loading() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo.png?v=3"
-            alt="SBS Store"
+            alt="SBS — Shyam Business Store"
             className="h-12 sm:h-14 w-auto object-contain drop-shadow-sm animate-pulse"
           />
         </div>

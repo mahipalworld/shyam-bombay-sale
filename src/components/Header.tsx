@@ -33,6 +33,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
     setIsSearchOpen, 
     setSelectedCategoryFilter,
     cartTotal,
+    storeSettings,
     userNotifications,
     setIsUserNotificationsModalOpen
   } = useStore();
@@ -54,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 transition-all">
       {/* Top Banner on Desktop */}
       <div className="hidden md:block bg-gradient-to-r from-[#FFF5EE] via-[#FFF0E6] to-[#FFE8DC] border-b border-orange-100/60 py-1.5 px-4 text-center text-xs font-semibold text-gray-700">
-        <span>✨ Free delivery on orders above ₹1,700 | Use code <strong className="text-[#F95721] font-bold">SBS100</strong> for Flat ₹100 Off</span>
+        <span>✨ Free delivery on orders above ₹{storeSettings?.freeDeliveryThreshold?.toLocaleString('en-IN') ?? '499'} | Use code <strong className="text-[#F95721] font-bold">SBS100</strong> for Flat ₹100 Off</span>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
@@ -81,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo.png?v=3"
-              alt="SBS Logo"
+              alt="SBS — Shyam Business Store"
               className="h-7 sm:h-8.5 w-auto object-contain group-hover:scale-105 transition-transform flex-shrink-0"
             />
             <div className="flex flex-col items-start justify-center leading-none">

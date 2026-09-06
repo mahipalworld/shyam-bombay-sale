@@ -14,7 +14,7 @@ export default function NotFound() {
         href="/"
         className="px-5 py-2.5 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-2xl shadow-sm transition-all"
       >
-        Return to SBS Store
+        Return to SBS — Shyam Business Store
       </Link>
     </div>
   );

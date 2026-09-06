@@ -278,7 +278,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
 
   // UI state
-  const [activeTab, setActiveTab] = useState<string>('home');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'admin' || window.location.hash.includes('admin')) {
+        return 'admin';
+      }
+    }
+    return 'home';
+  });
+
+  useEffect(() => {
+    const handleHash = () => {
+      if (typeof window !== 'undefined' && window.location.hash.includes('admin')) {
+        setActiveTab('admin');
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
   const [selectedCategoryFilter, setSelectedCategoryFilterState] = useState<string | null>(null);
   const [selectedSubcategoryFilter, setSelectedSubcategoryFilter] = useState<string | null>(null);
   const [activeSubcategoryModal, setActiveSubcategoryModal] = useState<{ category: Category; subcategory: Subcategory | null } | null>(null);
@@ -334,7 +353,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     {
       id: 'un_3',
       title: '🚚 Free Express Delivery Live',
-      message: 'All orders above ₹1,700 now qualify for free express courier dispatch across India.',
+      message: 'All qualifying orders now qualify for free express courier dispatch across India.',
       type: 'system',
       targetAudience: 'ALL',
       read: true,
@@ -435,6 +454,35 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([]);
   const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>([]);
   const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
+
+  const syncPaymentRecordsFromOrders = (ordersList: Order[]) => {
+    setPaymentRecords(
+      ordersList.map((ord) => {
+        let status: PaymentRecord['status'] = 'Pending';
+        if (ord.paymentStatus === 'PAYMENT_VERIFIED') status = 'Verified';
+        else if (ord.paymentStatus === 'CUSTOMER_CONFIRMED') status = 'Customer Confirmed';
+        else if (ord.paymentStatus === 'PAYMENT_FAILED') status = 'Failed';
+        else if (ord.status === 'Delivered' && ord.paymentMethod === 'COD') status = 'Success';
+        else if (!ord.paymentMethod?.includes('UPI') && ord.paymentMethod !== 'COD') status = 'Verified';
+
+        let method: PaymentRecord['method'] = 'UPI';
+        if (ord.paymentMethod?.includes('UPI')) method = 'UPI';
+        else if (ord.paymentMethod === 'COD') method = 'COD';
+        else if (ord.paymentMethod?.toLowerCase().includes('card')) method = 'Card';
+        else if (ord.paymentMethod?.toLowerCase().includes('net')) method = 'Net Banking';
+
+        return {
+          id: `pay_${ord.id}`,
+          orderId: ord.id,
+          customerName: ord.shippingAddress?.name || 'Customer',
+          amount: ord.total,
+          method,
+          status,
+          timestamp: ord.createdAt || new Date().toISOString(),
+        };
+      })
+    );
+  };
   const [inventoryLogs, setInventoryLogs] = useState<InventoryLog[]>([]);
 
   const [heroBanners, setHeroBanners] = useState<HeroBannerItem[]>([
@@ -828,12 +876,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           { data: cats },
           { data: prods },
           { data: coups },
-          { data: settings }
+          { data: settings },
+          { data: remoteReturns }
         ] = await Promise.all([
           supabase.from('categories').select('*').order('name'),
           supabase.from('products').select('*').order('name'),
           supabase.from('coupons').select('*').order('created_at'),
           supabase.from('store_settings').select('*'),
+          supabase.from('return_requests').select('*').order('date', { ascending: false }),
         ]);
 
         if (cats && cats.length > 0) {
@@ -900,9 +950,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             maxDiscount: c.max_discount ? Number(c.max_discount) : undefined,
             expiresAt: c.expires_at,
             description: c.description,
-            isActive: true,
+            isActive: c.is_active !== undefined ? Boolean(c.is_active) : true,
           }));
           setCoupons(mappedCoupons);
+        }
+
+        if (remoteReturns && remoteReturns.length > 0) {
+          setReturnRequests(remoteReturns.map((r: any) => ({
+            id: r.id,
+            orderId: r.order_id,
+            customerName: r.customer_name,
+            productName: r.product_name,
+            productImage: r.product_image,
+            reason: r.reason,
+            date: r.date,
+            status: r.status,
+            amount: Number(r.amount)
+          })));
         }
 
         if (settings && settings.length > 0) {
@@ -1064,7 +1128,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           userId: o.user_id,
         };
         // Always add to adminOrders stream for admin management
-        setAdminOrders((prev) => (prev.some((x) => x.id === newOrd.id) ? prev : [newOrd, ...prev]));
+        setAdminOrders((prev) => {
+          const updated = prev.some((x) => x.id === newOrd.id) ? prev : [newOrd, ...prev];
+          syncPaymentRecordsFromOrders(updated);
+          return updated;
+        });
         // Only append to customer's personal orders if it belongs to current authenticated user
         if (currentUserIdRef.current && newOrd.userId === currentUserIdRef.current) {
           setOrders((prev) => (prev.some((x) => x.id === newOrd.id) ? prev : [newOrd, ...prev]));
@@ -1082,7 +1150,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           trackingNumber: o.tracking_number || ord.trackingNumber 
         } : ord);
         setOrders((prev) => prev.map(updateFn));
-        setAdminOrders((prev) => prev.map(updateFn));
+        setAdminOrders((prev) => {
+          const updated = prev.map(updateFn);
+          syncPaymentRecordsFromOrders(updated);
+          return updated;
+        });
       })
       // Direct Cross-Device Broadcast Sync for Instant Screen Updates
       .on('broadcast', { event: 'cross_device_order_placed' }, (payload) => {
@@ -1135,9 +1207,31 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           maxDiscount: c.max_discount ? Number(c.max_discount) : undefined,
           expiresAt: c.expires_at,
           description: c.description,
-          isActive: true,
+          isActive: c.is_active !== undefined ? Boolean(c.is_active) : true,
         };
         setCoupons((prev) => (prev.some((x) => x.id === newCoup.id) ? prev : [newCoup, ...prev]));
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'coupons' }, (payload) => {
+        const c = payload.new as any;
+        if (!c || !c.id) return;
+        setCoupons((prev) =>
+          prev.map((item) =>
+            item.id === c.id
+              ? {
+                  ...item,
+                  code: c.code ?? item.code,
+                  title: c.title ?? item.title,
+                  discountType: c.discount_type ?? item.discountType,
+                  value: c.value !== undefined ? Number(c.value) : item.value,
+                  minOrderValue: c.min_order_value !== undefined ? Number(c.min_order_value) : item.minOrderValue,
+                  maxDiscount: c.max_discount !== undefined ? Number(c.max_discount) : item.maxDiscount,
+                  expiresAt: c.expires_at ?? item.expiresAt,
+                  description: c.description ?? item.description,
+                  isActive: c.is_active !== undefined ? Boolean(c.is_active) : item.isActive,
+                }
+              : item
+          )
+        );
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'coupons' }, (payload) => {
         const old = payload.old as any;
@@ -1312,8 +1406,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           }
         }
 
-        // If user is Admin, load all store orders for Admin management views
-        if (isUserAdmin) {
+        // If user is Admin or in local development, load all store orders for Admin management views
+        const isDevMode = typeof window !== 'undefined' && (
+          window.location.hostname === 'localhost' || 
+          window.location.hostname === '127.0.0.1' || 
+          window.location.hash.includes('admin')
+        );
+
+        if (isUserAdmin || isDevMode) {
           const { data: allAdminOrders } = await supabase
             .from('orders')
             .select('*')
@@ -1321,7 +1421,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             .limit(100);
 
           if (allAdminOrders) {
-            setAdminOrders(allAdminOrders.map((o: any) => ({
+            const mappedOrders = allAdminOrders.map((o: any) => ({
               id: o.id,
               orderNumber: o.order_number,
               createdAt: o.created_at,
@@ -1339,13 +1439,53 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               trackingNumber: o.tracking_number,
               estimatedDelivery: o.estimated_delivery,
               userId: o.user_id,
-            })));
+            }));
+            setAdminOrders(mappedOrders);
+            syncPaymentRecordsFromOrders(mappedOrders);
           }
         }
       } else {
         // Guest user: purge any stale orders with registered userId & clear addresses
         setOrders((prev) => prev.filter(o => !o.userId));
-        setAdminOrders([]);
+        const isDevMode = typeof window !== 'undefined' && (
+          window.location.hostname === 'localhost' || 
+          window.location.hostname === '127.0.0.1' || 
+          window.location.hash.includes('admin')
+        );
+        if (isDevMode) {
+          // In local dev, fetch orders for admin testing even without session
+          const { data: allAdminOrders } = await supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+          if (allAdminOrders) {
+            const mappedOrders = allAdminOrders.map((o: any) => ({
+              id: o.id,
+              orderNumber: o.order_number,
+              createdAt: o.created_at,
+              status: o.status,
+              paymentStatus: o.payment_status || (o.payment_method?.includes('UPI') ? 'PENDING' : 'PAYMENT_VERIFIED'),
+              paymentConfirmedAt: o.payment_confirmed_at,
+              whatsappConfirmedAt: o.whatsapp_confirmed_at,
+              items: o.items || [],
+              subtotal: Number(o.subtotal),
+              discount: Number(o.discount),
+              deliveryCharge: Number(o.delivery_charge),
+              total: Number(o.total),
+              shippingAddress: o.shipping_address,
+              paymentMethod: o.payment_method,
+              trackingNumber: o.tracking_number,
+              estimatedDelivery: o.estimated_delivery,
+              userId: o.user_id,
+            }));
+            setAdminOrders(mappedOrders);
+            syncPaymentRecordsFromOrders(mappedOrders);
+          }
+        } else {
+          setAdminOrders([]);
+        }
         setAddresses([]);
       }
     };
@@ -1709,7 +1849,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const cartDiscountMRP = Math.max(0, cartOriginalMRP - cartSubtotal);
 
   let couponDiscount = 0;
-  if (appliedCoupon) {
+  if (appliedCoupon && cartSubtotal >= (appliedCoupon.minOrderValue || 0)) {
     if (appliedCoupon.discountType === 'FLAT') {
       couponDiscount = appliedCoupon.value || 0;
     } else {
@@ -1722,7 +1862,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }
 
   const cartDiscount = cartDiscountMRP + couponDiscount;
-  const cartDeliveryCharge = cartSubtotal >= (storeSettings?.freeDeliveryThreshold ?? 1700) || cartSubtotal === 0 ? 0 : (storeSettings?.deliveryCharge ?? 49);
+  const cartDeliveryCharge = cartSubtotal >= (storeSettings?.freeDeliveryThreshold ?? 499) || cartSubtotal === 0 ? 0 : (storeSettings?.deliveryCharge ?? 40);
   const cartTotal = Math.max(0, cartSubtotal - couponDiscount + cartDeliveryCharge);
 
   // Checkout & Coupon
@@ -1732,27 +1872,37 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return false;
     }
     const cleanCode = code.trim().toUpperCase();
-    let found = coupons.find((c) => c && c.code && c.code.toUpperCase() === cleanCode && c.isActive !== false);
-    
-    // Fallback check in INITIAL_COUPONS if not present in state
-    if (!found) {
-      found = INITIAL_COUPONS.find((c) => c && c.code && c.code.toUpperCase() === cleanCode);
-      if (found) {
-        setCoupons((prev) => (prev.some((c) => c && c.code && c.code.toUpperCase() === cleanCode) ? prev : [...prev, found!]));
+    const existingCoupon = coupons.find((c) => c && c.code && c.code.toUpperCase() === cleanCode);
+
+    if (existingCoupon) {
+      if (existingCoupon.isActive === false) {
+        showToast(`Coupon "${cleanCode}" is currently inactive or disabled.`, 'error');
+        return false;
       }
+      if (cartSubtotal < (existingCoupon.minOrderValue || 0)) {
+        showToast(`Cart subtotal of at least ₹${existingCoupon.minOrderValue} required for coupon "${cleanCode}" (current: ₹${cartSubtotal})`, 'error');
+        return false;
+      }
+      setAppliedCoupon(existingCoupon);
+      showToast(`Coupon "${existingCoupon.code}" applied! 🎉`);
+      return true;
     }
 
-    if (!found) {
+    // Check INITIAL_COUPONS only if not registered yet
+    const fallback = INITIAL_COUPONS.find((c) => c && c.code && c.code.toUpperCase() === cleanCode);
+    if (!fallback) {
       showToast(`Invalid coupon code "${cleanCode}". Try SBS150, SBS100 or SAVE10!`, 'error');
       return false;
     }
 
-    if (cartSubtotal > 0 && cartSubtotal < found.minOrderValue) {
-      showToast(`Add ₹${found.minOrderValue - cartSubtotal} more to activate ${found.code} (Min: ₹${found.minOrderValue})`, 'info');
+    if (cartSubtotal < (fallback.minOrderValue || 0)) {
+      showToast(`Cart subtotal of at least ₹${fallback.minOrderValue} required for coupon "${cleanCode}" (current: ₹${cartSubtotal})`, 'error');
+      return false;
     }
 
-    setAppliedCoupon(found);
-    showToast(`Coupon "${found.code}" applied! 🎉`);
+    setCoupons((prev) => (prev.some((c) => c && c.code && c.code.toUpperCase() === cleanCode) ? prev : [...prev, fallback]));
+    setAppliedCoupon(fallback);
+    showToast(`Coupon "${fallback.code}" applied! 🎉`);
     return true;
   };
 
@@ -1987,13 +2137,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return newOrder;
   };
 
-  const updateOrderPaymentStatus = (
+  const updateOrderPaymentStatus = async (
     orderId: string, 
     paymentStatus: PaymentStatus, 
     extra?: { paymentConfirmedAt?: string; whatsappConfirmedAt?: string }
   ) => {
     let orderNum = '';
     let oldPaymentStatus: PaymentStatus | undefined;
+
+    const existingOrd = adminOrders.find(o => o.id === orderId) || orders.find(o => o.id === orderId);
+    const willMoveToProcessing = paymentStatus === 'PAYMENT_VERIFIED' && (existingOrd?.status === ('To Pay' as any));
 
     setOrders((prev) =>
       prev.map((ord) => {
@@ -2005,41 +2158,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             paymentStatus,
             paymentConfirmedAt: extra?.paymentConfirmedAt || ord.paymentConfirmedAt,
             whatsappConfirmedAt: extra?.whatsappConfirmedAt || ord.whatsappConfirmedAt,
-            status: paymentStatus === 'PAYMENT_VERIFIED' && (ord.status === 'To Pay' as any) ? 'Processing' : ord.status
+            status: willMoveToProcessing ? 'Processing' : ord.status
           };
         }
         return ord;
       })
     );
 
-    setAdminOrders((prev) =>
-      prev.map((ord) => {
+    setAdminOrders((prev) => {
+      const updated = prev.map((ord) => {
         if (ord.id === orderId) {
           return {
             ...ord,
             paymentStatus,
             paymentConfirmedAt: extra?.paymentConfirmedAt || ord.paymentConfirmedAt,
             whatsappConfirmedAt: extra?.whatsappConfirmedAt || ord.whatsappConfirmedAt,
-            status: paymentStatus === 'PAYMENT_VERIFIED' && (ord.status === 'To Pay' as any) ? 'Processing' : ord.status
+            status: willMoveToProcessing ? 'Processing' : ord.status
           };
         }
         return ord;
-      })
-    );
-
-    // Update payment record in ledger
-    setPaymentRecords((prevPays) =>
-      prevPays.map((p) => {
-        if (p.orderId === orderId) {
-          let status: PaymentRecord['status'] = p.status;
-          if (paymentStatus === 'CUSTOMER_CONFIRMED') status = 'Customer Confirmed';
-          else if (paymentStatus === 'PAYMENT_VERIFIED') status = 'Verified';
-          else if (paymentStatus === 'PAYMENT_FAILED') status = 'Failed';
-          return { ...p, status };
-        }
-        return p;
-      })
-    );
+      });
+      syncPaymentRecordsFromOrders(updated);
+      return updated;
+    });
 
     // Only create customer notification if payment status actually changed
     if (oldPaymentStatus !== paymentStatus) {
@@ -2058,6 +2199,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           type: 'order',
           orderId
         });
+        showToast(`Payment for #${numDisplay} verified ✓`, 'success');
       } else if (paymentStatus === 'PAYMENT_FAILED') {
         addCustomerNotification({
           title: 'Payment Verification Failed',
@@ -2065,22 +2207,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           type: 'alert',
           orderId
         });
-        showToast(`Payment for ${numDisplay} marked as failed`, 'error');
+        showToast(`Payment for #${numDisplay} marked as failed`, 'error');
       }
     }
 
     // Persist to Supabase if configured
     if (isSupabaseConfigured && supabase) {
       const updateData: any = { payment_status: paymentStatus };
-      if (paymentStatus === 'PAYMENT_VERIFIED') {
+      if (willMoveToProcessing) {
         updateData.status = 'Processing';
       }
       if (extra?.paymentConfirmedAt) updateData.payment_confirmed_at = extra.paymentConfirmedAt;
       if (extra?.whatsappConfirmedAt) updateData.whatsapp_confirmed_at = extra.whatsappConfirmedAt;
 
-      supabase.from('orders').update(updateData).eq('id', orderId).then(({ error }) => {
-        if (error) console.error('Supabase update order payment error:', error);
-      });
+      const { error } = await supabase.from('orders').update(updateData).eq('id', orderId);
+      if (error) {
+        console.error('Supabase update order payment error:', error);
+        showToast(`Failed to update payment status: ${error.message}`, 'error');
+      }
 
       // Broadcast to other open admin screens
       try {
@@ -2105,9 +2249,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const userId = session?.user?.id;
       const userEmail = session?.user?.email?.toLowerCase();
       const isUserAdmin = userEmail === 'mahipalstudent71@gmail.com' || adminTeamMembers.some(m => m.email.toLowerCase() === userEmail && m.status === 'ACTIVE');
+      const isDevMode = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1' || 
+        window.location.hash.includes('admin')
+      );
 
       // 1. Fetch full store orders for admin management
-      if (isUserAdmin) {
+      if (isUserAdmin || isDevMode) {
         const { data: allOrders, error } = await supabase
           .from('orders')
           .select('*')
@@ -2115,7 +2264,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           .limit(100);
 
         if (!error && allOrders) {
-          setAdminOrders(allOrders.map((o: any) => ({
+          const mapped = allOrders.map((o: any) => ({
             id: o.id,
             orderNumber: o.order_number,
             createdAt: o.created_at,
@@ -2133,7 +2282,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             trackingNumber: o.tracking_number,
             estimatedDelivery: o.estimated_delivery,
             userId: o.user_id,
-          })));
+          }));
+          setAdminOrders(mapped);
+          syncPaymentRecordsFromOrders(mapped);
         }
       }
 
@@ -2175,7 +2326,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+  const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
     let orderNum = '';
     let trackingNum = '';
     let oldStatus: OrderStatus | undefined;
@@ -2192,14 +2343,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       })
     );
 
-    setAdminOrders((prev) =>
-      prev.map((ord) => {
+    setAdminOrders((prev) => {
+      const updated = prev.map((ord) => {
         if (ord.id === orderId) {
           return { ...ord, status };
         }
         return ord;
-      })
-    );
+      });
+      syncPaymentRecordsFromOrders(updated);
+      return updated;
+    });
 
     // Only create notification if status actually changed (avoid duplicates on repeated saves)
     if (oldStatus && oldStatus !== status) {
@@ -2235,20 +2388,32 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }
 
-    showToast(`Order status updated to ${status}`);
-
     if (isSupabaseConfigured && supabase) {
-      supabase.from('orders').update({ status }).eq('id', orderId).then(({ error }) => {
-        if (error) console.error('Supabase update order status error:', error);
-      });
+      const existingOrd = adminOrders.find(o => o.id === orderId) || orders.find(o => o.id === orderId);
+      const isCod = existingOrd?.paymentMethod === 'COD';
+      const updates: any = { status };
+      if (status === 'Delivered' && isCod) {
+        updates.payment_status = 'PAYMENT_VERIFIED';
+      }
+
+      const { error } = await supabase.from('orders').update(updates).eq('id', orderId);
+      if (error) {
+        console.error('Supabase update order status error:', error);
+        showToast(`Failed to update order status: ${error.message}`, 'error');
+        // Rollback state
+        if (oldStatus) {
+          setOrders((prev) => prev.map((ord) => (ord.id === orderId ? { ...ord, status: oldStatus! } : ord)));
+          setAdminOrders((prev) => {
+            const rolled = prev.map((ord) => (ord.id === orderId ? { ...ord, status: oldStatus! } : ord));
+            syncPaymentRecordsFromOrders(rolled);
+            return rolled;
+          });
+        }
+        return;
+      }
     }
 
-    // Update COD payment status to success if order becomes delivered
-    if (status === 'Delivered') {
-      setPaymentRecords((prevPays) =>
-        prevPays.map((p) => (p.orderId === orderId && p.status === 'Pending' ? { ...p, status: 'Success' } : p))
-      );
-    }
+    showToast(`Order status updated to ${status}`);
   };
 
   // User Profile & Addresses
@@ -2785,7 +2950,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     showToast('All notifications cleared');
   };
 
-  const updateReturnRequestStatus = (id: string, status: ReturnRequest['status']) => {
+  const updateReturnRequestStatus = async (id: string, status: ReturnRequest['status']) => {
     setReturnRequests((prev) =>
       prev.map((ret) => {
         if (ret.id === id) {
@@ -2803,7 +2968,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setPaymentRecords((prevPays) => [newPayment, ...prevPays]);
 
             // Log inventory returning
-            const ord = orders.find(o => o.id === ret.orderId);
+            const ord = orders.find(o => o.id === ret.orderId) || adminOrders.find(o => o.id === ret.orderId);
             if (ord) {
               const matchedItem = ord.items.find(i => i.name === ret.productName);
               if (matchedItem) {
@@ -2824,6 +2989,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return ret;
       })
     );
+
+    if (isSupabaseConfigured && supabase) {
+      const targetRet = returnRequests.find((r) => r.id === id);
+      if (targetRet) {
+        const { error } = await supabase.from('return_requests').upsert({
+          id: targetRet.id,
+          order_id: targetRet.orderId,
+          customer_name: targetRet.customerName,
+          product_name: targetRet.productName,
+          product_image: targetRet.productImage,
+          reason: targetRet.reason,
+          date: targetRet.date,
+          status,
+          amount: targetRet.amount,
+        });
+        if (error) {
+          console.error('Supabase update return request error:', error);
+          showToast(`Failed to update return in database: ${error.message}`, 'error');
+          return;
+        }
+      }
+    }
+
     showToast(`Return status updated to ${status}`);
   };
 
@@ -2929,6 +3117,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         max_discount: newCoupon.maxDiscount || null,
         expires_at: newCoupon.expiresAt,
         description: newCoupon.description,
+        is_active: newCoupon.isActive !== false,
       }).then(({ error }) => {
         if (error) console.error('Supabase add coupon error:', error);
       });
@@ -2951,6 +3140,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (updates.maxDiscount !== undefined) dbUpdates.max_discount = updates.maxDiscount;
       if (updates.expiresAt !== undefined) dbUpdates.expires_at = updates.expiresAt;
       if (updates.description !== undefined) dbUpdates.description = updates.description;
+      if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
 
       supabase.from('coupons').update(dbUpdates).eq('id', id).then(({ error }) => {
         if (error) console.error('Supabase update coupon error:', error);
