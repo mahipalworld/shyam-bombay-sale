@@ -49,6 +49,8 @@ const s3Client = isS3Configured ? new S3Client({
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'https://sbs-store.pages.dev',
+  'https://sbsstore.in',
+  'https://www.sbsstore.in',
   'http://localhost:3000',
   'http://localhost:5173',
   'http://127.0.0.1:3000'
@@ -61,6 +63,7 @@ app.use(cors({
       allowedOrigins.length === 0 ||
       allowedOrigins.includes(origin) ||
       origin.endsWith('.pages.dev') ||
+      origin.endsWith('sbsstore.in') ||
       origin.includes('localhost') ||
       origin.includes('127.0.0.1')
     ) {
