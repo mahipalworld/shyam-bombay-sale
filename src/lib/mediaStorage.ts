@@ -1,8 +1,26 @@
 import { S3MediaItem, StorageStatus } from '@/types';
 import { supabase } from '@/lib/supabase';
 
-// API Base URL (Render in production, localhost in development)
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
+// Secure Render production backend
+const PRODUCTION_BACKEND_URL = 'https://sbs-backend-8ryi.onrender.com';
+
+/**
+ * Returns the backend API URL dynamically based on current environment and hostname.
+ * Automatically routes to the live Render backend on production domains (sbsstore.in, pages.dev).
+ */
+export function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (
+      host.includes('sbsstore.in') ||
+      host.includes('pages.dev') ||
+      (!host.includes('localhost') && !host.includes('127.0.0.1'))
+    ) {
+      return PRODUCTION_BACKEND_URL;
+    }
+  }
+  return (process.env.NEXT_PUBLIC_API_URL || PRODUCTION_BACKEND_URL).replace(/\/+$/, '');
+}
 
 // In-memory cache for resolved delivery URLs (key -> { url, expiresAt })
 const deliveryUrlCache = new Map<string, { url: string; expiresAt: number }>();
@@ -45,7 +63,7 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
  */
 export async function checkStorageStatus(): Promise<StorageStatus> {
   try {
-    const res = await fetch(`${API_BASE}/api/storage/status`);
+    const res = await fetch(`${getApiBaseUrl()}/api/storage/status`);
     if (!res.ok) {
       throw new Error(`Server returned HTTP ${res.status}`);
     }
@@ -93,7 +111,7 @@ export async function resolveMediaUrl(keyOrUrl?: string): Promise<string> {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/api/storage/delivery-url?key=${encodeURIComponent(keyOrUrl)}`);
+    const res = await fetch(`${getApiBaseUrl()}/api/storage/delivery-url?key=${encodeURIComponent(keyOrUrl)}`);
     if (!res.ok) {
       return keyOrUrl; // fallback
     }
@@ -143,7 +161,7 @@ export async function batchResolveMediaUrls(keys: string[]): Promise<Record<stri
   }
 
   try {
-    const res = await fetch(`${API_BASE}/api/storage/delivery-urls`, {
+    const res = await fetch(`${getApiBaseUrl()}/api/storage/delivery-urls`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ keys: keysToFetch }),
@@ -196,7 +214,7 @@ export async function uploadMediaToS3(
 
   // 2. Request short-lived presigned URL from secure backend
   const headers = await getAuthHeaders();
-  const presignRes = await fetch(`${API_BASE}/api/storage/presigned-url`, {
+  const presignRes = await fetch(`${getApiBaseUrl()}/api/storage/presigned-url`, {
     method: 'POST',
     headers,
     body: JSON.stringify({
@@ -258,7 +276,7 @@ export async function listS3Files(prefix: string = 'products/'): Promise<{
   region: string;
 }> {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}/api/storage/files?prefix=${encodeURIComponent(prefix)}`, {
+  const res = await fetch(`${getApiBaseUrl()}/api/storage/files?prefix=${encodeURIComponent(prefix)}`, {
     headers,
   });
 
@@ -281,7 +299,7 @@ export async function listS3Files(prefix: string = 'products/'): Promise<{
  */
 export async function deleteS3File(key: string): Promise<boolean> {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}/api/storage/files`, {
+  const res = await fetch(`${getApiBaseUrl()}/api/storage/files`, {
     method: 'DELETE',
     headers,
     body: JSON.stringify({ key }),
