@@ -2356,10 +2356,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Admin Team & Role Authorization Methods
+  const PRIMARY_STORE_ADMINS = [
+    'mahipalstudent71@gmail.com',
+    'shyambombaysale@gmail.com',
+    'mahipalworld71@gmail.com'
+  ];
+
   const isEmailAuthorizedAdmin = (email?: string | null): boolean => {
     if (!email) return false;
     const cleanEmail = email.trim().toLowerCase();
-    if (cleanEmail === 'mahipalstudent71@gmail.com') return true;
+    if (PRIMARY_STORE_ADMINS.includes(cleanEmail)) return true;
     const member = adminTeamMembers.find(m => m.email.trim().toLowerCase() === cleanEmail);
     return Boolean(member && member.status === 'ACTIVE');
   };
@@ -2367,7 +2373,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const getEffectiveAdminRole = (email?: string | null): AdminRole => {
     if (!email) return 'STAFF';
     const cleanEmail = email.trim().toLowerCase();
-    if (cleanEmail === 'mahipalstudent71@gmail.com') return 'OWNER';
+    if (PRIMARY_STORE_ADMINS.includes(cleanEmail)) return 'OWNER';
     const member = adminTeamMembers.find(m => m.email.trim().toLowerCase() === cleanEmail);
     return member?.role || 'STAFF';
   };

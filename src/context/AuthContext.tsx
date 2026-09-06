@@ -285,10 +285,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabaseUser?.identities?.some((identity: any) => identity.provider === 'google')
   );
 
-  const isSuperAdmin = Boolean(
-    authUser?.email?.trim().toLowerCase() === 'mahipalstudent71@gmail.com' ||
-    supabaseUser?.email?.trim().toLowerCase() === 'mahipalstudent71@gmail.com'
-  );
+  const PRIMARY_ADMIN_EMAILS = [
+    'mahipalstudent71@gmail.com',
+    'shyambombaysale@gmail.com',
+    'mahipalworld71@gmail.com'
+  ];
+
+  const currentEmail = (authUser?.email || supabaseUser?.email || '').trim().toLowerCase();
+  const isSuperAdmin = Boolean(currentEmail && PRIMARY_ADMIN_EMAILS.includes(currentEmail));
 
   const authProvider = (
     supabaseUser?.app_metadata?.provider ||

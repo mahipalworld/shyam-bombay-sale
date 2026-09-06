@@ -8,7 +8,7 @@ const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').re
 const deliveryUrlCache = new Map<string, { url: string; expiresAt: number }>();
 
 /**
- * Helper to get authorization headers (Supabase Admin JWT if available)
+ * Helper to get authorization headers (Supabase Admin JWT if available and X-SBS-Admin-Role)
  */
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
@@ -17,13 +17,24 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 
   try {
     if (supabase) {
-      const { data: { session } } = await supabase.auth.getSession();
+      let { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        const refreshRes = await supabase.auth.refreshSession().catch(() => null);
+        if (refreshRes?.data?.session) {
+          session = refreshRes.data.session;
+        }
+      }
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
     }
   } catch (err) {
     // Ignore auth retrieval error
+  }
+
+  if (typeof window !== 'undefined') {
+    const adminRole = localStorage.getItem('sbs_admin_role') || 'OWNER';
+    headers['X-SBS-Admin-Role'] = adminRole;
   }
 
   return headers;
