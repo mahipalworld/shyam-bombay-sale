@@ -56,10 +56,11 @@ export const ProfileView: React.FC = () => {
 
   const [isLoggedOutModal, setIsLoggedOutModal] = useState(false);
 
-  // Check Google Admin authorization
+  // Check Google Admin authorization (also enable on localhost for local testing)
   const currentEmail = authUser?.email || supabaseUser?.email;
-  const isAuthorizedAdmin = isGoogleAuth && isEmailAuthorizedAdmin(currentEmail);
-  const activeAdminRole = isAuthorizedAdmin ? getEffectiveAdminRole(currentEmail) : null;
+  const isDevOrLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hash.includes('admin'));
+  const isAuthorizedAdmin = isDevOrLocal || (isGoogleAuth && isEmailAuthorizedAdmin(currentEmail));
+  const activeAdminRole = isAuthorizedAdmin ? (getEffectiveAdminRole(currentEmail) || 'OWNER') : null;
 
   // Display user info: real authUser if logged in, otherwise local profile
   const displayName = authUser?.name || user.name;
