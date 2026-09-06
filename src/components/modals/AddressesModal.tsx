@@ -179,6 +179,16 @@ export const AddressesModal: React.FC = () => {
                 </button>
               </div>
             </form>
+          ) : addresses.length === 0 ? (
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 text-center space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#F95721] flex items-center justify-center mx-auto">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <p className="text-xs font-bold text-gray-800">No saved addresses</p>
+              <p className="text-[11px] text-gray-500">
+                Tap &quot;Add New Address&quot; above to save your delivery location.
+              </p>
+            </div>
           ) : (
             <div className="space-y-3">
               {addresses.map((addr) => (

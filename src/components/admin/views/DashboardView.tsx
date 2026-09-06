@@ -59,10 +59,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const lowStockProducts = products.filter(p => p.stockCount <= storeSettings.lowStockThreshold);
   const topSellingProducts = [...products].sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0)).slice(0, 4);
 
-  // Dynamic multipliers for time ranges
-  const rangeMultiplier = dateRange === 'today' ? 0.35 : dateRange === '7d' ? 0.75 : 1.0;
-  const displayRevenue = Math.round(totalRevenue * rangeMultiplier);
-  const displayOrders = Math.round(allOrdersList.length * rangeMultiplier);
+  // Real date range filtering of orders
+  const filteredOrders = allOrdersList.filter(o => {
+    const orderTime = new Date(o.createdAt).getTime();
+    if (isNaN(orderTime)) return false;
+    if (dateRange === 'today') {
+      return new Date(o.createdAt).toDateString() === new Date().toDateString();
+    }
+    const days = dateRange === '7d' ? 7 : 30;
+    return Date.now() - orderTime <= days * 24 * 60 * 60 * 1000;
+  });
+
+  const displayRevenue = filteredOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const displayOrders = filteredOrders.length;
 
   // Quick Restock helper
   const handleQuickRestock = (p: Product) => {

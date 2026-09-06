@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   X, 
   MessageCircle, 
   Phone, 
   MapPin, 
-  ChevronDown, 
   Clock, 
   ExternalLink,
-  HelpCircle
+  HelpCircle,
+  Navigation,
+  Sparkles
 } from 'lucide-react';
 
 interface HelpCenterModalProps {
@@ -17,57 +18,24 @@ interface HelpCenterModalProps {
   onClose: () => void;
 }
 
-interface FAQItem {
-  question: string;
-  answer: string;
-  category: string;
-}
-
-const FAQS: FAQItem[] = [
-  {
-    category: 'Orders & Delivery',
-    question: 'How fast does SBS Store deliver my order?',
-    answer: 'Orders in Maharashtra typically arrive within 1-2 business days. Across other regions in India, standard delivery takes 3-5 business days. You will receive live tracking updates via WhatsApp and SMS.'
-  },
-  {
-    category: 'Orders & Delivery',
-    question: 'How can I track my shipment?',
-    answer: 'Go to your Profile tab and tap "My Orders", or check the tracking link sent to your registered mobile number and WhatsApp once your package is dispatched.'
-  },
-  {
-    category: 'Payments & Pricing',
-    question: 'What payment methods are supported?',
-    answer: 'We accept all major UPI apps (Google Pay, PhonePe, Paytm, BHIM), debit & credit cards, net banking, and Cash on Delivery (COD) for eligible pin codes.'
-  },
-  {
-    category: 'Returns & Replacements',
-    question: 'What is your return & replacement policy?',
-    answer: 'We provide a 7-day hassle-free replacement guarantee for damaged, defective, or incorrect items. Just message us on WhatsApp with a short photo or video of the product.'
-  },
-  {
-    category: 'SBS Rewards',
-    question: 'How do SBS Rewards points work?',
-    answer: 'You earn points on purchases and for enabling notifications. Once you reach 100 points, you can instantly redeem ₹50 OFF directly at checkout!'
-  },
-  {
-    category: 'Store Visit',
-    question: 'Can I visit and purchase directly at the SBS physical store?',
-    answer: 'Yes! You are always welcome to visit our physical showroom to browse products in person. See the Store Location section below for full directions.'
-  }
-];
-
 export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClose }) => {
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-
   if (!isOpen) return null;
+
+  // Verified Google Maps place details resolved from https://maps.app.goo.gl/hnJ14BEoCfZR9bN27
+  const STORE_NAME = 'Shyam Bombay sale';
+  const VERIFIED_ADDRESS = 'Gotri, Vadodara, Gujarat 390016, India';
+  const MAPS_SHORT_URL = 'https://maps.app.goo.gl/hnJ14BEoCfZR9bN27';
+  const MAPS_EMBED_URL = 'https://maps.google.com/maps?q=22.3286672,73.1419469&hl=en&z=17&output=embed';
+  const STORE_PHONE = '+91 92262 94797';
+  const WHATSAPP_LINK = 'https://wa.me/919226294797?text=Hi%20SBS%20Store%2C%20I%20need%20assistance%20with%20my%20order.';
 
   return (
     <div 
-      className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
+      className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn overflow-x-hidden"
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col relative no-scrollbar"
+        className="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto overflow-x-hidden shadow-2xl flex flex-col relative no-scrollbar"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -77,8 +45,8 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
               <HelpCircle className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-black text-gray-900 leading-tight">Help Center & Support</h2>
-              <p className="text-[11px] text-gray-500">We&apos;re here to assist you 7 days a week</p>
+              <h2 className="text-base font-black text-gray-900 leading-tight">Help Center</h2>
+              <p className="text-[11px] text-gray-500">Need help? We&apos;re here for you</p>
             </div>
           </div>
           <button
@@ -93,128 +61,124 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
         {/* Modal Body */}
         <div className="p-5 space-y-6">
           {/* Quick Contact Buttons Row */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* WhatsApp Direct Support */}
-            <a
-              href="https://wa.me/919226294797?text=Hi%20SBS%20Store%2C%20I%20need%20assistance%20with%20my%20order."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 active:scale-98 transition-all group shadow-xs"
-            >
-              <div className="w-11 h-11 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-200 mb-2 group-hover:scale-105 transition-transform">
-                <MessageCircle className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-black text-emerald-950">Chat on WhatsApp</span>
-              <span className="text-[10px] text-emerald-700 font-mono mt-0.5">+91 9226294797</span>
-              <span className="text-[9px] font-bold uppercase text-emerald-600 bg-white/80 px-2 py-0.5 rounded-full mt-1.5">
-                Fast Response
-              </span>
-            </a>
+          <div>
+            <span className="text-[11px] font-black uppercase text-[#F95721] tracking-wider block mb-2.5">
+              Instant Contact Options
+            </span>
+            <div className="grid grid-cols-2 gap-3">
+              {/* WhatsApp Direct Support */}
+              <a
+                href={WHATSAPP_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center justify-center p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 active:scale-98 transition-all group shadow-xs"
+              >
+                <div className="w-11 h-11 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-200 mb-2 group-hover:scale-105 transition-transform">
+                  <MessageCircle className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-black text-emerald-950">WhatsApp</span>
+                <span className="text-[10px] text-emerald-700 font-mono mt-0.5">{STORE_PHONE}</span>
+                <span className="text-[9px] font-bold uppercase text-emerald-600 bg-white/80 px-2 py-0.5 rounded-full mt-1.5">
+                  Fast Chat Support
+                </span>
+              </a>
 
-            {/* Direct Phone Call */}
-            <a
-              href="tel:+919226294797"
-              className="flex flex-col items-center justify-center p-4 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-800 active:scale-98 transition-all group shadow-xs"
-            >
-              <div className="w-11 h-11 rounded-2xl bg-[#F95721] text-white flex items-center justify-center shadow-md shadow-orange-200 mb-2 group-hover:scale-105 transition-transform">
-                <Phone className="w-5 h-5" />
-              </div>
-              <span className="text-xs font-black text-orange-950">Call Customer Care</span>
-              <span className="text-[10px] text-orange-700 font-mono mt-0.5">+91 9226294797</span>
-              <span className="text-[9px] font-bold uppercase text-orange-600 bg-white/80 px-2 py-0.5 rounded-full mt-1.5">
-                10 AM - 9 PM
-              </span>
-            </a>
+              {/* Direct Phone Call */}
+              <a
+                href={`tel:${STORE_PHONE.replace(/\s+/g, '')}`}
+                className="flex flex-col items-center justify-center p-4 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-800 active:scale-98 transition-all group shadow-xs"
+              >
+                <div className="w-11 h-11 rounded-2xl bg-[#F95721] text-white flex items-center justify-center shadow-md shadow-orange-200 mb-2 group-hover:scale-105 transition-transform">
+                  <Phone className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-black text-orange-950">Direct Call</span>
+                <span className="text-[10px] text-orange-700 font-mono mt-0.5">{STORE_PHONE}</span>
+                <span className="text-[9px] font-bold uppercase text-orange-600 bg-white/80 px-2 py-0.5 rounded-full mt-1.5">
+                  10 AM – 9:30 PM
+                </span>
+              </a>
+            </div>
           </div>
 
-          {/* Physical Store Location Card (Issue 11) */}
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-5 shadow-lg space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-orange-500/20 text-orange-400 flex items-center justify-center shrink-0 border border-orange-400/30">
+          {/* Physical Store Location Card */}
+          <div className="bg-white border border-gray-200 rounded-3xl p-4 sm:p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-orange-500/10 text-[#F95721] flex items-center justify-center border border-orange-200">
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-white">Shyam Bombay Sale Store</h3>
-                  <p className="text-[11px] text-slate-300">Visit our retail outlet in person</p>
+                  <h3 className="text-sm font-black text-gray-900 leading-tight">Visit SBS Store</h3>
+                  <p className="text-[11px] text-gray-500">Retail Outlet & Showroom</p>
                 </div>
               </div>
-              <span className="text-[9px] font-bold uppercase bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
+              <span className="text-[9px] font-bold uppercase bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full border border-emerald-200">
                 Open Daily
               </span>
             </div>
 
-            <div className="space-y-2 text-xs text-slate-300 bg-white/5 rounded-2xl p-3 border border-white/10">
-              <p className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                <span>Shyam Bombay Sale, Near Main Market, Maharashtra, India</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-orange-400 shrink-0" />
-                <span>Mon – Sun: 10:00 AM – 9:30 PM</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-orange-400 shrink-0" />
-                <span className="font-mono">+91 9226294797</span>
-              </p>
+            {/* Embedded Responsive Google Map */}
+            <div className="relative w-full h-52 sm:h-60 rounded-2xl overflow-hidden border border-gray-200 bg-gray-100 shadow-inner">
+              <iframe
+                title="SBS Store Physical Location"
+                src={MAPS_EMBED_URL}
+                className="w-full h-full border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
             </div>
 
-            {/* Google Maps Directions Action Button */}
+            {/* Verified Store Address */}
+            <div className="space-y-2.5 text-xs text-gray-700 bg-gray-50 rounded-2xl p-4 border border-gray-200/80">
+              <div className="flex items-start gap-2.5">
+                <MapPin className="w-4 h-4 text-[#F95721] shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-extrabold text-gray-900 block text-xs">{STORE_NAME}</span>
+                  <span className="text-gray-600 block text-[11px] mt-0.5">{VERIFIED_ADDRESS}</span>
+                  <span className="text-[10px] text-gray-400 font-mono block mt-0.5">Coordinates: 22.3286672° N, 73.1419469° E</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 pt-2 border-t border-gray-200/60">
+                <Clock className="w-4 h-4 text-[#F95721] shrink-0" />
+                <span className="text-[11px] text-gray-600">Mon – Sun: 10:00 AM – 9:30 PM</span>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <Phone className="w-4 h-4 text-[#F95721] shrink-0" />
+                <span className="font-mono text-[11px] text-gray-600">{STORE_PHONE}</span>
+              </div>
+            </div>
+
+            {/* Get Directions Action Button */}
             <a
-              href="https://maps.app.goo.gl/hnJ14BEoCfZR9bN27"
+              href={MAPS_SHORT_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3 px-4 bg-gradient-to-r from-[#F95721] to-[#FA7035] hover:from-[#E44813] hover:to-[#F95721] text-white font-bold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-orange-500/25 active:scale-98 transition-all"
+              className="w-full py-3 px-4 bg-gradient-to-r from-[#F95721] to-[#FA7035] hover:from-[#E44813] hover:to-[#F95721] text-white font-black text-xs rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-orange-500/25 active:scale-98 transition-all"
             >
-              <MapPin className="w-4 h-4" />
-              <span>Get Directions on Google Maps</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <Navigation className="w-4 h-4" />
+              <span>Get Directions</span>
+              <ExternalLink className="w-3.5 h-3.5 opacity-80" />
             </a>
           </div>
 
-          {/* Support FAQs Accordion */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-black text-gray-900 flex items-center gap-2">
-              <span>Frequently Asked Questions</span>
-            </h3>
-
-            <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
-              {FAQS.map((faq, idx) => {
-                const isOpen = openFaqIndex === idx;
-                return (
-                  <div key={idx} className="transition-colors">
-                    <button
-                      type="button"
-                      onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                      className="w-full text-left p-3.5 flex items-center justify-between gap-2 hover:bg-gray-50 transition-colors"
-                    >
-                      <div>
-                        <span className="text-[10px] font-bold text-[#F95721] uppercase tracking-wider block">
-                          {faq.category}
-                        </span>
-                        <span className="text-xs font-bold text-gray-900 mt-0.5 block">
-                          {faq.question}
-                        </span>
-                      </div>
-                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-[#F95721]' : ''}`} />
-                    </button>
-                    {isOpen && (
-                      <div className="px-3.5 pb-3.5 pt-0 text-xs text-gray-600 leading-relaxed animate-fadeIn">
-                        <p className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                          {faq.answer}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+          {/* Useful Support Information */}
+          <div className="bg-orange-50/60 border border-orange-100 rounded-2xl p-3.5 space-y-1.5 text-[11px] text-gray-600">
+            <div className="flex items-center gap-2 text-orange-950 font-bold">
+              <Sparkles className="w-3.5 h-3.5 text-[#F95721]" />
+              <span>Order & Replacement Support</span>
             </div>
+            <p>
+              For replacement requests or questions regarding active orders, reach us on WhatsApp with your order reference number. Our support team responds promptly during working hours.
+            </p>
           </div>
         </div>
 
         {/* Footer Note */}
         <div className="p-4 border-t border-gray-100 bg-gray-50/80 text-center text-[11px] text-gray-500">
-          SBS Store • Authentic Quality Products • Need special assistance? Call +91 9226294797
+          SBS Store • Authentic Quality Products • Need assistance? Call {STORE_PHONE}
         </div>
       </div>
     </div>

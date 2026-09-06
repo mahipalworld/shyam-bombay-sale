@@ -131,7 +131,7 @@ export default function App() {
               <div className="space-y-2 text-xs">
                 <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Customer Support</h4>
                 <ul className="space-y-1 text-gray-400">
-                  <li><button onClick={() => setIsHelpCenterOpen(true)} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Help Center & FAQs</button></li>
+                  <li><button onClick={() => setIsHelpCenterOpen(true)} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Help Center & Support</button></li>
                   <li><button onClick={() => setActiveTab('profile')} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Track Your Order</button></li>
                   <li><button onClick={() => setIsHelpCenterOpen(true)} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Return & Refund Policy</button></li>
                   <li><button onClick={() => setIsHelpCenterOpen(true)} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Store Location & Directions</button></li>

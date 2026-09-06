@@ -8,6 +8,12 @@
   --font-inter: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  overscroll-behavior-x: none;
+}
+
 body {
   font-family: var(--font-inter);
   background-color: #FAF9F6;

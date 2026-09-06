@@ -15,8 +15,6 @@ import {
   Check,
   ShoppingCart,
   Zap,
-  ChevronLeft,
-  ChevronRight,
   Maximize2,
   Sparkles,
   Layers,
@@ -79,10 +77,23 @@ export const ProductDetailModal: React.FC = () => {
     setActiveMediaIndex((prev) => (prev - 1 + mediaList.length) % mediaList.length);
   };
 
-  // Touch swipe with angle threshold so vertical scrolling is unaffected
+  // Touch swipe with directional lock to prevent whole webpage sliding
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     setTouchStartPos({ x: touch.clientX, y: touch.clientY });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartPos) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStartPos.x;
+    const deltaY = touch.clientY - touchStartPos.y;
+
+    // If user is predominantly swiping horizontally, stop event from bubbling to page-level horizontally
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+      // Swiping horizontally inside gallery
+      e.stopPropagation();
+    }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
@@ -92,8 +103,8 @@ export const ProductDetailModal: React.FC = () => {
     const deltaY = touch.clientY - touchStartPos.y;
     setTouchStartPos(null);
 
-    // Swipe horizontally if horizontal delta is dominant and > 35px
-    if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+    // Swipe horizontally if horizontal delta is dominant and > 30px
+    if (Math.abs(deltaX) > 30 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
       if (deltaX < 0) {
         handleNextMedia();
       } else {
@@ -121,11 +132,11 @@ export const ProductDetailModal: React.FC = () => {
   return (
     <>
       <div 
-        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center animate-fadeIn"
+        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center animate-fadeIn overflow-x-hidden"
         onClick={() => setSelectedProductDetail(null)}
       >
         <div 
-          className="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col relative no-scrollbar"
+          className="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto overflow-x-hidden shadow-2xl flex flex-col relative no-scrollbar"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header Actions */}
@@ -160,14 +171,16 @@ export const ProductDetailModal: React.FC = () => {
           </div>
 
           {/* Modal Body */}
-          <div className="p-4 sm:p-5 space-y-5">
+          <div className="p-4 sm:p-5 space-y-5 overflow-x-hidden">
             {/* Mobile-First Mixed Media Gallery Section */}
-            <div className="space-y-3">
-              {/* Main Media Stage (Supports touch swipe & video/image rendering) */}
+            <div className="space-y-3 overflow-x-hidden">
+              {/* Main Media Stage (Gesture & swipe based, no arrow buttons) */}
               {currentMedia.type === 'video' ? (
                 <div 
-                  className="relative aspect-square w-full rounded-3xl bg-black flex items-center justify-center border border-gray-200 overflow-hidden shadow-inner"
+                  className="relative aspect-square w-full rounded-3xl bg-black flex items-center justify-center border border-gray-200 overflow-hidden shadow-inner touch-pan-y overscroll-x-contain select-none"
+                  style={{ touchAction: 'pan-y' }}
                   onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
                 >
                   <ResolvedVideo
@@ -185,38 +198,18 @@ export const ProductDetailModal: React.FC = () => {
                       {activeMediaIndex + 1} / {mediaList.length}
                     </span>
                   )}
-
-                  {/* Arrow controls if multiple media */}
-                  {mediaList.length > 1 && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handlePrevMedia}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 text-gray-800 flex items-center justify-center shadow-md border border-gray-200 hover:scale-105 active:scale-95 transition-all z-10"
-                        aria-label="Previous media"
-                      >
-                        <ChevronLeft className="w-4 h-4 stroke-[2.5px]" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleNextMedia}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 text-gray-800 flex items-center justify-center shadow-md border border-gray-200 hover:scale-105 active:scale-95 transition-all z-10"
-                        aria-label="Next media"
-                      >
-                        <ChevronRight className="w-4 h-4 stroke-[2.5px]" />
-                      </button>
-                    </>
-                  )}
                 </div>
               ) : (
                 <div 
-                  className="relative aspect-square w-full rounded-3xl bg-[#F9FAFB] p-4 flex items-center justify-center border border-gray-100 overflow-hidden group select-none"
+                  className="relative aspect-square w-full rounded-3xl bg-[#F9FAFB] p-4 flex items-center justify-center border border-gray-100 overflow-hidden group select-none touch-pan-y overscroll-x-contain"
+                  style={{ touchAction: 'pan-y' }}
                   onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
                 >
                   {/* Position Counter Badge */}
                   {mediaList.length > 1 && (
-                    <span className="absolute top-3 left-3 z-10 text-[10px] font-extrabold text-gray-700 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-gray-100 flex items-center gap-1">
+                    <span className="absolute top-3 left-3 z-10 text-[10px] font-extrabold text-gray-700 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-gray-100 flex items-center gap-1 pointer-events-none">
                       <ImageIcon className="w-3 h-3 text-[#F95721]" />
                       <span>{activeMediaIndex + 1} / {mediaList.length}</span>
                     </span>
@@ -244,28 +237,6 @@ export const ProductDetailModal: React.FC = () => {
                       }`}
                     />
                   </div>
-
-                  {/* Left/Right Arrow Controls (if multiple media) */}
-                  {mediaList.length > 1 && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handlePrevMedia}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F95721] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all z-10"
-                        aria-label="Previous media"
-                      >
-                        <ChevronLeft className="w-4 h-4 stroke-[2.5px]" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleNextMedia}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs text-gray-700 hover:text-[#F95721] flex items-center justify-center shadow-md border border-gray-100 hover:scale-105 active:scale-95 transition-all z-10"
-                        aria-label="Next media"
-                      >
-                        <ChevronRight className="w-4 h-4 stroke-[2.5px]" />
-                      </button>
-                    </>
-                  )}
                 </div>
               )}
 

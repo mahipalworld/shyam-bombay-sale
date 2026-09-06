@@ -390,10 +390,9 @@ export const SettingsView: React.FC = () => {
 
             <div className="space-y-2">
               {[
-                { name: 'Mahipal Singh', email: 'owner@sbsstore.com', role: 'OWNER', badge: 'bg-[#F95721] text-white' },
-                { name: 'Kailash Sharma', email: 'manager@sbsstore.com', role: 'MANAGER', badge: 'bg-blue-600 text-white' },
-                { name: 'Divya Patel', email: 'marketing@sbsstore.com', role: 'MARKETING', badge: 'bg-purple-600 text-white' },
-                { name: 'Suresh Kumar', email: 'staff@sbsstore.com', role: 'STAFF', badge: 'bg-emerald-600 text-white' },
+                { name: 'Mahipal Singh', email: 'mahipalstudent71@gmail.com', role: 'OWNER', badge: 'bg-[#F95721] text-white' },
+                { name: 'Shyam Bombay Sale', email: 'shyambombaysale@gmail.com', role: 'OWNER', badge: 'bg-[#F95721] text-white' },
+                { name: 'Mahipal World', email: 'mahipalworld71@gmail.com', role: 'OWNER', badge: 'bg-[#F95721] text-white' },
               ].map((acc, idx) => (
                 <div key={idx} className="p-3 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
                   <div>

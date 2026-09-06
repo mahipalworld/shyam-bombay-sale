@@ -432,27 +432,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   ]);
 
-  const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([
-    { id: 'n1', title: 'New Order Received', message: 'Order SBS-99012 placed by Mahipal Singh', type: 'order', priority: 'high', read: false, timestamp: new Date(Date.now() - 3600000 * 2).toISOString() },
-    { id: 'n2', title: 'Low Stock Alert', message: 'Mini Washing Machine is below threshold (5 items left)', type: 'stock', priority: 'high', read: false, timestamp: new Date(Date.now() - 3600000 * 5).toISOString() },
-    { id: 'n3', title: 'Return Request', message: 'Return requested for Rechargeable Trimmer (Order SBS-98104)', type: 'return', priority: 'medium', read: true, timestamp: new Date(Date.now() - 3600000 * 24).toISOString() }
-  ]);
-
-  const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>([
-    { id: 'ret_1', orderId: 'ord_102', customerName: 'Mahipal Singh', productName: 'Rechargeable Trimmer', productImage: 'https://images.unsplash.com/photo-1621607512214-68297480165e?w=600&auto=format&fit=crop&q=80', reason: 'Product battery heating issue', date: '2026-08-29T10:00:00Z', status: 'Pending', amount: 799 }
-  ]);
-
-  const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([
-    { id: 'pay_1', orderId: 'ord_101', customerName: 'Mahipal Singh', amount: 1848, method: 'UPI', status: 'Success', timestamp: '2026-08-28T14:32:00Z' },
-    { id: 'pay_2', orderId: 'ord_102', customerName: 'Mahipal Singh', amount: 789, method: 'Card', status: 'Success', timestamp: '2026-08-26T11:17:00Z' },
-    { id: 'pay_3', orderId: 'ord_103', customerName: 'Mahipal Singh', amount: 1097, method: 'COD', status: 'Success', timestamp: '2026-08-23T16:00:00Z' },
-    { id: 'pay_4', orderId: 'ord_104', customerName: 'Mahipal Singh', amount: 589, method: 'UPI', status: 'Pending', timestamp: '2026-08-29T18:02:00Z' }
-  ]);
-
-  const [inventoryLogs, setInventoryLogs] = useState<InventoryLog[]>([
-    { id: 'log_1', productId: 'p1', productName: 'Mini Washing Machine', changeQuantity: -1, type: 'remove', reason: 'Order SBS-98231 checkout', timestamp: '2026-08-28T14:30:00Z' },
-    { id: 'log_2', productId: 'p1', productName: 'Mini Washing Machine', changeQuantity: 10, type: 'add', reason: 'Stock replenishment by Owner', timestamp: '2026-08-27T09:00:00Z' }
-  ]);
+  const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([]);
+  const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>([]);
+  const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
+  const [inventoryLogs, setInventoryLogs] = useState<InventoryLog[]>([]);
 
   const [heroBanners, setHeroBanners] = useState<HeroBannerItem[]>([
     {
@@ -752,7 +735,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedReturns) setReturnRequests(JSON.parse(savedReturns));
 
       const savedPayments = localStorage.getItem('sbs_payment_records');
-      if (savedPayments) setPaymentRecords(JSON.parse(savedPayments));
+      if (savedPayments) {
+        try {
+          const parsed = JSON.parse(savedPayments);
+          if (Array.isArray(parsed)) {
+            // Filter out any legacy mock entries
+            const realOnly = parsed.filter((p: any) => !p.id.startsWith('pay_') || p.orderId?.startsWith('SBS-'));
+            setPaymentRecords(realOnly);
+          }
+        } catch { }
+      }
 
       const savedInvLogs = localStorage.getItem('sbs_inventory_logs');
       if (savedInvLogs) setInventoryLogs(JSON.parse(savedInvLogs));
@@ -796,13 +788,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       }
 
-      // Saved customer addresses (One-time entry persistence)
+      // Clean addresses: only genuine user addresses from DB should be loaded
+      // Purge any legacy demo address from localStorage
       const savedAddresses = localStorage.getItem('sbs_saved_addresses');
       if (savedAddresses) {
         try {
           const parsed = JSON.parse(savedAddresses);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setAddresses(parsed);
+          if (Array.isArray(parsed)) {
+            const hasLegacyMock = parsed.some((a: any) => a.id === 'addr_1' || a.street?.includes('Shivalik Hills'));
+            if (hasLegacyMock) {
+              localStorage.removeItem('sbs_saved_addresses');
+              setAddresses([]);
+            }
           }
         } catch { }
       }
@@ -1232,29 +1229,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             localStorage.setItem('sbs_saved_addresses', JSON.stringify(mappedAddr));
           } catch { }
         } else {
-          // Safe One-Time Migration: if user has addresses in localStorage, upload them to Supabase
-          const localSaved = typeof window !== 'undefined' ? localStorage.getItem('sbs_saved_addresses') : null;
-          if (localSaved) {
-            try {
-              const parsed: Address[] = JSON.parse(localSaved);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                const toInsert = parsed.map(a => ({
-                  id: a.id.startsWith('addr_') ? a.id : `addr_${Date.now()}_${Math.floor(Math.random()*1000)}`,
-                  user_id: userId,
-                  name: a.name || 'Customer',
-                  phone: a.phone || '',
-                  street: a.street,
-                  city: a.city || 'City',
-                  state: a.state || 'State',
-                  pincode: a.pincode || '',
-                  type: a.type || 'HOME',
-                  is_default: Boolean(a.isDefault),
-                }));
-                await supabase.from('user_addresses').upsert(toInsert);
-                setAddresses(parsed);
-              }
-            } catch { }
-          }
+          // Genuinely new user or user with no address: Start strictly empty!
+          setAddresses([]);
+          try {
+            localStorage.removeItem('sbs_saved_addresses');
+          } catch { }
         }
 
         // Load reward transactions and sync balance
@@ -1364,9 +1343,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           }
         }
       } else {
-        // Guest user: purge any stale orders with registered userId
+        // Guest user: purge any stale orders with registered userId & clear addresses
         setOrders((prev) => prev.filter(o => !o.userId));
         setAdminOrders([]);
+        setAddresses([]);
       }
     };
 
@@ -1379,8 +1359,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         currentUserIdRef.current = null;
         setOrders([]);
         setAdminOrders([]);
+        setAddresses([]);
         if (typeof window !== 'undefined') {
           localStorage.removeItem('sbs_orders');
+          localStorage.removeItem('sbs_saved_addresses');
         }
       }
       handleAuthChange();
