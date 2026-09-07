@@ -7,7 +7,8 @@ import {
   Order,
   ProductStory,
   ScratchCardConfig,
-  FlashDealConfig
+  FlashDealConfig,
+  QuickActionItem
 } from '@/types';
 
 export const INITIAL_CATEGORIES: Category[] = [
@@ -1645,4 +1646,75 @@ export const INITIAL_FLASH_DEAL_CONFIG: FlashDealConfig = {
   productImage: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=400&auto=format&fit=crop&q=80',
   hoursRemaining: 5,
 };
+
+export const INITIAL_QUICK_ACTIONS: QuickActionItem[] = [
+  {
+    id: 'qa1',
+    label: 'Flash Deals',
+    subtitle: 'Up to 55% Off',
+    icon: '⚡',
+    image: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=300&auto=format&fit=crop&q=80',
+    badge: 'HOT',
+    actionType: 'tab',
+    actionValue: 'offers',
+    enabled: true,
+    order: 1,
+  },
+  {
+    id: 'qa2',
+    label: 'Cleaning Tools',
+    subtitle: 'Mops & wipes',
+    icon: '🧹',
+    image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&auto=format&fit=crop&q=80',
+    actionType: 'category',
+    actionValue: 'cleaning',
+    enabled: true,
+    order: 2,
+  },
+  {
+    id: 'qa3',
+    label: 'Smart Kitchen',
+    subtitle: 'Pantry & gadgets',
+    icon: '🍳',
+    image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300&auto=format&fit=crop&q=80',
+    actionType: 'category',
+    actionValue: 'kitchen',
+    enabled: true,
+    order: 3,
+  },
+  {
+    id: 'qa4',
+    label: 'Personal Care',
+    subtitle: 'Trimmers & tools',
+    icon: '✂️',
+    image: 'https://images.unsplash.com/photo-1621607512214-68297480165e?w=300&auto=format&fit=crop&q=80',
+    actionType: 'category',
+    actionValue: 'personal-care',
+    enabled: true,
+    order: 4,
+  },
+  {
+    id: 'qa5',
+    label: 'Home & Storage',
+    subtitle: 'Space saving',
+    icon: '📦',
+    image: 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=300&auto=format&fit=crop&q=80',
+    actionType: 'category',
+    actionValue: 'home-storage',
+    enabled: true,
+    order: 5,
+  },
+  {
+    id: 'qa6',
+    label: 'Scratch & Win',
+    subtitle: 'Win coupons',
+    icon: '🎁',
+    image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=300&auto=format&fit=crop&q=80',
+    badge: 'FREE',
+    actionType: 'tab',
+    actionValue: 'rewards',
+    enabled: true,
+    order: 6,
+  },
+];
 

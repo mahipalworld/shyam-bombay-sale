@@ -1,9 +1,13 @@
+'use client';
+
 import React from 'react';
 import { useStore } from '@/context/StoreContext';
 import { ProductCard } from '@/components/ProductCard';
 import { ProductStories } from '@/components/ProductStories';
 import { ScratchCardModal } from '@/components/modals/ScratchCardModal';
 import { NotificationRewardCard } from '@/components/modals/NotificationRewardPrompt';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
+import { Product, QuickActionItem, HeroBannerItem, TodayDealItem } from '@/types';
 import { 
   ChevronRight, 
   ChevronLeft, 
@@ -15,7 +19,9 @@ import {
   Timer,
   Gift,
   Zap,
-  Flame
+  Flame,
+  Star,
+  ExternalLink
 } from 'lucide-react';
 
 export const HomeView: React.FC = () => {
@@ -24,6 +30,12 @@ export const HomeView: React.FC = () => {
     categories, 
     homepageCategories, 
     homepageSubcategories,
+    heroBanners,
+    quickActions,
+    todayDeals,
+    trendingNowProducts,
+    bestSellersConfig,
+    homepageSections,
     flashDealConfig,
     storeSettings,
     setActiveTab, 
@@ -60,14 +72,78 @@ export const HomeView: React.FC = () => {
     return () => clearInterval(timer);
   }, [flashDealConfig?.hoursRemaining]);
 
-  // Auto-slide Hero Carousel with pause
+  // Categories Strictly Filtered by Homepage Settings
+  const visibleCategories = React.useMemo(() => {
+    if (homepageCategories && homepageCategories.length > 0) {
+      return categories.filter((cat) => homepageCategories.includes(cat.id));
+    }
+    return categories.filter((cat) => cat.showOnHome !== false);
+  }, [categories, homepageCategories]);
+
+  const visibleCategoryIds = React.useMemo(
+    () => new Set(visibleCategories.map(c => c.id)),
+    [visibleCategories]
+  );
+
+  // Active Hero Slides: user-configured heroBanners plus live Flash Deal slide if enabled
+  const activeSlides = React.useMemo(() => {
+    const slides: {
+      type: 'banner' | 'flash';
+      banner?: HeroBannerItem;
+      product?: Product | null;
+    }[] = [];
+
+    // User configured hero banners
+    const liveBanners = heroBanners.filter((b) => b.enabled !== false);
+    liveBanners.forEach((b) => {
+      const prod = b.productId ? products.find(p => p.id === b.productId) : null;
+      slides.push({
+        type: 'banner',
+        banner: b,
+        product: prod || null
+      });
+    });
+
+    // Flash Deal slide if flash deals enabled
+    if (storeSettings.enableFlashDeals !== false && flashDealConfig?.enabled !== false) {
+      const flashProd = products.find(p => p.id === flashDealConfig?.productId) || null;
+      slides.push({
+        type: 'flash',
+        product: flashProd
+      });
+    }
+
+    // Fallback if no slides exist
+    if (slides.length === 0) {
+      const defaultProd = products[0] || null;
+      slides.push({
+        type: 'banner',
+        banner: {
+          id: 'default_banner',
+          heading: 'Everyday Essentials Sale',
+          description: 'Smart products, better prices directly from SBS.',
+          image: defaultProd?.image || '/icon-512x512.png?v=2',
+          ctaText: 'Shop Now',
+          ctaDestination: 'cleaning',
+          enabled: true
+        },
+        product: defaultProd
+      });
+    }
+
+    return slides;
+  }, [heroBanners, flashDealConfig, storeSettings.enableFlashDeals, products]);
+
+  const slideCount = activeSlides.length;
+
+  // Auto-slide Hero Carousel
   React.useEffect(() => {
-    if (isHeroPaused) return;
+    if (isHeroPaused || slideCount <= 1) return;
     const heroTimer = setInterval(() => {
-      setActiveHeroSlide((prev) => (prev + 1) % 3);
+      setActiveHeroSlide((prev) => (prev + 1) % slideCount);
     }, 6000);
     return () => clearInterval(heroTimer);
-  }, [isHeroPaused]);
+  }, [isHeroPaused, slideCount]);
 
   // Touch & Mouse Swipe Handlers
   const handleHeroTouchStart = (e: React.TouchEvent) => {
@@ -85,9 +161,9 @@ export const HomeView: React.FC = () => {
     if (touchStartXRef.current === null || touchEndXRef.current === null) return;
     const distance = touchStartXRef.current - touchEndXRef.current;
     if (distance > 45) {
-      setActiveHeroSlide((prev) => (prev + 1) % 3);
+      setActiveHeroSlide((prev) => (prev + 1) % slideCount);
     } else if (distance < -45) {
-      setActiveHeroSlide((prev) => (prev - 1 + 3) % 3);
+      setActiveHeroSlide((prev) => (prev - 1 + slideCount) % slideCount);
     }
     touchStartXRef.current = null;
     touchEndXRef.current = null;
@@ -112,9 +188,9 @@ export const HomeView: React.FC = () => {
     if (touchStartXRef.current === null || touchEndXRef.current === null) return;
     const distance = touchStartXRef.current - touchEndXRef.current;
     if (distance > 45) {
-      setActiveHeroSlide((prev) => (prev + 1) % 3);
+      setActiveHeroSlide((prev) => (prev + 1) % slideCount);
     } else if (distance < -45) {
-      setActiveHeroSlide((prev) => (prev - 1 + 3) % 3);
+      setActiveHeroSlide((prev) => (prev - 1 + slideCount) % slideCount);
     }
     touchStartXRef.current = null;
     touchEndXRef.current = null;
@@ -122,21 +198,15 @@ export const HomeView: React.FC = () => {
 
   const handleHeroPrev = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setActiveHeroSlide((prev) => (prev - 1 + 3) % 3);
+    setActiveHeroSlide((prev) => (prev - 1 + slideCount) % slideCount);
   };
 
   const handleHeroNext = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setActiveHeroSlide((prev) => (prev + 1) % 3);
+    setActiveHeroSlide((prev) => (prev + 1) % slideCount);
   };
 
-  const visibleCategories = categories.filter((cat) => {
-    if (cat.showOnHome !== undefined) return cat.showOnHome;
-    if (homepageCategories && homepageCategories.length > 0) return homepageCategories.includes(cat.id);
-    return true;
-  });
-
-  // Prepare active featured subcategories list with minPrice
+  // Curated Aisles Subcategories List (Scoped to active visible categories)
   const featuredSubcategoryItems = React.useMemo(() => {
     if (!homepageSubcategories || homepageSubcategories.length === 0) return [];
     
@@ -149,6 +219,11 @@ export const HomeView: React.FC = () => {
     }[] = [];
 
     homepageSubcategories.forEach((item) => {
+      // Must be part of active visible categories
+      if (visibleCategoryIds.size > 0 && !visibleCategoryIds.has(item.categoryId)) {
+        return;
+      }
+
       const parentCat = categories.find((c) => c.id === item.categoryId);
       if (!parentCat || !parentCat.subcategories) return;
       const subMatch = parentCat.subcategories.find((s) => s.id === item.subcategoryId);
@@ -170,7 +245,7 @@ export const HomeView: React.FC = () => {
     });
 
     return list;
-  }, [homepageSubcategories, categories, products]);
+  }, [homepageSubcategories, categories, products, visibleCategoryIds]);
 
   // Unique parent categories for filter chips
   const availableCategoryPills = React.useMemo(() => {
@@ -197,9 +272,37 @@ export const HomeView: React.FC = () => {
     }
   };
 
-  const trendingProducts = products.filter((p) => p.isTrending || p.id === 'p1' || p.id === 'p2');
-  const bestSellers = products.filter((p) => p.isBestSeller || p.id === 'p4' || p.id === 'p5' || p.id === 'p6');
+  // Trending Products (Database Driven)
+  const trendingProducts = React.useMemo(() => {
+    if (trendingNowProducts && trendingNowProducts.length > 0) {
+      const customList = trendingNowProducts
+        .map((id) => products.find((p) => p.id === id))
+        .filter((p): p is Product => Boolean(p));
+      if (customList.length > 0) return customList;
+    }
+    return products.filter((p) => p.isTrending || p.isFeatured).slice(0, 8);
+  }, [products, trendingNowProducts]);
 
+  // Best Sellers (Database Driven)
+  const bestSellers = React.useMemo(() => {
+    if (bestSellersConfig?.mode === 'manual' && bestSellersConfig.manualProductIds?.length > 0) {
+      const customList = bestSellersConfig.manualProductIds
+        .map((id) => products.find((p) => p.id === id))
+        .filter((p): p is Product => Boolean(p));
+      if (customList.length > 0) return customList;
+    }
+    return products.filter((p) => p.isBestSeller || (p.rating >= 4.5 && p.reviewCount >= 5)).slice(0, 8);
+  }, [products, bestSellersConfig]);
+
+  // Active Deals
+  const activeTodayDeals = React.useMemo(() => {
+    if (todayDeals && todayDeals.length > 0) {
+      return todayDeals.filter(d => d.enabled !== false);
+    }
+    return [];
+  }, [todayDeals]);
+
+  // Navigation Handlers
   const handleCategoryClick = (categoryId: string) => {
     setSelectedCategoryFilter(categoryId);
     setSelectedSubcategoryFilter(null);
@@ -212,21 +315,42 @@ export const HomeView: React.FC = () => {
     setActiveTab('categories');
   };
 
-  const handleHeroProductClick = (productId: string) => {
+  const handleProductClick = (productId: string) => {
     const found = products.find((p) => p.id === productId);
     if (found) {
       setSelectedProductDetail(found);
     }
   };
 
-  return (
-    <div className="space-y-6 md:space-y-8 pb-24 md:pb-12 animate-fadeIn">
-      {/* 1. Instagram-Style Product Stories Bar */}
-      <section className="pt-1">
-        <ProductStories />
-      </section>
+  const handleQuickActionClick = (qa: QuickActionItem) => {
+    if (qa.actionType === 'category') {
+      handleCategoryClick(qa.actionValue);
+    } else if (qa.actionType === 'product') {
+      handleProductClick(qa.actionValue);
+    } else if (qa.actionType === 'tab') {
+      if (qa.actionValue === 'offers') {
+        setSelectedCategoryFilter('offers');
+        setActiveTab('categories');
+      } else if (qa.actionValue === 'rewards') {
+        setIsScratchModalOpen(true);
+      } else {
+        setActiveTab(qa.actionValue);
+      }
+    } else if (qa.actionType === 'url') {
+      if (qa.actionValue.startsWith('http')) {
+        window.open(qa.actionValue, '_blank');
+      } else {
+        window.location.href = qa.actionValue;
+      }
+    }
+  };
 
-      {/* 2. Interactive Multi-Slide Hero Banner with Touch/Mouse Swipe & Arrow Controls */}
+  // Section 1: Hero Carousel Renderer
+  const renderHeroSection = () => {
+    const currentSlide = activeSlides[activeHeroSlide] || activeSlides[0];
+    if (!currentSlide) return null;
+
+    return (
       <section className="relative">
         <div 
           onMouseEnter={() => setIsHeroPaused(true)}
@@ -240,103 +364,43 @@ export const HomeView: React.FC = () => {
           onMouseDown={handleHeroMouseDown}
           onMouseMove={handleHeroMouseMove}
           onMouseUp={handleHeroMouseUp}
-          className="group/hero relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#FFF5EE] via-[#FFF0E6] to-[#FFEAD9] border border-[#FFE2D1] p-5 sm:p-7 md:p-10 shadow-sm min-h-[220px] sm:min-h-[260px] flex flex-col justify-between select-none cursor-grab active:cursor-grabbing transition-all"
+          className="group/hero relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#FFF5EE] via-[#FFF0E6] to-[#FFEAD9] border border-[#FFE2D1] p-5 sm:p-7 md:p-10 shadow-sm min-h-[230px] sm:min-h-[270px] flex flex-col justify-between select-none cursor-grab active:cursor-grabbing transition-all"
         >
-          {/* Decorative background glow circle */}
+          {/* Decorative background glow */}
           <div className="absolute -right-16 -top-16 w-80 h-80 bg-orange-200/40 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Previous / Next Arrow Controls */}
-          <button
-            onClick={handleHeroPrev}
-            className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-white/85 hover:bg-white text-gray-800 shadow-md backdrop-blur-xs items-center justify-center opacity-0 group-hover/hero:opacity-100 transition-all active:scale-90"
-            aria-label="Previous slide"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button
-            onClick={handleHeroNext}
-            className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-white/85 hover:bg-white text-gray-800 shadow-md backdrop-blur-xs items-center justify-center opacity-0 group-hover/hero:opacity-100 transition-all active:scale-90"
-            aria-label="Next slide"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-
-          {/* Slide 0: Smart Products. Better Prices. */}
-          {activeHeroSlide === 0 && (
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fadeIn">
-              <div className="max-w-md space-y-2.5">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 text-xs font-bold text-[#F95721] shadow-xs">
-                  <Sparkles className="w-3.5 h-3.5" /> Special Everyday Collection
-                </span>
-                <h1 className="text-2xl sm:text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
-                  Smart Products. <br />
-                  <span className="text-[#F95721]">Better Prices.</span>
-                </h1>
-                <p className="text-xs sm:text-sm md:text-base text-gray-600 font-medium line-clamp-2">
-                  Everyday essentials designed for a smarter, cleaner, and easier you.
-                </p>
-                <div className="pt-2 flex items-center gap-2.5">
-                  <button
-                    onClick={() => setActiveTab('categories')}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-[#F95721] hover:bg-[#E44813] text-white text-xs md:text-sm font-bold rounded-xl shadow-float active:scale-95 transition-all"
-                  >
-                    <span>Shop Now</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setIsScratchModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 sm:py-3 bg-white/90 hover:bg-white text-gray-800 text-xs md:text-sm font-bold rounded-xl border border-orange-200 shadow-2xs transition-all tap-active"
-                  >
-                    <Gift className="w-3.5 h-3.5 text-[#F95721]" />
-                    <span>Scratch & Win</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Mascot & Product Showcase */}
-              <div className="relative flex items-center justify-center md:justify-end mt-2 md:mt-0">
-                <div className="relative w-full max-w-[340px] h-44 sm:h-52 md:h-60 flex items-center justify-center">
-                  {/* Central Waving Mascot */}
-                  <div className="relative z-10 flex flex-col items-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/icon-512x512.png?v=2"
-                      alt="SBS Mascot"
-                      className="w-32 sm:w-40 md:w-48 h-32 sm:h-40 md:h-48 object-contain rounded-3xl drop-shadow-2xl hover:scale-105 transition-transform duration-300 pointer-events-none"
-                    />
-                  </div>
-                  {/* Floating deal 1 */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=500&auto=format&fit=crop&q=80"
-                    alt="Washing Machine"
-                    onClick={() => handleHeroProductClick('p1')}
-                    className="absolute -left-2 sm:left-0 top-1/2 -translate-y-1/2 w-16 sm:w-20 md:w-24 h-16 sm:h-20 md:h-24 object-contain rounded-2xl drop-shadow-lg transform -rotate-12 hover:scale-110 active:scale-95 transition-transform bg-white/95 p-1.5 cursor-pointer tap-active border border-orange-100/80"
-                    title="View Mini Washing Machine"
-                  />
-                  {/* Floating deal 2 */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="https://images.unsplash.com/photo-1621607512214-68297480165e?w=500&auto=format&fit=crop&q=80"
-                    alt="Trimmer"
-                    onClick={() => handleHeroProductClick('p4')}
-                    className="absolute -right-2 sm:right-0 top-1/2 -translate-y-1/2 w-16 sm:w-20 md:w-24 h-16 sm:h-20 md:h-24 object-contain rounded-2xl drop-shadow-lg transform rotate-12 hover:scale-110 active:scale-95 transition-transform bg-white/95 p-1.5 cursor-pointer tap-active border border-orange-100/80"
-                    title="View Cordless Trimmer"
-                  />
-                </div>
-              </div>
-            </div>
+          {/* Previous / Next Controls */}
+          {slideCount > 1 && (
+            <>
+              <button
+                onClick={handleHeroPrev}
+                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-gray-800 shadow-md backdrop-blur-xs items-center justify-center opacity-0 group-hover/hero:opacity-100 transition-all active:scale-90"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleHeroNext}
+                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-gray-800 shadow-md backdrop-blur-xs items-center justify-center opacity-0 group-hover/hero:opacity-100 transition-all active:scale-90"
+                aria-label="Next slide"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
           )}
 
-          {/* Slide 1: Live Flash Deals Countdown */}
-          {activeHeroSlide === 1 && (
+          {/* Render Active Slide */}
+          {currentSlide.type === 'flash' ? (
+            /* Flash Deal Slide with Live Countdown */
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fadeIn">
               <div className="max-w-md space-y-2.5">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500 text-white text-xs font-black shadow-xs animate-pulse">
                     <Flame className="w-3.5 h-3.5" /> {flashDealConfig?.badgeText || 'LIVE FLASH SALE'}
                   </span>
-                  <span className="text-xs font-black text-gray-700">{flashDealConfig?.discountText || 'Up to 55% Off'}</span>
+                  <span className="text-xs font-black text-gray-700">
+                    {flashDealConfig?.discountText || 'Up to 55% Off'}
+                  </span>
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
@@ -367,12 +431,16 @@ export const HomeView: React.FC = () => {
                 <div className="pt-2 flex items-center gap-2.5">
                   <button
                     onClick={() => {
-                      setSelectedCategoryFilter('offers');
-                      setActiveTab('categories');
+                      if (currentSlide.product) {
+                        setSelectedProductDetail(currentSlide.product);
+                      } else {
+                        setSelectedCategoryFilter('offers');
+                        setActiveTab('categories');
+                      }
                     }}
                     className="inline-flex items-center gap-2 px-6 py-3 bg-[#F95721] hover:bg-[#E44813] text-white text-xs md:text-sm font-bold rounded-xl shadow-float active:scale-95 transition-all"
                   >
-                    <span>Claim Flash Deals</span>
+                    <span>Claim Flash Deal</span>
                     <Zap className="w-4 h-4" />
                   </button>
                 </div>
@@ -381,80 +449,102 @@ export const HomeView: React.FC = () => {
               {/* Flash Deal Visual Hero */}
               <div className="relative flex items-center justify-center md:justify-end">
                 <div 
-                  onClick={() => handleHeroProductClick(flashDealConfig?.productId || 'p3')}
+                  onClick={() => {
+                    if (currentSlide.product) setSelectedProductDetail(currentSlide.product);
+                    else handleProductClick(flashDealConfig?.productId || 'p3');
+                  }}
                   className="bg-white/95 rounded-2xl p-4 shadow-xl border border-orange-200 max-w-[260px] w-full flex flex-col items-center cursor-pointer group tap-active"
                 >
                   <span className="self-start text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-600">
                     {flashDealConfig?.discountText || '55% OFF'}
                   </span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={flashDealConfig?.productImage || 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=400&auto=format&fit=crop&q=80'}
-                    alt={flashDealConfig?.productName || 'Flash Deal Item'}
-                    className="w-28 h-28 object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
-                  />
+                  <div className="w-28 h-28 my-1 flex items-center justify-center">
+                    <ResolvedImage
+                      src={currentSlide.product ? currentSlide.product.image : (flashDealConfig?.productImage || '/icon-192x192.png?v=2')}
+                      alt={currentSlide.product ? currentSlide.product.name : (flashDealConfig?.productName || 'Flash Deal')}
+                      className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
+                    />
+                  </div>
                   <p className="text-xs font-extrabold text-gray-900 text-center line-clamp-1">
-                    {flashDealConfig?.productName || 'Portable Food Packet Sealer'}
+                    {currentSlide.product ? currentSlide.product.name : (flashDealConfig?.productName || 'Portable Food Packet Sealer')}
                   </p>
                   <div className="flex items-baseline gap-1.5 mt-1">
                     <span className="text-sm font-black text-[#F95721]">₹{flashDealConfig?.dealPrice || 199}</span>
-                    <span className="text-[10px] text-gray-500 font-medium line-through">₹{flashDealConfig?.originalPrice || 499}</span>
+                    <span className="text-[10px] text-gray-500 font-medium line-through">
+                      ₹{currentSlide.product ? currentSlide.product.originalPrice : (flashDealConfig?.originalPrice || 499)}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Slide 2: Smart Lightings & Ambience */}
-          {activeHeroSlide === 2 && (
+          ) : (
+            /* Database Configured Hero Banner Slide */
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fadeIn">
               <div className="max-w-md space-y-2.5">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 text-xs font-bold text-purple-600 shadow-xs">
-                  <Sparkles className="w-3.5 h-3.5" /> Room Aesthetic Upgrade
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 text-xs font-bold text-[#F95721] shadow-xs">
+                  <Sparkles className="w-3.5 h-3.5" /> 
+                  {currentSlide.banner?.badgeText || 'Special Everyday Collection'}
                 </span>
-                <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
-                  Smart Sunset & <br />
-                  <span className="text-purple-600">Ambient Lightings</span>
-                </h2>
-                <p className="text-xs sm:text-sm md:text-base text-gray-600 font-medium">
-                  Transform any room into a cozy, aesthetic sanctuary from just ₹149.
+                <h1 className="text-2xl sm:text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
+                  {currentSlide.product ? currentSlide.product.name : currentSlide.banner?.heading}
+                </h1>
+                <p className="text-xs sm:text-sm md:text-base text-gray-600 font-medium line-clamp-2">
+                  {currentSlide.banner?.description || (currentSlide.product ? currentSlide.product.description : 'Smart everyday utilities at direct factory rates.')}
                 </p>
                 <div className="pt-2 flex items-center gap-2.5">
                   <button
                     onClick={() => {
-                      setSelectedCategoryFilter('home');
-                      setSelectedSubcategoryFilter('lightings');
-                      setActiveTab('categories');
+                      if (currentSlide.product) {
+                        setSelectedProductDetail(currentSlide.product);
+                      } else if (currentSlide.banner?.ctaDestination) {
+                        handleCategoryClick(currentSlide.banner.ctaDestination);
+                      } else {
+                        setActiveTab('categories');
+                      }
                     }}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white text-xs md:text-sm font-bold rounded-xl shadow-float active:scale-95 transition-all"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-[#F95721] hover:bg-[#E44813] text-white text-xs md:text-sm font-bold rounded-xl shadow-float active:scale-95 transition-all"
                   >
-                    <span>Explore Lightings</span>
+                    <span>{currentSlide.banner?.ctaText || 'Shop Now'}</span>
                     <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setIsScratchModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 sm:py-3 bg-white/90 hover:bg-white text-gray-800 text-xs md:text-sm font-bold rounded-xl border border-orange-200 shadow-2xs transition-all tap-active"
+                  >
+                    <Gift className="w-3.5 h-3.5 text-[#F95721]" />
+                    <span>Scratch & Win</span>
                   </button>
                 </div>
               </div>
 
-              {/* Sunset Lamp Showcase */}
-              <div className="relative flex items-center justify-center md:justify-end">
+              {/* Product Showcase */}
+              <div className="relative flex items-center justify-center md:justify-end mt-2 md:mt-0">
                 <div 
-                  onClick={() => handleHeroProductClick('p2')}
-                  className="bg-white/95 rounded-2xl p-4 shadow-xl border border-purple-200 max-w-[260px] w-full flex flex-col items-center cursor-pointer group tap-active"
+                  onClick={() => {
+                    if (currentSlide.product) {
+                      setSelectedProductDetail(currentSlide.product);
+                    }
+                  }}
+                  className={`relative w-full max-w-[320px] h-44 sm:h-52 md:h-60 flex items-center justify-center ${
+                    currentSlide.product ? 'cursor-pointer group' : ''
+                  }`}
                 >
-                  <span className="self-start text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-extrabold">
-                    Bestseller
-                  </span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400&auto=format&fit=crop&q=80"
-                    alt="Sunset Lamp"
-                    className="w-28 h-28 object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
-                  />
-                  <p className="text-xs font-extrabold text-gray-900 text-center line-clamp-1">
-                    Romantic Sunset Projection Lamp
-                  </p>
-                  <div className="flex items-baseline gap-1.5 mt-1">
-                    <span className="text-sm font-black text-purple-600">₹399</span>
-                    <span className="text-[10px] text-gray-500 font-medium line-through">₹799</span>
+                  <div className="w-40 sm:w-48 md:w-56 h-40 sm:h-48 md:h-56 bg-white/80 backdrop-blur-xs p-3 rounded-3xl border border-orange-200/80 shadow-lg flex flex-col items-center justify-center group-hover:scale-105 transition-transform">
+                    <ResolvedImage
+                      src={currentSlide.product ? currentSlide.product.image : (currentSlide.banner?.image || '/icon-512x512.png?v=2')}
+                      alt={currentSlide.banner?.heading || 'Featured Banner'}
+                      className="w-full h-full object-contain mix-blend-multiply"
+                    />
+                    {currentSlide.product && (
+                      <div className="absolute bottom-2 bg-gray-900/90 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-xs">
+                        ₹{currentSlide.product.price}
+                        {currentSlide.product.originalPrice && (
+                          <span className="line-through text-gray-400 ml-1.5 text-[9px]">
+                            ₹{currentSlide.product.originalPrice}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -462,41 +552,76 @@ export const HomeView: React.FC = () => {
           )}
 
           {/* Dots Carousel Navigation */}
-          <div className="relative z-10 flex justify-center items-center gap-1 mt-4">
-            {[0, 1, 2].map((idx) => (
-              <button
-                key={idx}
-                onClick={() => setActiveHeroSlide(idx)}
-                className="w-7 h-7 flex items-center justify-center p-1 cursor-pointer tap-active"
-                aria-label={`Slide ${idx + 1}`}
-              >
-                <span
-                  className={`h-1.5 rounded-full transition-all duration-300 block ${
-                    activeHeroSlide === idx
-                      ? 'w-6 bg-[#F95721]'
-                      : 'w-2.5 bg-orange-200/80 hover:bg-orange-300'
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
+          {slideCount > 1 && (
+            <div className="relative z-10 flex justify-center items-center gap-1 mt-4">
+              {activeSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveHeroSlide(idx)}
+                  className="w-7 h-7 flex items-center justify-center p-1 cursor-pointer tap-active"
+                  aria-label={`Slide ${idx + 1}`}
+                >
+                  <span
+                    className={`h-1.5 rounded-full transition-all duration-300 block ${
+                      activeHeroSlide === idx
+                        ? 'w-6 bg-[#F95721]'
+                        : 'w-2.5 bg-orange-200/80 hover:bg-orange-300'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
+    );
+  };
 
-      {/* Scratch & Win Modal */}
-      <ScratchCardModal
-        isOpen={isScratchModalOpen}
-        onClose={() => setIsScratchModalOpen(false)}
-      />
+  // Section 2: Quick Actions Bar Renderer
+  const renderQuickActionsSection = () => {
+    const liveActions = quickActions.filter(qa => qa.enabled !== false);
+    if (liveActions.length === 0) return null;
 
-      {/* Notification VIP Alerts & 250 Points Reward Card */}
-      <section>
-        <NotificationRewardCard variant="compact" />
+    return (
+      <section className="py-1">
+        <div className="flex items-center gap-2.5 sm:gap-3.5 overflow-x-auto no-scrollbar py-2 -mx-2 px-2 select-none">
+          {liveActions.map((qa) => (
+            <button
+              key={qa.id}
+              onClick={() => handleQuickActionClick(qa)}
+              className="flex-shrink-0 flex items-center gap-2.5 px-3 py-2 sm:px-3.5 sm:py-2.5 bg-white border border-gray-100 hover:border-orange-200 rounded-2xl shadow-2xs hover:shadow-xs transition-all active:scale-95 group text-left"
+            >
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-50/80 border border-orange-100/80 flex items-center justify-center flex-shrink-0 overflow-hidden text-base group-hover:scale-105 transition-transform">
+                {qa.image ? (
+                  <ResolvedImage src={qa.image} alt={qa.label} className="w-full h-full object-contain p-1" />
+                ) : (
+                  <span>{qa.icon || '⚡'}</span>
+                )}
+              </div>
+              <div className="min-w-0 pr-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-gray-900 truncate">{qa.label}</span>
+                  {qa.badge && (
+                    <span className="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-red-50 text-red-600 border border-red-200">
+                      {qa.badge}
+                    </span>
+                  )}
+                </div>
+                {qa.subtitle && (
+                  <p className="text-[10px] text-gray-500 line-clamp-1">{qa.subtitle}</p>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
       </section>
+    );
+  };
 
-      {/* Feature / Trust Badges Strip */}
+  // Section 3: Feature / Trust Badges Strip
+  const renderTrustSection = () => {
+    return (
       <section className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
-        {/* Free Express Delivery */}
         <div className="bg-gradient-to-b from-orange-50/50 via-white to-white border border-orange-100/70 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center text-center sm:text-left gap-2 sm:gap-3.5 shadow-xs hover:shadow-sm hover:border-orange-200 transition-all group">
           <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-orange-100/80 text-[#F95721] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
             <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -507,13 +632,12 @@ export const HomeView: React.FC = () => {
               <span className="hidden sm:inline">Free Express Delivery</span>
             </p>
             <p className="text-[9px] sm:text-[11px] md:text-xs text-gray-500 mt-0.5 leading-tight">
-              <span className="sm:hidden">Above ₹{storeSettings?.freeDeliveryThreshold?.toLocaleString('en-IN') ?? '499'}</span>
-              <span className="hidden sm:inline">On all orders above ₹{storeSettings?.freeDeliveryThreshold?.toLocaleString('en-IN') ?? '499'}</span>
+              <span className="sm:hidden">Above ₹{storeSettings?.freeDeliveryThreshold ?? 499}</span>
+              <span className="hidden sm:inline">On all orders above ₹{storeSettings?.freeDeliveryThreshold ?? 499}</span>
             </p>
           </div>
         </div>
 
-        {/* 7 Days Easy Return */}
         <div className="bg-gradient-to-b from-emerald-50/50 via-white to-white border border-emerald-100/70 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center text-center sm:text-left gap-2 sm:gap-3.5 shadow-xs hover:shadow-sm hover:border-emerald-200 transition-all group">
           <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-emerald-100/80 text-[#00A859] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
             <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -530,7 +654,6 @@ export const HomeView: React.FC = () => {
           </div>
         </div>
 
-        {/* SBS Quality Certified */}
         <div className="bg-gradient-to-b from-blue-50/50 via-white to-white border border-blue-100/70 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center text-center sm:text-left gap-2 sm:gap-3.5 shadow-xs hover:shadow-sm hover:border-blue-200 transition-all group">
           <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-blue-100/80 text-[#0284C7] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
             <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -547,8 +670,14 @@ export const HomeView: React.FC = () => {
           </div>
         </div>
       </section>
+    );
+  };
 
-      {/* Shop by Category Section */}
+  // Section 4: Shop by Category
+  const renderCategoriesSection = () => {
+    if (visibleCategories.length === 0) return null;
+
+    return (
       <section>
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -567,7 +696,6 @@ export const HomeView: React.FC = () => {
           </button>
         </div>
 
-        {/* Categories Row */}
         <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
           {visibleCategories.map((cat) => (
             <button
@@ -577,202 +705,201 @@ export const HomeView: React.FC = () => {
             >
               <div 
                 style={{ backgroundColor: cat.bgColor }}
-                className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center p-2.5 border border-black/5 group-hover:scale-105 transition-transform shadow-xs"
+                className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center p-2.5 border border-black/5 group-hover:scale-105 transition-transform shadow-xs overflow-hidden"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <ResolvedImage
                   src={cat.image}
                   alt={cat.name}
                   className="w-full h-full object-contain mix-blend-multiply"
                 />
               </div>
-              <span className="text-[11px] md:text-xs font-bold text-gray-800 text-center leading-tight">
+              <span className="text-[11px] md:text-xs font-bold text-gray-800 text-center leading-tight capitalize">
                 {cat.name}
               </span>
             </button>
           ))}
         </div>
       </section>
+    );
+  };
 
-      {/* Quick-Commerce Aisles & Subcategories Capsule Carousel */}
-      {featuredSubcategoryItems.length > 0 && (
-        <section className="space-y-3.5 bg-gradient-to-b from-orange-50/50 via-[#FFF9F5]/40 to-transparent p-4 sm:p-5 -mx-3 sm:-mx-4 md:mx-0 rounded-3xl border border-orange-100/60 shadow-2xs">
-          {/* Header Row */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="w-8 h-8 rounded-xl bg-orange-100/90 text-[#F95721] flex items-center justify-center flex-shrink-0 text-sm sm:text-base shadow-xs">
-                ✨
-              </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg md:text-xl font-black text-gray-900 tracking-tight">
-                    Explore Curated Aisles
-                  </h2>
-                  <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-orange-500/10 text-[#F95721] text-[10px] font-extrabold uppercase tracking-wide">
-                    Popular
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500 hidden sm:block">
-                  Swipe through curated spaces, smart utilities & collections
-                </p>
+  // Section 5: Curated Aisles
+  const renderAislesSection = () => {
+    if (featuredSubcategoryItems.length === 0) return null;
+
+    return (
+      <section className="space-y-3.5 bg-gradient-to-b from-orange-50/50 via-[#FFF9F5]/40 to-transparent p-4 sm:p-5 -mx-3 sm:-mx-4 md:mx-0 rounded-3xl border border-orange-100/60 shadow-2xs">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-8 h-8 rounded-xl bg-orange-100/90 text-[#F95721] flex items-center justify-center flex-shrink-0 text-sm sm:text-base shadow-xs">
+              ✨
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg md:text-xl font-black text-gray-900 tracking-tight">
+                  Explore Curated Aisles
+                </h2>
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-orange-500/10 text-[#F95721] text-[10px] font-extrabold uppercase tracking-wide">
+                  Popular
+                </span>
               </div>
-            </div>
-
-            {/* Carousel Controls & See All */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Desktop Scroll Arrows */}
-              <div className="hidden md:flex items-center gap-1">
-                <button
-                  onClick={() => scrollSubcategories('left')}
-                  className="w-8 h-8 rounded-full bg-white border border-gray-200/90 text-gray-700 hover:bg-orange-50 hover:text-[#F95721] hover:border-orange-200 shadow-xs flex items-center justify-center transition-all active:scale-95"
-                  aria-label="Scroll left"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => scrollSubcategories('right')}
-                  className="w-8 h-8 rounded-full bg-white border border-gray-200/90 text-gray-700 hover:bg-orange-50 hover:text-[#F95721] hover:border-orange-200 shadow-xs flex items-center justify-center transition-all active:scale-95"
-                  aria-label="Scroll right"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-
-              <button
-                onClick={() => {
-                  setSelectedCategoryFilter(null);
-                  setSelectedSubcategoryFilter(null);
-                  setActiveTab('categories');
-                }}
-                className="text-xs md:text-sm font-bold text-[#F95721] hover:text-[#E44813] flex items-center gap-0.5 ml-1 hover:underline"
-              >
-                <span>All Aisles</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+              <p className="text-xs text-gray-500 hidden sm:block">
+                Swipe through curated spaces, smart utilities & collections
+              </p>
             </div>
           </div>
 
-          {/* Category Filter Pills */}
-          {availableCategoryPills.length > 1 && (
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="hidden md:flex items-center gap-1">
               <button
-                onClick={() => {
-                  setActiveCategoryPill('all');
-                  subcategoryScrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
-                }}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
-                  activeCategoryPill === 'all'
-                    ? 'bg-[#F95721] text-white shadow-xs'
-                    : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 hover:border-gray-300'
+                onClick={() => scrollSubcategories('left')}
+                className="w-8 h-8 rounded-full bg-white border border-gray-200/90 text-gray-700 hover:bg-orange-50 hover:text-[#F95721] hover:border-orange-200 shadow-xs flex items-center justify-center transition-all active:scale-95"
+                aria-label="Scroll left"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => scrollSubcategories('right')}
+                className="w-8 h-8 rounded-full bg-white border border-gray-200/90 text-gray-700 hover:bg-orange-50 hover:text-[#F95721] hover:border-orange-200 shadow-xs flex items-center justify-center transition-all active:scale-95"
+                aria-label="Scroll right"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <button
+              onClick={() => {
+                setSelectedCategoryFilter(null);
+                setSelectedSubcategoryFilter(null);
+                setActiveTab('categories');
+              }}
+              className="text-xs md:text-sm font-bold text-[#F95721] hover:text-[#E44813] flex items-center gap-0.5 ml-1 hover:underline"
+            >
+              <span>All Aisles</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {availableCategoryPills.length > 1 && (
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+            <button
+              onClick={() => {
+                setActiveCategoryPill('all');
+                subcategoryScrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+              }}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
+                activeCategoryPill === 'all'
+                  ? 'bg-[#F95721] text-white shadow-xs'
+                  : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 hover:border-gray-300'
+              }`}
+            >
+              <span>All</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                  activeCategoryPill === 'all' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
                 }`}
               >
-                <span>All</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                    activeCategoryPill === 'all' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                {featuredSubcategoryItems.length}
+              </span>
+            </button>
+
+            {availableCategoryPills.map((cat) => {
+              const count = featuredSubcategoryItems.filter((i) => i.categoryId === cat.id).length;
+              const isActive = activeCategoryPill === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setActiveCategoryPill(cat.id);
+                    subcategoryScrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-[#F95721] text-white shadow-xs'
+                      : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 hover:border-gray-300'
                   }`}
                 >
-                  {featuredSubcategoryItems.length}
-                </span>
-              </button>
-
-              {availableCategoryPills.map((cat) => {
-                const count = featuredSubcategoryItems.filter((i) => i.categoryId === cat.id).length;
-                const isActive = activeCategoryPill === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      setActiveCategoryPill(cat.id);
-                      subcategoryScrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
-                    }}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
-                      isActive
-                        ? 'bg-[#F95721] text-white shadow-xs'
-                        : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 hover:border-gray-300'
+                  <span>{cat.name}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
                     }`}
                   >
-                    <span>{cat.name}</span>
-                    <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Swipeable Capsule Cards Row */}
-          <div
-            ref={subcategoryScrollRef}
-            className="flex items-stretch gap-3 md:gap-3.5 overflow-x-auto no-scrollbar py-2 px-0.5 scroll-smooth"
-          >
-            {filteredSubcategoryItems.map((item) => (
-              <div
-                key={`${item.categoryId}-${item.sub.id}`}
-                onClick={() => handleSubcategoryClick(item.categoryId, item.sub.id)}
-                className="group relative flex-shrink-0 w-[126px] sm:w-[145px] md:w-[155px] flex flex-col items-center justify-between p-3 sm:p-3.5 rounded-3xl bg-white border border-gray-100 hover:border-orange-300 shadow-2xs hover:shadow-card transition-all duration-300 cursor-pointer tap-active select-none"
-              >
-                {/* Ambient Category Pastel Top Glow */}
-                <div
-                  style={{ backgroundColor: item.cat.bgColor || '#FFF0E6' }}
-                  className="absolute top-0 inset-x-0 h-24 rounded-t-3xl opacity-50 group-hover:opacity-80 transition-opacity"
-                />
-
-                {/* Top Badge: Parent Category Name */}
-                <div className="relative z-10 w-full flex items-center justify-center">
-                  <span
-                    style={{ color: item.cat.accentColor || '#EA580C' }}
-                    className="text-[9px] font-black uppercase tracking-wider line-clamp-1 text-center bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded-full border border-black/5 shadow-2xs"
-                  >
-                    {item.cat.name}
+                    {count}
                   </span>
-                </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
-                {/* Floating Bubble Avatar */}
-                <div className="relative z-10 my-2">
-                  <div
-                    style={{ borderColor: `${item.cat.accentColor || '#F95721'}30` }}
-                    className="w-18 h-18 sm:w-20 sm:h-20 md:w-22 md:h-22 rounded-2xl sm:rounded-3xl bg-white p-2.5 shadow-xs border flex items-center justify-center group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={item.sub.image || item.cat.image}
-                      alt={item.sub.name}
-                      className="w-full h-full object-contain mix-blend-multiply"
-                    />
-                  </div>
-                </div>
+        <div
+          ref={subcategoryScrollRef}
+          className="flex items-stretch gap-3 md:gap-3.5 overflow-x-auto no-scrollbar py-2 px-0.5 scroll-smooth"
+        >
+          {filteredSubcategoryItems.map((item) => (
+            <div
+              key={`${item.categoryId}-${item.sub.id}`}
+              onClick={() => handleSubcategoryClick(item.categoryId, item.sub.id)}
+              className="group relative flex-shrink-0 w-[126px] sm:w-[145px] md:w-[155px] flex flex-col items-center justify-between p-3 sm:p-3.5 rounded-3xl bg-white border border-gray-100 hover:border-orange-300 shadow-2xs hover:shadow-card transition-all duration-300 cursor-pointer tap-active select-none"
+            >
+              <div
+                style={{ backgroundColor: item.cat.bgColor || '#FFF0E6' }}
+                className="absolute top-0 inset-x-0 h-24 rounded-t-3xl opacity-50 group-hover:opacity-80 transition-opacity"
+              />
 
-                {/* Subcategory Name & Price / Item Badge */}
-                <div className="relative z-10 w-full text-center space-y-1.5">
-                  <h3 className="text-xs sm:text-sm font-extrabold text-gray-900 line-clamp-2 leading-tight min-h-[30px] sm:min-h-[34px] flex items-center justify-center group-hover:text-[#F95721] transition-colors">
-                    {item.sub.name}
-                  </h3>
+              <div className="relative z-10 w-full flex items-center justify-center">
+                <span
+                  style={{ color: item.cat.accentColor || '#EA580C' }}
+                  className="text-[9px] font-black uppercase tracking-wider line-clamp-1 text-center bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded-full border border-black/5 shadow-2xs"
+                >
+                  {item.cat.name}
+                </span>
+              </div>
 
-                  <div className="flex items-center justify-center">
-                    {item.minPrice ? (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-extrabold text-[#F95721] bg-orange-50/90 border border-orange-200/70 px-2 py-0.5 rounded-full">
-                        From ₹{item.minPrice}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                        {item.productCount} items
-                      </span>
-                    )}
-                  </div>
+              <div className="relative z-10 my-2">
+                <div
+                  style={{ borderColor: `${item.cat.accentColor || '#F95721'}30` }}
+                  className="w-18 h-18 sm:w-20 sm:h-20 md:w-22 md:h-22 rounded-2xl sm:rounded-3xl bg-white p-2.5 shadow-xs border flex items-center justify-center group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300"
+                >
+                  <ResolvedImage
+                    src={item.sub.image || item.cat.image}
+                    alt={item.sub.name}
+                    className="w-full h-full object-contain mix-blend-multiply"
+                  />
                 </div>
               </div>
-            ))}
-          </div>
-        </section>
-      )}
 
-      {/* Trending Now */}
+              <div className="relative z-10 w-full text-center space-y-1.5">
+                <h3 className="text-xs sm:text-sm font-extrabold text-gray-900 line-clamp-2 leading-tight min-h-[30px] sm:min-h-[34px] flex items-center justify-center group-hover:text-[#F95721] transition-colors">
+                  {item.sub.name}
+                </h3>
+
+                <div className="flex items-center justify-center">
+                  {item.minPrice ? (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-extrabold text-[#F95721] bg-orange-50/90 border border-orange-200/70 px-2 py-0.5 rounded-full">
+                      From ₹{item.minPrice}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                      {item.productCount} items
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  };
+
+  // Section 6: Trending Now
+  const renderTrendingSection = () => {
+    if (trendingProducts.length === 0) return null;
+
+    return (
       <section>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -796,8 +923,14 @@ export const HomeView: React.FC = () => {
           ))}
         </div>
       </section>
+    );
+  };
 
-      {/* Today's Deals Section (Promo Cards matching Screenshot) */}
+  // Section 7: Today's Deals
+  const renderDealsSection = () => {
+    if (activeTodayDeals.length === 0) return null;
+
+    return (
       <section>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -819,57 +952,51 @@ export const HomeView: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Deal Card 1: Daily Essentials */}
-          <div
-            onClick={() => handleCategoryClick('cleaning')}
-            className="cursor-pointer bg-gradient-to-r from-[#FFF5EC] to-[#FFEFE4] border border-[#FEDDC7] rounded-3xl p-5 flex items-center justify-between hover:shadow-card transition-all tap-active"
-          >
-            <div className="space-y-1.5">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Flash Deal</span>
-              <span className="text-2xl md:text-3xl font-black text-[#F95721] block">40% OFF</span>
-              <p className="text-sm font-bold text-gray-900">On Daily Essentials</p>
-              <p className="text-xs text-gray-500">Limited time only!</p>
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F95721] pt-1">
-                Shop Now <ArrowRight className="w-3.5 h-3.5" />
-              </span>
-            </div>
-            <div className="w-28 h-28 md:w-32 md:h-32 bg-white/80 rounded-2xl p-2.5 flex items-center justify-center shadow-xs">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&auto=format&fit=crop&q=80"
-                alt="Daily Essentials Deal"
-                className="w-full h-full object-contain mix-blend-multiply"
-              />
-            </div>
-          </div>
-
-          {/* Deal Card 2: Personal Care */}
-          <div
-            onClick={() => handleCategoryClick('personal-care')}
-            className="cursor-pointer bg-gradient-to-r from-[#FFF5EC] to-[#FFEFE4] border border-[#FEDDC7] rounded-3xl p-5 flex items-center justify-between hover:shadow-card transition-all tap-active"
-          >
-            <div className="space-y-1.5">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Top Offer</span>
-              <span className="text-2xl md:text-3xl font-black text-[#F95721] block">35% OFF</span>
-              <p className="text-sm font-bold text-gray-900">On Personal Care</p>
-              <p className="text-xs text-gray-500">Hurry, Limited Stock!</p>
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F95721] pt-1">
-                Shop Now <ArrowRight className="w-3.5 h-3.5" />
-              </span>
-            </div>
-            <div className="w-28 h-28 md:w-32 md:h-32 bg-white/80 rounded-2xl p-2.5 flex items-center justify-center shadow-xs">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://images.unsplash.com/photo-1621607512214-68297480165e?w=400&auto=format&fit=crop&q=80"
-                alt="Personal Care Deal"
-                className="w-full h-full object-contain mix-blend-multiply"
-              />
-            </div>
-          </div>
+          {activeTodayDeals.map((deal) => {
+            const prod = products.find(p => p.id === deal.productId);
+            return (
+              <div
+                key={deal.id}
+                onClick={() => {
+                  if (prod) setSelectedProductDetail(prod);
+                  else {
+                    setSelectedCategoryFilter('offers');
+                    setActiveTab('categories');
+                  }
+                }}
+                className="cursor-pointer bg-gradient-to-r from-[#FFF5EC] to-[#FFEFE4] border border-[#FEDDC7] rounded-3xl p-5 flex items-center justify-between hover:shadow-card transition-all tap-active"
+              >
+                <div className="space-y-1.5">
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Flash Deal</span>
+                  <span className="text-2xl md:text-3xl font-black text-[#F95721] block">{deal.discount}% OFF</span>
+                  <p className="text-sm font-bold text-gray-900">{deal.title || (prod ? prod.name : 'Special Offer')}</p>
+                  {prod && (
+                    <p className="text-xs font-bold text-gray-600">Special Price: ₹{prod.price}</p>
+                  )}
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F95721] pt-1">
+                    Shop Deal <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </div>
+                <div className="w-28 h-28 md:w-32 md:h-32 bg-white/80 rounded-2xl p-2.5 flex items-center justify-center shadow-xs overflow-hidden">
+                  <ResolvedImage
+                    src={deal.bannerImage || prod?.image || '/icon-192x192.png?v=2'}
+                    alt={deal.title}
+                    className="w-full h-full object-contain mix-blend-multiply"
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
+    );
+  };
 
-      {/* Best Sellers */}
+  // Section 8: Best Sellers
+  const renderBestSellersSection = () => {
+    if (bestSellers.length === 0) return null;
+
+    return (
       <section>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -892,6 +1019,56 @@ export const HomeView: React.FC = () => {
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
+      </section>
+    );
+  };
+
+  // Dynamic Section Dispatcher mapped to admin ordered homepageSections
+  const renderSectionById = (sectionId: string) => {
+    switch (sectionId) {
+      case 'stories':
+        return (
+          <section key="stories" className="pt-1">
+            <ProductStories />
+          </section>
+        );
+      case 'hero':
+        return <React.Fragment key="hero">{renderHeroSection()}</React.Fragment>;
+      case 'quick_actions':
+        return <React.Fragment key="quick_actions">{renderQuickActionsSection()}</React.Fragment>;
+      case 'trust':
+        return <React.Fragment key="trust">{renderTrustSection()}</React.Fragment>;
+      case 'categories':
+        return <React.Fragment key="categories">{renderCategoriesSection()}</React.Fragment>;
+      case 'aisles':
+        return <React.Fragment key="aisles">{renderAislesSection()}</React.Fragment>;
+      case 'trending':
+        return <React.Fragment key="trending">{renderTrendingSection()}</React.Fragment>;
+      case 'deals':
+        return <React.Fragment key="deals">{renderDealsSection()}</React.Fragment>;
+      case 'bestsellers':
+        return <React.Fragment key="bestsellers">{renderBestSellersSection()}</React.Fragment>;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-6 md:space-y-8 pb-24 md:pb-12 animate-fadeIn">
+      {/* Dynamic Sections in order configured in admin panel */}
+      {homepageSections
+        .filter((sec) => sec.enabled !== false)
+        .map((sec) => renderSectionById(sec.id))}
+
+      {/* Scratch & Win Modal */}
+      <ScratchCardModal
+        isOpen={isScratchModalOpen}
+        onClose={() => setIsScratchModalOpen(false)}
+      />
+
+      {/* Notification Reward Card */}
+      <section>
+        <NotificationRewardCard variant="compact" />
       </section>
     </div>
   );

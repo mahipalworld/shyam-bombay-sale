@@ -21,6 +21,7 @@ import {
   PaymentRecord,
   InventoryLog,
   HeroBannerItem,
+  QuickActionItem,
   TodayDealItem,
   BestSellersConfig,
   HomepageSection,
@@ -40,7 +41,8 @@ import {
   INITIAL_ORDERS,
   INITIAL_STORIES,
   INITIAL_SCRATCH_CONFIG,
-  INITIAL_FLASH_DEAL_CONFIG
+  INITIAL_FLASH_DEAL_CONFIG,
+  INITIAL_QUICK_ACTIONS
 } from '@/data/initialData';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import confetti from 'canvas-confetti';
@@ -107,6 +109,7 @@ interface StoreContextType {
   paymentRecords: PaymentRecord[];
   inventoryLogs: InventoryLog[];
   heroBanners: HeroBannerItem[];
+  quickActions: QuickActionItem[];
   homepageCategories: string[];
   trendingNowProducts: string[];
   todayDeals: TodayDealItem[];
@@ -222,6 +225,7 @@ interface StoreContextType {
   // Homepage Settings Setters
   homepageSubcategories: { categoryId: string; subcategoryId: string }[];
   setHeroBanners: React.Dispatch<React.SetStateAction<HeroBannerItem[]>>;
+  setQuickActions: React.Dispatch<React.SetStateAction<QuickActionItem[]>>;
   setHomepageCategories: React.Dispatch<React.SetStateAction<string[]>>;
   setHomepageSubcategories: React.Dispatch<React.SetStateAction<{ categoryId: string; subcategoryId: string }[]>>;
   setTrendingNowProducts: React.Dispatch<React.SetStateAction<string[]>>;
@@ -229,6 +233,16 @@ interface StoreContextType {
   setBestSellersConfig: React.Dispatch<React.SetStateAction<BestSellersConfig>>;
   setHomepageSections: React.Dispatch<React.SetStateAction<HomepageSection[]>>;
   setStoreSettings: React.Dispatch<React.SetStateAction<StoreSettings>>;
+
+  // Homepage Persistence Sync Helpers
+  saveHeroBanners: (banners: HeroBannerItem[]) => Promise<void>;
+  saveHomepageSections: (sections: HomepageSection[]) => Promise<void>;
+  saveHomepageCategories: (cats: string[]) => Promise<void>;
+  saveHomepageSubcategories: (subs: { categoryId: string; subcategoryId: string }[]) => Promise<void>;
+  saveQuickActions: (actions: QuickActionItem[]) => Promise<void>;
+  saveTodayDeals: (deals: TodayDealItem[]) => Promise<void>;
+  saveTrendingNowProducts: (ids: string[]) => Promise<void>;
+  saveBestSellersConfig: (config: BestSellersConfig) => Promise<void>;
 
   // Stories, Scratch Card & Interactive Features
   stories: ProductStory[];
@@ -255,6 +269,18 @@ interface StoreContextType {
   cartSelectedItemsCount: number;
 }
 
+export const DEFAULT_HOMEPAGE_SECTIONS: HomepageSection[] = [
+  { id: 'stories', name: 'Product Stories', enabled: true },
+  { id: 'hero', name: 'Hero Banner', enabled: true },
+  { id: 'quick_actions', name: 'Quick Actions', enabled: true },
+  { id: 'trust', name: 'Feature Badges', enabled: true },
+  { id: 'categories', name: 'Shop by Category', enabled: true },
+  { id: 'aisles', name: 'Curated Aisles', enabled: true },
+  { id: 'trending', name: 'Trending Now', enabled: true },
+  { id: 'deals', name: 'Today\'s Deals', enabled: true },
+  { id: 'bestsellers', name: 'Best Sellers', enabled: true }
+];
+
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -278,23 +304,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
 
   // UI state
-  const [activeTab, setActiveTab] = useState<string>(() => {
+  const [activeTab, setActiveTab] = useState<string>('home');
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('tab') === 'admin' || window.location.hash.includes('admin')) {
-        return 'admin';
+        setActiveTab('admin');
       }
     }
-    return 'home';
-  });
 
-  useEffect(() => {
     const handleHash = () => {
       if (typeof window !== 'undefined' && window.location.hash.includes('admin')) {
         setActiveTab('admin');
       }
     };
-    handleHash();
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
@@ -506,6 +530,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   ]);
 
+  const [quickActions, setQuickActions] = useState<QuickActionItem[]>(INITIAL_QUICK_ACTIONS);
+
   const [homepageCategories, setHomepageCategories] = useState<string[]>([
     'cleaning', 'kitchen', 'personal-care', 'home-storage'
   ]);
@@ -543,14 +569,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     manualProductIds: ['p4', 'p5', 'p6']
   });
 
-  const [homepageSections, setHomepageSections] = useState<HomepageSection[]>([
-    { id: 'hero', name: 'Hero Banner', enabled: true },
-    { id: 'categories', name: 'Categories Carousel', enabled: true },
-    { id: 'trending', name: 'Trending Now', enabled: true },
-    { id: 'deals', name: 'Today\'s Deals', enabled: true },
-    { id: 'bestsellers', name: 'Best Sellers', enabled: true },
-    { id: 'trust', name: 'Trust Badge Info', enabled: true }
-  ]);
+  const [homepageSections, setHomepageSections] = useState<HomepageSection[]>(DEFAULT_HOMEPAGE_SECTIONS);
 
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
     storeName: 'Shyam Business Store',
@@ -816,7 +835,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedBestConfig) setBestSellersConfig(JSON.parse(savedBestConfig));
 
       const savedSections = localStorage.getItem('sbs_homepage_sections');
-      if (savedSections) setHomepageSections(JSON.parse(savedSections));
+      if (savedSections) {
+        try {
+          const parsed = JSON.parse(savedSections);
+          if (Array.isArray(parsed)) {
+            const existingIds = new Set(parsed.map((s: any) => s.id));
+            const missing = DEFAULT_HOMEPAGE_SECTIONS.filter(s => !existingIds.has(s.id));
+            setHomepageSections([...parsed, ...missing]);
+          }
+        } catch { }
+      }
+
+      const savedQuickActions = localStorage.getItem('sbs_quick_actions');
+      if (savedQuickActions) {
+        try {
+          setQuickActions(JSON.parse(savedQuickActions));
+        } catch { }
+      }
 
       const savedSettings = localStorage.getItem('sbs_store_settings');
       if (savedSettings) {
@@ -975,6 +1010,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             if (s.id === 'scratch_config' && s.data) setScratchConfig(s.data);
             if (s.id === 'flash_deal_config' && s.data) setFlashDealConfig(s.data);
             if (s.id === 'hero_banners' && Array.isArray(s.data)) setHeroBanners(s.data);
+            if (s.id === 'homepage_sections' && Array.isArray(s.data)) {
+              const existingIds = new Set(s.data.map((x: any) => x.id));
+              const missing = DEFAULT_HOMEPAGE_SECTIONS.filter(x => !existingIds.has(x.id));
+              setHomepageSections([...s.data, ...missing]);
+            }
+            if (s.id === 'homepage_categories' && Array.isArray(s.data)) setHomepageCategories(s.data);
+            if (s.id === 'homepage_subcategories' && Array.isArray(s.data)) setHomepageSubcategories(s.data);
+            if (s.id === 'quick_actions' && Array.isArray(s.data)) setQuickActions(s.data);
+            if (s.id === 'today_deals' && Array.isArray(s.data)) setTodayDeals(s.data);
+            if (s.id === 'trending_products' && Array.isArray(s.data)) setTrendingNowProducts(s.data);
+            if (s.id === 'best_sellers_config' && s.data) setBestSellersConfig(s.data);
             if (s.id === 'store_settings' && s.data) setStoreSettings(s.data);
           });
         }
@@ -1237,7 +1283,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const old = payload.old as any;
         if (old?.id) setCoupons((prev) => prev.filter((c) => c.id !== old.id));
       })
-      // Store Settings Realtime Sync (Stories, Flash Deals, Scratch Cards, Banners)
+      // Store Settings Realtime Sync (Stories, Flash Deals, Scratch Cards, Banners, Sections, Categories, etc.)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'store_settings' }, (payload) => {
         const s = (payload.new || payload.old) as any;
         if (!s || !s.id) return;
@@ -1245,6 +1291,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (s.id === 'scratch_config' && s.data) setScratchConfig(s.data);
         if (s.id === 'flash_deal_config' && s.data) setFlashDealConfig(s.data);
         if (s.id === 'hero_banners' && Array.isArray(s.data)) setHeroBanners(s.data);
+        if (s.id === 'homepage_sections' && Array.isArray(s.data)) {
+          const existingIds = new Set(s.data.map((x: any) => x.id));
+          const missing = DEFAULT_HOMEPAGE_SECTIONS.filter(x => !existingIds.has(x.id));
+          setHomepageSections([...s.data, ...missing]);
+        }
+        if (s.id === 'homepage_categories' && Array.isArray(s.data)) setHomepageCategories(s.data);
+        if (s.id === 'homepage_subcategories' && Array.isArray(s.data)) setHomepageSubcategories(s.data);
+        if (s.id === 'quick_actions' && Array.isArray(s.data)) setQuickActions(s.data);
+        if (s.id === 'today_deals' && Array.isArray(s.data)) setTodayDeals(s.data);
+        if (s.id === 'trending_products' && Array.isArray(s.data)) setTrendingNowProducts(s.data);
+        if (s.id === 'best_sellers_config' && s.data) setBestSellersConfig(s.data);
         if (s.id === 'store_settings' && s.data) setStoreSettings(s.data);
       })
       .subscribe();
@@ -3217,10 +3274,94 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateFlashDealConfig = (updates: Partial<FlashDealConfig>) => {
     const nextConfig = { ...flashDealConfig, ...updates };
     setFlashDealConfig(nextConfig);
+    try {
+      localStorage.setItem('sbs_flash_deal_config', JSON.stringify(nextConfig));
+    } catch { }
     showToast('Flash deals settings saved! ⚡');
 
     if (isSupabaseConfigured && supabase) {
       supabase.from('store_settings').upsert({ id: 'flash_deal_config', data: nextConfig }).then();
+    }
+  };
+
+  // Homepage Persistence Sync Helpers
+  const saveHeroBanners = async (banners: HeroBannerItem[]) => {
+    setHeroBanners(banners);
+    try {
+      localStorage.setItem('sbs_hero_banners', JSON.stringify(banners));
+    } catch { }
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('store_settings').upsert({ id: 'hero_banners', data: banners });
+    }
+  };
+
+  const saveHomepageSections = async (sections: HomepageSection[]) => {
+    setHomepageSections(sections);
+    try {
+      localStorage.setItem('sbs_homepage_sections', JSON.stringify(sections));
+    } catch { }
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('store_settings').upsert({ id: 'homepage_sections', data: sections });
+    }
+  };
+
+  const saveHomepageCategories = async (cats: string[]) => {
+    setHomepageCategories(cats);
+    try {
+      localStorage.setItem('sbs_home_categories', JSON.stringify(cats));
+    } catch { }
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('store_settings').upsert({ id: 'homepage_categories', data: cats });
+    }
+  };
+
+  const saveHomepageSubcategories = async (subs: { categoryId: string; subcategoryId: string }[]) => {
+    setHomepageSubcategories(subs);
+    try {
+      localStorage.setItem('sbs_home_subcategories', JSON.stringify(subs));
+    } catch { }
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('store_settings').upsert({ id: 'homepage_subcategories', data: subs });
+    }
+  };
+
+  const saveQuickActions = async (actions: QuickActionItem[]) => {
+    setQuickActions(actions);
+    try {
+      localStorage.setItem('sbs_quick_actions', JSON.stringify(actions));
+    } catch { }
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('store_settings').upsert({ id: 'quick_actions', data: actions });
+    }
+  };
+
+  const saveTodayDeals = async (deals: TodayDealItem[]) => {
+    setTodayDeals(deals);
+    try {
+      localStorage.setItem('sbs_today_deals', JSON.stringify(deals));
+    } catch { }
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('store_settings').upsert({ id: 'today_deals', data: deals });
+    }
+  };
+
+  const saveTrendingNowProducts = async (ids: string[]) => {
+    setTrendingNowProducts(ids);
+    try {
+      localStorage.setItem('sbs_trending_products', JSON.stringify(ids));
+    } catch { }
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('store_settings').upsert({ id: 'trending_products', data: ids });
+    }
+  };
+
+  const saveBestSellersConfig = async (config: BestSellersConfig) => {
+    setBestSellersConfig(config);
+    try {
+      localStorage.setItem('sbs_bestsellers_config', JSON.stringify(config));
+    } catch { }
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('store_settings').upsert({ id: 'best_sellers_config', data: config });
     }
   };
 
@@ -3473,6 +3614,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         paymentRecords,
         inventoryLogs,
         heroBanners,
+        quickActions,
         homepageCategories,
         trendingNowProducts,
         todayDeals,
@@ -3573,6 +3715,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Homepage setters
         homepageSubcategories,
         setHeroBanners,
+        setQuickActions,
         setHomepageCategories,
         setHomepageSubcategories,
         setTrendingNowProducts,
@@ -3580,6 +3723,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setBestSellersConfig,
         setHomepageSections,
         setStoreSettings,
+
+        // Homepage sync helpers
+        saveHeroBanners,
+        saveHomepageSections,
+        saveHomepageCategories,
+        saveHomepageSubcategories,
+        saveQuickActions,
+        saveTodayDeals,
+        saveTrendingNowProducts,
+        saveBestSellersConfig,
 
         cartOriginalMRP,
         cartSubtotal,

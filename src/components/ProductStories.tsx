@@ -2,114 +2,22 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '@/context/StoreContext';
-import { X, ChevronLeft, ChevronRight, ShoppingCart, Sparkles, Check } from 'lucide-react';
-
-interface StoryItem {
-  id: string;
-  productId: string;
-  title: string;
-  tag: string;
-  thumbnail: string;
-  videoImage: string;
-  badge: string;
-  headline: string;
-  bullet1: string;
-  bullet2: string;
-}
-
-const STORIES_DATA: StoryItem[] = [
-  {
-    id: 's0',
-    productId: 'p1',
-    title: 'Meet SBS',
-    tag: 'Official',
-    thumbnail: '/icon-192x192.png?v=2',
-    videoImage: '/icon-512x512.png?v=2',
-    badge: '👋 Meet Your SBS Buddy',
-    headline: 'Smart Products. Better Prices. Guaranteed.',
-    bullet1: 'Everyday essentials curated directly for your lifestyle',
-    bullet2: 'Fast nationwide shipping with secure UPI & COD payments',
-  },
-  {
-    id: 's1',
-    productId: 'p1',
-    title: 'Mini Washer',
-    tag: '10s Demo',
-    thumbnail: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=300&auto=format&fit=crop&q=80',
-    videoImage: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=1000&auto=format&fit=crop&q=80',
-    badge: '🔥 10-Second Quick Clean',
-    headline: 'Ultrasonic Turbo Spin Washes Delicate Clothes Fast',
-    bullet1: 'Forward & reverse dual rotation eliminates stains',
-    bullet2: 'Foldable body packs into any travel bag',
-  },
-  {
-    id: 's2',
-    productId: 'p4',
-    title: 'Precision Trimmer',
-    tag: 'Grooming',
-    thumbnail: 'https://images.unsplash.com/photo-1621607512214-68297480165e?w=300&auto=format&fit=crop&q=80',
-    videoImage: 'https://images.unsplash.com/photo-1621607512214-68297480165e?w=1000&auto=format&fit=crop&q=80',
-    badge: '⚡ Zero Cut Titanium Blade',
-    headline: 'Cordless Precision Detailer For Hair & Beard',
-    bullet1: '120 minutes continuous run on 1 charge',
-    bullet2: 'Vintage bronze sculpted grip',
-  },
-  {
-    id: 's3',
-    productId: 'p3',
-    title: 'Mini Sealer',
-    tag: 'Snack Hack',
-    thumbnail: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=300&auto=format&fit=crop&q=80',
-    videoImage: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=1000&auto=format&fit=crop&q=80',
-    badge: '🍿 2-in-1 Seal & Cut',
-    headline: 'Airtight Sealing Keeps Chips & Snacks Crispy Forever',
-    bullet1: 'Magnetic back sticks to refrigerator door',
-    bullet2: 'No pre-heating needed, instant thermal seal',
-  },
-  {
-    id: 's4',
-    productId: 'p2',
-    title: 'Sunset Lamp',
-    tag: 'Mood Light',
-    thumbnail: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=300&auto=format&fit=crop&q=80',
-    videoImage: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=1000&auto=format&fit=crop&q=80',
-    badge: '✨ Aesthetic Bedroom Glow',
-    headline: '16 Million Color Sunset Projection With Remote',
-    bullet1: '360° rotatable aluminum halo head',
-    bullet2: 'Perfect for photoshoots & evening ambiance',
-  },
-  {
-    id: 's5',
-    productId: 'p7',
-    title: 'Granite Pan',
-    tag: 'Non-Stick',
-    thumbnail: 'https://images.unsplash.com/photo-1583778176476-4a8b02a64c01?w=300&auto=format&fit=crop&q=80',
-    videoImage: 'https://images.unsplash.com/photo-1583778176476-4a8b02a64c01?w=1000&auto=format&fit=crop&q=80',
-    badge: '🍳 Zero Oil Cooking',
-    headline: '5-Layer German Granite Coating Frying Pan',
-    bullet1: 'Wipes clean in 1 paper napkin swipe',
-    bullet2: 'Induction & gas stove compatible base',
-  },
-  {
-    id: 's6',
-    productId: 'p8',
-    title: 'Spin Mop',
-    tag: 'Clean Hack',
-    thumbnail: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&auto=format&fit=crop&q=80',
-    videoImage: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1000&auto=format&fit=crop&q=80',
-    badge: '🧹 360° Effortless Spin',
-    headline: 'Microfiber Floor & Ceiling Mop with Squeegee',
-    bullet1: 'Picks up fine dust and hair without bending',
-    bullet2: 'Extendable telescopic lightweight handle',
-  },
-];
+import { X, ChevronLeft, ChevronRight, ShoppingCart, Check, Volume2, VolumeX } from 'lucide-react';
+import { ResolvedImage, ResolvedVideo } from '@/components/common/ResolvedMedia';
 
 export const ProductStories: React.FC = () => {
   const { stories, storeSettings, products, addToCart, setSelectedProductDetail } = useStore();
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [videoLoadError, setVideoLoadError] = useState(false);
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    setVideoLoadError(false);
+  }, [activeStoryIndex]);
 
   const activeStories = stories.filter((s) => s.enabled);
 
@@ -149,6 +57,21 @@ export const ProductStories: React.FC = () => {
     };
   }, [activeStoryIndex, isPaused, activeStories.length]);
 
+  const isStoryVideo = (story: { type?: string; media?: string } | null) => {
+    if (!story || !story.media) return false;
+    return story.type === 'video' || !!story.media.match(/\.(mp4|webm|mov|m4v)$/i) || story.media.includes('/videos/');
+  };
+
+  // Handle pause/play on the active video
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (isPaused) {
+      videoRef.current.pause();
+    } else {
+      videoRef.current.play().catch(() => {});
+    }
+  }, [isPaused, activeStoryIndex]);
+
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (activeStoryIndex !== null && activeStoryIndex > 0) {
@@ -160,7 +83,7 @@ export const ProductStories: React.FC = () => {
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (activeStoryIndex !== null) {
-      if (activeStoryIndex < STORIES_DATA.length - 1) {
+      if (activeStoryIndex < activeStories.length - 1) {
         setActiveStoryIndex(activeStoryIndex + 1);
         setProgress(0);
       } else {
@@ -197,12 +120,22 @@ export const ProductStories: React.FC = () => {
             {/* Gradient Ring Outer Frame */}
             <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full p-[2.5px] bg-gradient-to-tr from-[#F95721] via-[#F59E0B] to-[#EC4899] shadow-xs group-hover:scale-105 transition-transform">
               <div className="w-full h-full rounded-full border-2 border-white overflow-hidden bg-gray-50 flex items-center justify-center relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={story.media}
-                  alt={story.title}
-                  className="w-full h-full object-contain p-1 mix-blend-multiply group-hover:scale-110 transition-transform duration-300"
-                />
+                {isStoryVideo(story) ? (
+                  <ResolvedVideo
+                    src={story.media}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                  />
+                ) : (
+                  <ResolvedImage
+                    src={story.media}
+                    alt={story.title}
+                    className="w-full h-full object-contain p-1 mix-blend-multiply group-hover:scale-110 transition-transform duration-300"
+                  />
+                )}
                 {/* Micro play badge */}
                 <div className="absolute bottom-0.5 right-0.5 w-4 h-4 rounded-full bg-[#F95721] text-white flex items-center justify-center text-[8px] font-black shadow-xs">
                   ▶
@@ -254,13 +187,23 @@ export const ProductStories: React.FC = () => {
             {/* Top Header Bar */}
             <div className="absolute top-6 inset-x-3 z-30 flex items-center justify-between text-white">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-white/20 p-0.5 backdrop-blur-xs">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={activeStory.media}
-                    alt={activeStory.title}
-                    className="w-full h-full object-cover rounded-full"
-                  />
+                <div className="w-8 h-8 rounded-full bg-white/20 p-0.5 backdrop-blur-xs overflow-hidden flex items-center justify-center">
+                  {isStoryVideo(activeStory) ? (
+                    <ResolvedVideo
+                      src={activeStory.media}
+                      className="w-full h-full object-cover rounded-full"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <ResolvedImage
+                      src={activeStory.media}
+                      alt={activeStory.title}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  )}
                 </div>
                 <div>
                   <h4 className="text-xs font-bold leading-tight">{activeStory.title}</h4>
@@ -268,26 +211,53 @@ export const ProductStories: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                onClick={() => setActiveStoryIndex(null)}
-                className="p-1.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
-                aria-label="Close story"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-1.5">
+                {isStoryVideo(activeStory) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMuted(!isMuted);
+                    }}
+                    className="p-1.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+                    aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+                    title={isMuted ? "Unmute audio" : "Mute audio"}
+                  >
+                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  </button>
+                )}
+                <button
+                  onClick={() => setActiveStoryIndex(null)}
+                  className="p-1.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+                  aria-label="Close story"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Story Visual Content */}
-            <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={activeStory.media}
-                alt={activeStory.title}
-                className="w-full h-full object-cover brightness-95"
-              />
+            <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-black">
+              {isStoryVideo(activeStory) && !videoLoadError ? (
+                <ResolvedVideo
+                  ref={videoRef}
+                  src={activeStory.media}
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  loop
+                  muted={isMuted}
+                  playsInline
+                  onError={() => setVideoLoadError(true)}
+                />
+              ) : (
+                <ResolvedImage
+                  src={activeProduct?.image || activeStory.media}
+                  alt={activeStory.title}
+                  className="w-full h-full object-cover brightness-95"
+                />
+              )}
 
               {/* Bottom Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none" />
 
               {/* Left & Right Tap Zones to navigate */}
               <div
@@ -323,7 +293,7 @@ export const ProductStories: React.FC = () => {
               {/* Highlight Badge & Headline */}
               <div className="space-y-1.5">
                 <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#F95721] text-white shadow-xs">
-                  {activeStory.tag}
+                  {storyBadge(activeStory)}
                 </span>
                 <h3 className="text-base sm:text-lg font-black text-white leading-snug">
                   {activeStory.subtitle || activeStory.productName}
@@ -363,3 +333,7 @@ export const ProductStories: React.FC = () => {
     </>
   );
 };
+
+function storyBadge(story: any) {
+  return story.tag || 'Special Offer';
+}

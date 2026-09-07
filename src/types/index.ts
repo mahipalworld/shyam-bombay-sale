@@ -225,12 +225,31 @@ export interface InventoryLog {
 
 export interface HeroBannerItem {
   id: string;
-  image: string;
+  productId?: string;
   heading: string;
   description: string;
+  image: string;
   ctaText: string;
   ctaDestination: string;
+  badgeText?: string;
+  discountText?: string;
+  accentColor?: string;
+  bgGradient?: string;
   enabled: boolean;
+  order?: number;
+}
+
+export interface QuickActionItem {
+  id: string;
+  label: string;
+  subtitle?: string;
+  icon?: string;
+  image?: string;
+  badge?: string;
+  actionType: 'category' | 'product' | 'tab' | 'url';
+  actionValue: string;
+  enabled: boolean;
+  order: number;
 }
 
 export interface TodayDealItem {
@@ -250,7 +269,7 @@ export interface BestSellersConfig {
 }
 
 export interface HomepageSection {
-  id: 'hero' | 'categories' | 'trending' | 'deals' | 'bestsellers' | 'trust';
+  id: 'stories' | 'hero' | 'quick_actions' | 'categories' | 'aisles' | 'trending' | 'deals' | 'bestsellers' | 'trust';
   name: string;
   enabled: boolean;
 }
@@ -290,10 +309,10 @@ export interface FlashDealConfig {
   badgeText: string;
   discountText: string;
   productId: string;
-  productName: string;
+  productName?: string;
   dealPrice: number;
-  originalPrice: number;
-  productImage: string;
+  originalPrice?: number;
+  productImage?: string;
   hoursRemaining: number;
 }
 
