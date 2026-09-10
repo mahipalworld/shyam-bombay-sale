@@ -36,3 +36,8 @@ server/.env.*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local scripts & artifacts
+scripts/deploy_cloudflare.ps1
+*.png
+*.log

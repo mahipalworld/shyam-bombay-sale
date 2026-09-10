@@ -21,11 +21,11 @@ interface HelpCenterModalProps {
 export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
-  // Verified Google Maps place details resolved from https://maps.app.goo.gl/hnJ14BEoCfZR9bN27
-  const STORE_NAME = 'Shyam Bombay sale';
-  const VERIFIED_ADDRESS = 'Gotri, Vadodara, Gujarat 390016, India';
-  const MAPS_SHORT_URL = 'https://maps.app.goo.gl/hnJ14BEoCfZR9bN27';
-  const MAPS_EMBED_URL = 'https://maps.google.com/maps?q=22.3286672,73.1419469&hl=en&z=17&output=embed';
+  // Verified Google Maps place details for Shyam Bombay Sale
+  const STORE_NAME = 'Shyam Bombay Sale';
+  const VERIFIED_ADDRESS = 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023';
+  const MAPS_SHORT_URL = 'https://share.google/Pa5CkR6pMiRD0MMZm';
+  const MAPS_EMBED_URL = 'https://maps.google.com/maps?q=22.3323,73.1612&hl=en&z=17&output=embed';
   const STORE_PHONE = '+91 92262 94797';
   const WHATSAPP_LINK = 'https://wa.me/919226294797?text=Hi%20SBS%20Store%2C%20I%20need%20assistance%20with%20my%20order.';
 
@@ -136,7 +136,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                 <div>
                   <span className="font-extrabold text-gray-900 block text-xs">{STORE_NAME}</span>
                   <span className="text-gray-600 block text-[11px] mt-0.5">{VERIFIED_ADDRESS}</span>
-                  <span className="text-[10px] text-gray-400 font-mono block mt-0.5">Coordinates: 22.3286672° N, 73.1419469° E</span>
+                  <span className="text-[10px] text-gray-400 font-mono block mt-0.5">Coordinates: 22.3323° N, 73.1612° E</span>
                 </div>
               </div>
 

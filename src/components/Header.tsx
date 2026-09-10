@@ -82,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo.png?v=3"
-              alt="SBS — Shyam Business Store"
+              alt="SBS — Shyam Bombay Sale"
               className="h-7 sm:h-8.5 w-auto object-contain group-hover:scale-105 transition-transform flex-shrink-0"
             />
             <div className="flex flex-col items-start justify-center leading-none">
@@ -97,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
         </div>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-6 text-xs font-bold text-gray-700">
+        <nav className="hidden md:flex items-center gap-5 text-xs font-bold text-gray-700">
           <button
             onClick={() => {
               setSelectedCategoryFilter(null);
@@ -127,6 +127,18 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
             <Sparkles className="w-3.5 h-3.5" />
             <span>Today&apos;s Deals</span>
           </button>
+          <a
+            href="/about"
+            className="hover:text-[#F95721] transition-colors"
+          >
+            About
+          </a>
+          <a
+            href="/contact"
+            className="hover:text-[#F95721] transition-colors"
+          >
+            Store & Contact
+          </a>
         </nav>
 
         {/* Desktop Search Bar */}

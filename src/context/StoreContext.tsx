@@ -572,12 +572,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [homepageSections, setHomepageSections] = useState<HomepageSection[]>(DEFAULT_HOMEPAGE_SECTIONS);
 
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
-    storeName: 'Shyam Business Store',
+    storeName: 'Shyam Bombay Sale',
     logo: 'SBS',
-    contactEmail: 'support@sbsstore.com',
+    contactEmail: 'shyambombaysale@gmail.com',
     contactPhone: '+91 92262 94797',
-    address: 'Shyam Bazaar, Jaipur, Rajasthan, 302001',
-    businessHours: '09:00 AM - 09:00 PM',
+    address: 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023',
+    businessHours: '10:00 AM - 09:30 PM',
     deliveryCharge: 40,
     freeDeliveryThreshold: 499,
     deliveryZones: ['Jaipur', 'Jodhpur', 'Kota', 'Udaipur'],
