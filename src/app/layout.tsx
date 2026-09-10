@@ -11,21 +11,34 @@ import { PWAProvider } from '@/context/PWAContext';
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.sbsstore.in'),
   title: {
-    default: 'SBS — Shyam Business Store | Official Website',
-    template: '%s | SBS Store',
+    default: 'SBS — Shyam Bombay Sale | Official Store & Online Shopping',
+    template: '%s | SBS Store — Shyam Bombay Sale',
   },
   description:
-    'SBS — Shyam Business Store is your destination for smart everyday essentials: home, kitchen, cleaning, personal care, and more. Quality products, genuine service, delivered across India.',
-  authors: [{ name: 'SBS — Shyam Business Store' }],
-  creator: 'SBS — Shyam Business Store',
-  publisher: 'SBS — Shyam Business Store',
+    'Official website of SBS — Shyam Bombay Sale (Shyam Business Store). Shop smart everyday essentials: home, kitchen, household cleaning supplies, personal care, and more in Vadodara and across India.',
+  keywords: [
+    'Shyam Bombay Sale',
+    'Shyam Bombay Sale Vadodara',
+    'Shyam Bombay Sale Subhanpura',
+    'SBS Store',
+    'SBS',
+    'Shyam Business Store',
+    'household cleaning product dealer Vadodara',
+    'kitchen essentials Vadodara',
+    'home essentials store Vadodara',
+    'sbsstore.in',
+  ],
+  authors: [{ name: 'Shyam Bombay Sale (SBS)' }],
+  creator: 'Shyam Bombay Sale',
+  publisher: 'Shyam Bombay Sale',
   applicationName: 'SBS Store',
   alternates: {
     canonical: 'https://www.sbsstore.in',
   },
   other: {
     'geo.region': 'IN-GJ',
-    'geo.placename': 'Vadodara, Gujarat',
+    'geo.placename': 'Subhanpura, Vadodara, Gujarat',
+    'geo.position': '22.3323;73.1612',
   },
   manifest: '/manifest.json',
   appleWebApp: {
@@ -45,11 +58,11 @@ export const metadata: Metadata = {
     shortcut: '/favicon.ico?v=2',
   },
   openGraph: {
-    title: 'SBS — Shyam Business Store | Official Website',
+    title: 'SBS — Shyam Bombay Sale | Official Store & Online Shopping',
     description:
-      'SBS — Shyam Business Store offers smart everyday essentials for home, kitchen, cleaning, and personal care. Genuine products, fair prices, delivered across India.',
+      'SBS — Shyam Bombay Sale (Shyam Business Store) offers smart everyday essentials for home, kitchen, cleaning, and personal care. Genuine products, fair prices, delivered across India.',
     url: 'https://www.sbsstore.in',
-    siteName: 'SBS — Shyam Business Store',
+    siteName: 'SBS — Shyam Bombay Sale',
     locale: 'en_IN',
     type: 'website',
     images: [
@@ -57,15 +70,15 @@ export const metadata: Metadata = {
         url: 'https://www.sbsstore.in/logo.png',
         width: 800,
         height: 600,
-        alt: 'SBS — Shyam Business Store Logo',
+        alt: 'SBS — Shyam Bombay Sale Logo',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SBS — Shyam Business Store | Official Website',
+    title: 'SBS — Shyam Bombay Sale | Official Store & Online Shopping',
     description:
-      'Smart everyday essentials for home, kitchen, cleaning, and personal care. Official website of SBS — Shyam Business Store.',
+      'Smart everyday essentials for home, kitchen, cleaning, and personal care. Official website of SBS — Shyam Bombay Sale.',
     images: ['https://www.sbsstore.in/logo.png'],
   },
   robots: {
@@ -89,10 +102,7 @@ export const viewport: Viewport = {
   themeColor: '#F95721',
 };
 
-// Structured data — Phase 1 (Brand Foundation).
-// Address kept at city-level until location conflict is resolved (see implementation_plan.md §3B).
-// Fake product ItemList removed — products are not ready.
-// Update this when: (a) location is confirmed, (b) social profiles exist, (c) products launch.
+// Structured data linking online brand with offline Google Business Profile
 const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -100,16 +110,16 @@ const jsonLd = {
       '@type': 'WebSite',
       '@id': 'https://www.sbsstore.in/#website',
       'url': 'https://www.sbsstore.in/',
-      'name': 'SBS — Shyam Business Store',
-      'alternateName': ['SBS Store', 'sbsstore.in'],
-      'description': 'Official website of SBS — Shyam Business Store. Smart everyday essentials for home, kitchen, cleaning, and personal care.',
+      'name': 'Shyam Bombay Sale | SBS Store',
+      'alternateName': ['Shyam Bombay Sale', 'SBS Store', 'SBS', 'Shyam Business Store', 'sbsstore.in'],
+      'description': 'Official website of Shyam Bombay Sale (SBS Store). Smart everyday essentials for home, kitchen, cleaning, and personal care.',
       'inLanguage': 'en-IN',
     },
     {
-      '@type': 'Organization',
+      '@type': ['Store', 'LocalBusiness', 'Organization'],
       '@id': 'https://www.sbsstore.in/#organization',
-      'name': 'SBS — Shyam Business Store',
-      'alternateName': 'SBS',
+      'name': 'Shyam Bombay Sale',
+      'alternateName': ['SBS', 'SBS Store', 'Shyam Business Store'],
       'url': 'https://www.sbsstore.in',
       'logo': {
         '@type': 'ImageObject',
@@ -118,18 +128,43 @@ const jsonLd = {
         'height': 600,
       },
       'image': 'https://www.sbsstore.in/logo.png',
-      'description': 'SBS — Shyam Business Store offers quality everyday essentials for home, kitchen, cleaning, and personal care with genuine products and fair prices.',
+      'description': 'Shyam Bombay Sale (SBS) offers quality everyday essentials for home, kitchen, cleaning, and personal care with genuine products and fair prices.',
       'telephone': '+91-9226294797',
       'email': 'shyambombaysale@gmail.com',
-      // NOTE: Full streetAddress, postalCode, and geo coordinates withheld
-      // pending resolution of location conflict (Gotri vs Laxmipura-Gorwa).
-      // Add confirmed values here once verified.
+      'hasMap': 'https://share.google/Pa5CkR6pMiRD0MMZm',
+      'sameAs': [
+        'https://www.google.com/search?kgmid=/g/11ymlwg3wd&q=Shyam+Bombay+sale',
+      ],
+      'priceRange': '₹',
       'address': {
         '@type': 'PostalAddress',
+        'streetAddress': 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura',
         'addressLocality': 'Vadodara',
         'addressRegion': 'Gujarat',
+        'postalCode': '390023',
         'addressCountry': 'IN',
       },
+      'geo': {
+        '@type': 'GeoCoordinates',
+        'latitude': 22.3323,
+        'longitude': 73.1612,
+      },
+      'openingHoursSpecification': [
+        {
+          '@type': 'OpeningHoursSpecification',
+          'dayOfWeek': [
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+            'Sunday',
+          ],
+          'opens': '10:00',
+          'closes': '21:30',
+        },
+      ],
     },
     {
       '@type': 'BreadcrumbList',

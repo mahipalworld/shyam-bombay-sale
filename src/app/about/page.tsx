@@ -1,26 +1,26 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'About SBS — Shyam Business Store | Who We Are',
+  title: 'About SBS — Shyam Bombay Sale | Who We Are & Store Story',
   description:
-    'Learn about SBS — Shyam Business Store, your destination for smart everyday essentials. Home, kitchen, cleaning, personal care products with genuine quality and fair prices.',
+    'Learn about Shyam Bombay Sale (SBS Store), your trusted destination for smart everyday essentials, household cleaning products, and kitchenware in Vadodara and online across India.',
   alternates: {
     canonical: 'https://www.sbsstore.in/about',
   },
   openGraph: {
-    title: 'About SBS — Shyam Business Store',
+    title: 'About SBS — Shyam Bombay Sale',
     description:
-      'Learn about SBS — Shyam Business Store, your destination for smart everyday essentials delivered across India.',
+      'Learn about Shyam Bombay Sale (SBS Store), offering quality everyday essentials, home & kitchen goods in Subhanpura, Vadodara and delivered across India.',
     url: 'https://www.sbsstore.in/about',
-    siteName: 'SBS — Shyam Business Store',
+    siteName: 'SBS — Shyam Bombay Sale',
     type: 'website',
     images: [
       {
         url: 'https://www.sbsstore.in/logo.png',
         width: 800,
         height: 600,
-        alt: 'SBS — Shyam Business Store Logo',
+        alt: 'SBS — Shyam Bombay Sale Logo',
       },
     ],
   },
@@ -31,8 +31,8 @@ const aboutJsonLd = {
   '@type': 'AboutPage',
   '@id': 'https://www.sbsstore.in/about#webpage',
   'url': 'https://www.sbsstore.in/about',
-  'name': 'About SBS — Shyam Business Store',
-  'description': 'About page for SBS — Shyam Business Store.',
+  'name': 'About SBS — Shyam Bombay Sale',
+  'description': 'About page for Shyam Bombay Sale (SBS Store).',
   'isPartOf': { '@id': 'https://www.sbsstore.in/#website' },
   'about': { '@id': 'https://www.sbsstore.in/#organization' },
 };
@@ -51,7 +51,7 @@ export default function AboutPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/logo.png?v=3"
-                alt="SBS — Shyam Business Store"
+                alt="SBS — Shyam Bombay Sale"
                 className="h-8 w-auto object-contain group-hover:scale-105 transition-transform"
               />
               <span className="text-base font-black text-gray-900 group-hover:text-[#F95721] transition-colors">
@@ -79,10 +79,10 @@ export default function AboutPage() {
               About Us
             </span>
             <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-4">
-              SBS — Shyam Business Store
+              Shyam Bombay Sale (SBS)
             </h1>
             <p className="text-lg text-gray-600 leading-relaxed max-w-2xl">
-              Your destination for smart everyday essentials — quality products for your home, kitchen, and daily life, delivered across India.
+              Your destination for smart everyday essentials — quality products for your home, kitchen, and daily life, both in our offline store and delivered across India.
             </p>
           </div>
 
@@ -90,33 +90,56 @@ export default function AboutPage() {
             <section>
               <h2 className="text-xl font-black text-gray-900 mb-3">Who We Are</h2>
               <p>
-                SBS stands for <strong>Shyam Business Store</strong> — an online store dedicated to bringing you practical, well-made everyday essentials at fair prices. We focus on products that genuinely improve your daily routine: home organisation, kitchen tools, personal care, and cleaning solutions.
+                <strong>Shyam Bombay Sale</strong> (also operating digitally as <strong>SBS — Shyam Business Store</strong>) is a trusted retail establishment based in <strong>Vadodara, Gujarat</strong>. We specialise in practical, well-made everyday essentials at fair prices, focusing on products that make daily life easier: household cleaning solutions, kitchen tools, personal care, and home organisation.
               </p>
               <p className="mt-3">
-                Our physical store is based in <strong>Vadodara, Gujarat, India</strong>, and we serve customers across the country through our online platform at{' '}
-                <Link href="/" className="text-[#F95721] font-semibold hover:underline">sbsstore.in</Link>.
+                Whether you visit us at our local offline store in Subhanpura or order online through{' '}
+                <Link href="/" className="text-[#F95721] font-semibold hover:underline">sbsstore.in</Link>, you get the same dedication to genuine quality and fair, transparent pricing.
               </p>
             </section>
 
             <section>
+              <h2 className="text-xl font-black text-gray-900 mb-3">Our Offline Retail Store</h2>
+              <div className="p-6 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-3">
+                <p className="font-bold text-gray-900">
+                  📍 Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, near Rami School, Subhanpura, Vadodara, Gujarat 390023
+                </p>
+                <p className="text-sm text-gray-600">
+                  Open 7 days a week: <strong>10:00 AM to 9:30 PM</strong>.
+                </p>
+                <div>
+                  <a
+                    href="https://share.google/Pa5CkR6pMiRD0MMZm"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-800 underline underline-offset-4"
+                  >
+                    <span>Find Shyam Bombay Sale on Google Maps</span>
+                    <span>↗</span>
+                  </a>
+                </div>
+              </div>
+            </section>
+
+            <section>
               <h2 className="text-xl font-black text-gray-900 mb-3">What We Offer</h2>
-              <p>At SBS — Shyam Business Store, we curate products across everyday categories including:</p>
+              <p>At Shyam Bombay Sale (SBS), we curate products across everyday categories including:</p>
               <ul className="mt-3 space-y-1.5 list-disc list-inside text-gray-600">
-                <li>Home essentials and organisation</li>
-                <li>Kitchen tools and gadgets</li>
-                <li>Cleaning and laundry solutions</li>
-                <li>Personal care products</li>
-                <li>Storage and travel accessories</li>
+                <li>Household cleaning supplies & housekeeping products</li>
+                <li>Kitchen essentials, tools, and organizers</li>
+                <li>Home decor & utility items</li>
+                <li>Personal care & grooming essentials</li>
+                <li>Smart storage & daily convenience accessories</li>
               </ul>
               <p className="mt-3">
-                Every product is selected to be useful, affordable, and of genuine quality — not just visually appealing.
+                Every product is selected to be useful, durable, and affordable — offering honest value for every rupee spent.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-black text-gray-900 mb-3">Our Commitment</h2>
               <p>
-                We believe everyday shopping should be simple and trustworthy. At SBS, we stand behind every product we sell. If something is not right, our support team is here to help — by phone, WhatsApp, or email.
+                We believe everyday shopping should be simple, reliable, and trustworthy. We stand behind every product we sell. If you ever have a question, need product recommendations, or need help with an order, our team is accessible by phone, WhatsApp, or in person at our store.
               </p>
             </section>
 
@@ -124,8 +147,8 @@ export default function AboutPage() {
               <h2 className="text-xl font-black text-gray-900 mb-3">Get in Touch</h2>
               <p>
                 Have a question or need assistance? Visit our{' '}
-                <Link href="/contact" className="text-[#F95721] font-semibold hover:underline">Contact page</Link>{' '}
-                for all the ways to reach us, or head back to the{' '}
+                <Link href="/contact" className="text-[#F95721] font-semibold hover:underline">Contact & Store Location page</Link>{' '}
+                for direct WhatsApp support and map directions, or head back to the{' '}
                 <Link href="/" className="text-[#F95721] font-semibold hover:underline">SBS Store homepage</Link>.
               </p>
             </section>
@@ -133,14 +156,14 @@ export default function AboutPage() {
 
           <div className="mt-12 p-6 bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <p className="font-black text-gray-900">Ready to explore SBS?</p>
-              <p className="text-xs text-gray-500 mt-0.5">Discover smart everyday essentials on our store.</p>
+              <p className="font-black text-gray-900">Ready to explore SBS Store?</p>
+              <p className="text-xs text-gray-500 mt-0.5">Discover smart everyday essentials on our online store.</p>
             </div>
             <Link
               href="/"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#F95721] hover:bg-[#E44813] text-white text-sm font-bold rounded-xl shadow-sm transition-all whitespace-nowrap"
             >
-              Visit SBS Store →
+              Explore Online Store →
             </Link>
           </div>
         </main>
@@ -149,7 +172,7 @@ export default function AboutPage() {
           <p>
             © {new Date().getFullYear()}{' '}
             <Link href="/" className="hover:text-[#F95721] transition-colors font-semibold">
-              SBS — Shyam Business Store
+              Shyam Bombay Sale (SBS Store)
             </Link>. All rights reserved.
           </p>
           <nav className="mt-2 flex items-center justify-center gap-4">

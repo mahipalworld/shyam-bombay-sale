@@ -1,26 +1,26 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Contact SBS — Shyam Business Store | Get in Touch',
+  title: 'Contact SBS — Shyam Bombay Sale | Get in Touch & Store Location',
   description:
-    'Contact SBS — Shyam Business Store. Reach us by phone, WhatsApp, or email. We are based in Vadodara, Gujarat and support customers across India.',
+    'Contact SBS — Shyam Bombay Sale (Shyam Business Store). Reach us by phone, WhatsApp, or visit our offline store in Subhanpura, Vadodara, Gujarat.',
   alternates: {
     canonical: 'https://www.sbsstore.in/contact',
   },
   openGraph: {
-    title: 'Contact SBS — Shyam Business Store',
+    title: 'Contact SBS — Shyam Bombay Sale | Store Location & Support',
     description:
-      'Get in touch with SBS — Shyam Business Store. Phone, WhatsApp, and email support available Mon–Sun, 10 AM to 9:30 PM.',
+      'Get in touch with Shyam Bombay Sale (SBS Store). Visit our store in Vadodara or reach our phone, WhatsApp, and email support available Mon–Sun, 10 AM to 9:30 PM.',
     url: 'https://www.sbsstore.in/contact',
-    siteName: 'SBS — Shyam Business Store',
+    siteName: 'SBS — Shyam Bombay Sale',
     type: 'website',
     images: [
       {
         url: 'https://www.sbsstore.in/logo.png',
         width: 800,
         height: 600,
-        alt: 'SBS — Shyam Business Store Logo',
+        alt: 'SBS — Shyam Bombay Sale Logo',
       },
     ],
   },
@@ -31,18 +31,20 @@ const contactJsonLd = {
   '@type': 'ContactPage',
   '@id': 'https://www.sbsstore.in/contact#webpage',
   'url': 'https://www.sbsstore.in/contact',
-  'name': 'Contact SBS — Shyam Business Store',
-  'description': 'Contact page for SBS — Shyam Business Store.',
+  'name': 'Contact SBS — Shyam Bombay Sale',
+  'description': 'Contact page and store location for Shyam Bombay Sale (SBS Store).',
   'isPartOf': { '@id': 'https://www.sbsstore.in/#website' },
   'about': { '@id': 'https://www.sbsstore.in/#organization' },
 };
 
-// Contact constants — sourced from HelpCenterModal.tsx (customer-facing verified data)
+// Contact constants
+const STORE_NAME = 'Shyam Bombay Sale (SBS)';
 const STORE_PHONE = '+91 92262 94797';
-const WHATSAPP_LINK = 'https://wa.me/919226294797?text=Hi%20SBS%20Store%2C%20I%20need%20assistance.';
+const WHATSAPP_LINK = 'https://wa.me/919226294797?text=Hi%20Shyam%20Bombay%20Sale%2C%20I%20need%20assistance.';
 const STORE_EMAIL = 'shyambombaysale@gmail.com';
 const STORE_HOURS = 'Monday – Sunday, 10:00 AM – 9:30 PM';
-const STORE_CITY = 'Vadodara, Gujarat, India';
+const STORE_ADDRESS = 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023';
+const GOOGLE_MAPS_LINK = 'https://share.google/Pa5CkR6pMiRD0MMZm';
 
 export default function ContactPage() {
   return (
@@ -83,14 +85,59 @@ export default function ContactPage() {
 
           <div className="mb-10">
             <span className="inline-block text-xs font-bold text-[#F95721] uppercase tracking-widest mb-3">
-              Contact Us
+              Contact Us & Store Location
             </span>
             <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-4">
-              Get in Touch with SBS
+              Get in Touch with Shyam Bombay Sale (SBS)
             </h1>
             <p className="text-lg text-gray-600 leading-relaxed max-w-2xl">
-              Have a question, need help with an order, or want to know more about SBS — Shyam Business Store? We are here for you.
+              Visit our offline retail store in Vadodara or reach our customer care team online. We are here to help!
             </p>
+          </div>
+
+          {/* Offline Store Card (Google Maps) */}
+          <div className="mb-8 p-6 md:p-8 bg-gradient-to-br from-blue-50/70 via-white to-orange-50/50 rounded-3xl border border-blue-100/80 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-3 max-w-xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100/70 text-blue-800 text-xs font-bold">
+                  <svg className="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                  <span>Offline Store</span>
+                </div>
+                <h2 className="text-xl md:text-2xl font-black text-gray-900">
+                  Shyam Bombay Sale
+                </h2>
+                <p className="text-sm md:text-base text-gray-700 leading-relaxed">
+                  {STORE_ADDRESS}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 pt-1">
+                  <span>🕒 Open Daily: 10:00 AM – 9:30 PM</span>
+                  <span>📍 Subhanpura / Laxmipura Road, Vadodara</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row md:flex-col gap-3 shrink-0">
+                <a
+                  href={GOOGLE_MAPS_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-2xl shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02]"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                  <span>View on Google Maps</span>
+                  <span>↗</span>
+                </a>
+                <a
+                  href={`tel:${STORE_PHONE.replace(/\s+/g, '')}`}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-gray-200 hover:border-gray-300 text-gray-800 text-xs font-bold rounded-xl transition-all"
+                >
+                  <span>Call Store</span>
+                </a>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
@@ -126,7 +173,7 @@ export default function ContactPage() {
                 </svg>
               </div>
               <h2 className="text-base font-black text-gray-900 mb-1">Call Us Directly</h2>
-              <p className="text-sm text-gray-600 mb-3">Speak directly with our support team during business hours.</p>
+              <p className="text-sm text-gray-600 mb-3">Speak directly with our store team during business hours.</p>
               <p className="text-sm font-mono font-bold text-[#F95721]">{STORE_PHONE}</p>
               <span className="mt-2 text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded-full self-start">
                 {STORE_HOURS}
@@ -136,7 +183,7 @@ export default function ContactPage() {
 
           {/* Store info */}
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-4">
-            <h2 className="text-base font-black text-gray-900">Store Information</h2>
+            <h2 className="text-base font-black text-gray-900">Store & Support Details</h2>
             <div className="space-y-3 text-sm text-gray-600">
               <div className="flex items-start gap-3">
                 <svg className="w-4 h-4 text-[#F95721] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -144,8 +191,8 @@ export default function ContactPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
                 <div>
-                  <span className="font-bold text-gray-900 block">Location</span>
-                  <span>{STORE_CITY}</span>
+                  <span className="font-bold text-gray-900 block">Store Address</span>
+                  <span>{STORE_ADDRESS}</span>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -153,7 +200,7 @@ export default function ContactPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <div>
-                  <span className="font-bold text-gray-900 block">Support Hours</span>
+                  <span className="font-bold text-gray-900 block">Store Timings</span>
                   <span>{STORE_HOURS}</span>
                 </div>
               </div>
@@ -162,7 +209,7 @@ export default function ContactPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
                 <div>
-                  <span className="font-bold text-gray-900 block">Email</span>
+                  <span className="font-bold text-gray-900 block">Official Email</span>
                   <a href={`mailto:${STORE_EMAIL}`} className="text-[#F95721] hover:underline">{STORE_EMAIL}</a>
                 </div>
               </div>
@@ -171,7 +218,7 @@ export default function ContactPage() {
 
           <div className="mt-8 text-sm text-gray-500">
             Looking for more information?{' '}
-            <Link href="/about" className="text-[#F95721] font-semibold hover:underline">Read about SBS</Link>{' '}
+            <Link href="/about" className="text-[#F95721] font-semibold hover:underline">Read about Shyam Bombay Sale (SBS)</Link>{' '}
             or return to the{' '}
             <Link href="/" className="text-[#F95721] font-semibold hover:underline">SBS Store homepage</Link>.
           </div>
@@ -181,7 +228,7 @@ export default function ContactPage() {
           <p>
             © {new Date().getFullYear()}{' '}
             <Link href="/" className="hover:text-[#F95721] transition-colors font-semibold">
-              SBS — Shyam Business Store
+              Shyam Bombay Sale (SBS Store)
             </Link>. All rights reserved.
           </p>
           <nav className="mt-2 flex items-center justify-center gap-4">
