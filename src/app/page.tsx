@@ -171,7 +171,7 @@ export default function App() {
 
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 animate-bounce duration-300 pointer-events-none">
+        <div className="fixed top-16 left-1/2 z-50 animate-toast-in pointer-events-none">
           <div className={`px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 text-xs font-bold text-white ${
             toast.type === 'error'
               ? 'bg-red-600'

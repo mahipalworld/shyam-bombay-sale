@@ -35,10 +35,11 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('ALL');
   const [stockStatusFilter, setStockStatusFilter] = useState<'ALL' | 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK'>('ALL');
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'ACTIVE' | 'DRAFT'>('ALL');
+  const [sortBy, setSortBy] = useState<'DEFAULT' | 'PRICE_LOW' | 'PRICE_HIGH' | 'DISCOUNT' | 'STOCK_LOW' | 'NAME_ASC'>('DEFAULT');
 
-  // Filtered list
+  // Filtered and sorted list
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    const list = products.filter((p) => {
       // Search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -69,7 +70,17 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
 
       return true;
     });
-  }, [products, searchQuery, selectedCategory, selectedSubcategory, stockStatusFilter, activeFilter, storeSettings]);
+
+    // Sorting
+    return [...list].sort((a, b) => {
+      if (sortBy === 'PRICE_LOW') return a.price - b.price;
+      if (sortBy === 'PRICE_HIGH') return b.price - a.price;
+      if (sortBy === 'DISCOUNT') return b.discountPercentage - a.discountPercentage;
+      if (sortBy === 'STOCK_LOW') return a.stockCount - b.stockCount;
+      if (sortBy === 'NAME_ASC') return a.name.localeCompare(b.name);
+      return 0; // Default
+    });
+  }, [products, searchQuery, selectedCategory, selectedSubcategory, stockStatusFilter, activeFilter, sortBy, storeSettings]);
 
   const handleDelete = (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete "${name}" from store catalog?`)) {
@@ -207,26 +218,45 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
         })()}
       </div>
 
-      {/* Stock Status Filter Sub-Bar */}
-      <div className="flex bg-gray-100 p-1 rounded-2xl gap-1 text-[11px] font-bold">
-        {[
-          { key: 'ALL', label: 'All Stock' },
-          { key: 'IN_STOCK', label: 'In Stock' },
-          { key: 'LOW_STOCK', label: 'Low Stock' },
-          { key: 'OUT_OF_STOCK', label: 'Out of Stock' },
-        ].map((item) => (
-          <button
-            key={item.key}
-            onClick={() => setStockStatusFilter(item.key as any)}
-            className={`flex-1 py-1.5 rounded-xl transition-all ${
-              stockStatusFilter === item.key
-                ? 'bg-white text-gray-900 shadow-xs'
-                : 'text-gray-500 hover:text-gray-900'
-            }`}
+      {/* Stock Status Filter & Sort Sub-Bar */}
+      <div className="flex flex-col sm:flex-row gap-2 items-center justify-between">
+        <div className="flex bg-gray-100 p-1 rounded-2xl gap-1 text-[11px] font-bold w-full sm:w-auto flex-1">
+          {[
+            { key: 'ALL', label: 'All Stock' },
+            { key: 'IN_STOCK', label: 'In Stock' },
+            { key: 'LOW_STOCK', label: 'Low Stock' },
+            { key: 'OUT_OF_STOCK', label: 'Out of Stock' },
+          ].map((item) => (
+            <button
+              key={item.key}
+              onClick={() => setStockStatusFilter(item.key as any)}
+              className={`flex-1 py-1.5 px-2 rounded-xl transition-all ${
+                stockStatusFilter === item.key
+                  ? 'bg-white text-gray-900 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Sort Selector */}
+        <div className="flex items-center gap-1.5 w-full sm:w-auto shrink-0">
+          <span className="text-[11px] font-bold text-gray-500">Sort:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="border border-gray-200 bg-white rounded-xl px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-[#F95721] shadow-2xs"
           >
-            {item.label}
-          </button>
-        ))}
+            <option value="DEFAULT">Default Order</option>
+            <option value="PRICE_LOW">Price: Low to High</option>
+            <option value="PRICE_HIGH">Price: High to Low</option>
+            <option value="DISCOUNT">Highest Discount %</option>
+            <option value="STOCK_LOW">Lowest Stock First</option>
+            <option value="NAME_ASC">Name (A to Z)</option>
+          </select>
+        </div>
       </div>
 
       {/* Product List Cards */}
@@ -252,6 +282,8 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
           filteredProducts.map((p) => {
             const isLow = p.stockCount <= storeSettings.lowStockThreshold && p.stockCount > 0;
             const isOut = p.stockCount === 0 || !p.inStock;
+            const photoCount = p.images && p.images.length > 0 ? p.images.length : (p.image ? 1 : 0);
+            const hasVideo = Boolean(p.video || (p.videos && p.videos.length > 0));
 
             return (
               <div
@@ -261,13 +293,22 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 {/* Top Row: Thumbnail + Info */}
                 <div className="flex items-start gap-3">
                   {/* Large Product Thumbnail */}
-                  <div className="w-20 h-20 rounded-2xl bg-gray-50 p-1.5 flex items-center justify-center flex-shrink-0 border border-gray-100 relative">
+                  <div className="w-20 h-20 rounded-2xl bg-gray-50 p-1.5 flex items-center justify-center flex-shrink-0 border border-gray-100 relative overflow-hidden">
                     <ResolvedImage src={p.image} alt={p.name} className="w-full h-full object-contain" />
-                    {p.isTrending && (
-                      <span className="absolute -top-1.5 -left-1.5 text-[9px] bg-red-500 text-white font-black px-1.5 py-0.2 rounded-full">
-                        HOT
-                      </span>
-                    )}
+                    
+                    {/* Media count indicators */}
+                    <div className="absolute bottom-1 right-1 flex items-center gap-1">
+                      {photoCount > 1 && (
+                        <span className="text-[9px] font-bold bg-black/60 text-white px-1 py-0.2 rounded">
+                          📷 {photoCount}
+                        </span>
+                      )}
+                      {hasVideo && (
+                        <span className="text-[9px] font-bold bg-purple-600 text-white px-1 py-0.2 rounded">
+                          🎥
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Title & Metadata */}
@@ -305,18 +346,91 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                         {p.discountPercentage}% OFF
                       </span>
                     </div>
+
+                    {/* Inline Quick Merchandising Badges */}
+                    <div className="flex items-center gap-1 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateProduct(p.id, { isTrending: !p.isTrending });
+                          showToast(`Trending ${!p.isTrending ? 'enabled' : 'disabled'}`);
+                        }}
+                        className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md transition-colors flex items-center gap-0.5 ${
+                          p.isTrending ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-gray-100 text-gray-400 hover:text-gray-700'
+                        }`}
+                        title="Toggle Trending"
+                      >
+                        🔥 Hot
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateProduct(p.id, { isBestSeller: !p.isBestSeller });
+                          showToast(`Bestseller ${!p.isBestSeller ? 'enabled' : 'disabled'}`);
+                        }}
+                        className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md transition-colors flex items-center gap-0.5 ${
+                          p.isBestSeller ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-gray-100 text-gray-400 hover:text-gray-700'
+                        }`}
+                        title="Toggle Bestseller"
+                      >
+                        ⭐ Best
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateProduct(p.id, { isDealOfDay: !p.isDealOfDay });
+                          showToast(`Deal of Day ${!p.isDealOfDay ? 'enabled' : 'disabled'}`);
+                        }}
+                        className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md transition-colors flex items-center gap-0.5 ${
+                          p.isDealOfDay ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-gray-100 text-gray-400 hover:text-gray-700'
+                        }`}
+                        title="Toggle Deal of Day"
+                      >
+                        ⚡ Deal
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {/* Bottom Row: Stock Gauge & Action Buttons */}
+                {/* Bottom Row: Stock Gauge, Steppers & Action Buttons */}
                 <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
-                  {/* Stock Bar */}
+                  {/* Stock Bar & Quick Stepper */}
                   <div className="flex-1 space-y-1">
-                    <div className="flex justify-between text-[10px] text-gray-500 font-bold">
+                    <div className="flex justify-between items-center text-[10px] text-gray-500 font-bold">
                       <span>Stock Units:</span>
-                      <span className={isLow ? 'text-amber-600' : isOut ? 'text-red-600' : 'text-gray-900'}>
-                        {p.stockCount} left
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className={isLow ? 'text-amber-600' : isOut ? 'text-red-600' : 'text-gray-900'}>
+                          {p.stockCount} left
+                        </span>
+                        {/* Quick stock +/- buttons */}
+                        <div className="flex items-center gap-0.5 ml-1">
+                          <button
+                            type="button"
+                            disabled={p.stockCount <= 0}
+                            onClick={() => {
+                              const nextCount = Math.max(0, p.stockCount - 1);
+                              updateProduct(p.id, { stockCount: nextCount, inStock: nextCount > 0 });
+                            }}
+                            className="w-4 h-4 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center text-[10px] disabled:opacity-30"
+                            title="Decrease Stock -1"
+                          >
+                            -
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextCount = p.stockCount + 5;
+                              updateProduct(p.id, { stockCount: nextCount, inStock: true });
+                            }}
+                            className="px-1 h-4 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center text-[9px] font-bold"
+                            title="Restock +5"
+                          >
+                            +5
+                          </button>
+                        </div>
+                      </div>
                     </div>
                     <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
                       <div 

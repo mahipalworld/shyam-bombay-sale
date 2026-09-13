@@ -30,7 +30,6 @@ import {
 import { OrderStatus } from '@/types';
 import { usePWA } from '@/context/PWAContext';
 import { IOSInstallGuideModal } from '@/components/modals/IOSInstallGuideModal';
-import { NotificationRewardCard } from '@/components/modals/NotificationRewardPrompt';
 
 export const ProfileView: React.FC = () => {
   const { 
@@ -63,7 +62,7 @@ export const ProfileView: React.FC = () => {
   const activeAdminRole = isAuthorizedAdmin ? (getEffectiveAdminRole(currentEmail) || 'OWNER') : null;
 
   // Display user info: real authUser if logged in, otherwise local profile
-  const displayName = authUser?.name || user.name;
+  const displayName = authUser?.name || (user.email ? user.name : 'Guest Shopper');
   const displayEmail = authUser?.email || user.email;
   const displayPhone = authUser?.phone || user.phone;
   const displayPoints = authUser?.reward_points ?? user.rewardPoints;
@@ -119,17 +118,23 @@ export const ProfileView: React.FC = () => {
               <div className="flex items-center gap-3">
                 {/* Avatar */}
                 <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#F95721] to-[#E44813] border-2 border-white shadow-xs flex items-center justify-center text-white text-lg font-black">
-                  {displayName.charAt(0).toUpperCase()}
+                  {authUser ? displayName.charAt(0).toUpperCase() : <User className="w-6 h-6 text-white" />}
                 </div>
                 {/* User Details */}
                 <div>
                   <h2 className="text-base font-bold text-gray-900 leading-tight">
                     {displayName}
                   </h2>
-                  <p className="text-xs text-gray-600 flex items-center gap-1 mt-0.5">
-                    <Mail className="w-3 h-3 text-gray-400" />
-                    {displayEmail}
-                  </p>
+                  {displayEmail ? (
+                    <p className="text-xs text-gray-600 flex items-center gap-1 mt-0.5">
+                      <Mail className="w-3 h-3 text-gray-400" />
+                      {displayEmail}
+                    </p>
+                  ) : (
+                    <p className="text-[11px] font-semibold text-gray-500 mt-0.5">
+                      Guest Shopper • Not Signed In
+                    </p>
+                  )}
                   {displayPhone && (
                     <p className="text-xs text-gray-600 flex items-center gap-1 mt-0.5">
                       <Phone className="w-3 h-3 text-gray-400" />
@@ -160,7 +165,7 @@ export const ProfileView: React.FC = () => {
                   <ShoppingBag className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-xs font-bold text-gray-900">{orders.length}</span>
-                <span className="text-[10px] text-gray-500 font-medium">Orders</span>
+                <span className="text-[11px] text-gray-500 font-medium">Orders</span>
               </div>
 
               {/* Wishlist */}
@@ -172,7 +177,7 @@ export const ProfileView: React.FC = () => {
                   <Heart className="w-3.5 h-3.5 fill-[#E53E3E]" />
                 </div>
                 <span className="text-xs font-bold text-gray-900">{wishlist.length}</span>
-                <span className="text-[10px] text-gray-500 font-medium">Wishlist</span>
+                <span className="text-[11px] text-gray-500 font-medium">Wishlist</span>
               </div>
 
               {/* Coupons */}
@@ -184,7 +189,7 @@ export const ProfileView: React.FC = () => {
                   <Ticket className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-xs font-bold text-gray-900">{coupons.length}</span>
-                <span className="text-[10px] text-gray-500 font-medium">Coupons</span>
+                <span className="text-[11px] text-gray-500 font-medium">Coupons</span>
               </div>
 
               {/* SBS Rewards */}
@@ -196,7 +201,7 @@ export const ProfileView: React.FC = () => {
                   <Star className="w-3.5 h-3.5 fill-[#D97706]" />
                 </div>
                 <span className="text-xs font-bold text-gray-900">{user.rewardPoints}</span>
-                <span className="text-[9px] text-gray-500 font-medium leading-none">Rewards</span>
+                <span className="text-[11px] text-gray-500 font-medium leading-none">Rewards</span>
               </div>
             </div>
           </div>
@@ -231,7 +236,7 @@ export const ProfileView: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] font-semibold text-gray-700">To Pay</span>
+                <span className="text-[11px] font-semibold text-gray-700">To Pay</span>
               </button>
 
               {/* Processing */}
@@ -249,7 +254,7 @@ export const ProfileView: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] font-semibold text-gray-700">Processing</span>
+                <span className="text-[11px] font-semibold text-gray-700">Processing</span>
               </button>
 
               {/* Shipped */}
@@ -267,7 +272,7 @@ export const ProfileView: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] font-semibold text-gray-700">Shipped</span>
+                <span className="text-[11px] font-semibold text-gray-700">Shipped</span>
               </button>
 
               {/* Delivered */}
@@ -280,7 +285,7 @@ export const ProfileView: React.FC = () => {
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                 </div>
-                <span className="text-[10px] font-semibold text-gray-700">Delivered</span>
+                <span className="text-[11px] font-semibold text-gray-700">Delivered</span>
               </button>
 
               {/* Returns */}
@@ -293,7 +298,7 @@ export const ProfileView: React.FC = () => {
                     <RotateCcw className="w-5 h-5" />
                   </div>
                 </div>
-                <span className="text-[10px] font-semibold text-gray-700">Returns</span>
+                <span className="text-[11px] font-semibold text-gray-700">Returns</span>
               </button>
             </div>
           </div>
@@ -341,21 +346,18 @@ export const ProfileView: React.FC = () => {
                   <span className="whitespace-nowrap">Install</span>
                 </button>
               ) : (
-                <span className="px-2.5 py-1 bg-emerald-100 text-[#00A859] text-[10px] font-extrabold rounded-full whitespace-nowrap flex-shrink-0">
+                <span className="px-2.5 py-1 bg-emerald-100 text-[#00A859] text-[11px] font-extrabold rounded-full whitespace-nowrap flex-shrink-0">
                   Active
                 </span>
               )}
             </div>
           </div>
 
-          {/* On-Device Notifications & 250 Points Reward Card */}
-          <NotificationRewardCard variant="full" />
-
           <div className="bg-white border border-gray-100 rounded-3xl p-3 shadow-subtle divide-y divide-gray-50">
             {/* My Orders */}
             <div
               onClick={() => setOrderListFilter('ALL')}
-              className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors"
+              className="flex items-center justify-between p-3.5 hover:bg-orange-50/50 rounded-2xl cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3.5">
                 <div className="w-10 h-10 rounded-xl bg-[#FFF4EC] text-[#F95721] flex items-center justify-center">
@@ -372,10 +374,10 @@ export const ProfileView: React.FC = () => {
             {/* My Wishlist */}
             <div
               onClick={() => setActiveTab('wishlist')}
-              className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors"
+              className="flex items-center justify-between p-3.5 hover:bg-orange-50/50 rounded-2xl cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-[#FDF2F4] text-[#E53E3E] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#FFF4EC] text-[#F95721] flex items-center justify-center">
                   <Heart className="w-5 h-5" />
                 </div>
                 <div>
@@ -389,10 +391,10 @@ export const ProfileView: React.FC = () => {
             {/* Coupons & Offers */}
             <div
               onClick={() => setIsCouponsOpen(true)}
-              className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors"
+              className="flex items-center justify-between p-3.5 hover:bg-orange-50/50 rounded-2xl cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-[#EBF7F0] text-[#00A859] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#FFF4EC] text-[#F95721] flex items-center justify-center">
                   <Ticket className="w-5 h-5" />
                 </div>
                 <div>
@@ -406,7 +408,7 @@ export const ProfileView: React.FC = () => {
             {/* SBS Rewards */}
             <div
               onClick={() => setIsRewardsOpen(true)}
-              className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors"
+              className="flex items-center justify-between p-3.5 hover:bg-orange-50/50 rounded-2xl cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3.5">
                 <div className="w-10 h-10 rounded-xl bg-[#FFF9E6] text-[#D97706] flex items-center justify-center">
@@ -415,7 +417,7 @@ export const ProfileView: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="text-xs md:text-sm font-bold text-gray-900">SBS Rewards</h4>
-                    <span className="text-[10px] font-extrabold text-[#D97706] bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded-md">
+                    <span className="text-[11px] font-extrabold text-[#D97706] bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded-md">
                       {user.rewardPoints} pts
                     </span>
                   </div>
@@ -428,10 +430,10 @@ export const ProfileView: React.FC = () => {
             {/* Addresses */}
             <div
               onClick={() => setIsAddressesOpen(true)}
-              className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors"
+              className="flex items-center justify-between p-3.5 hover:bg-orange-50/50 rounded-2xl cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-[#F3EFFC] text-[#9333EA] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#FFF4EC] text-[#F95721] flex items-center justify-center">
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>
@@ -445,10 +447,10 @@ export const ProfileView: React.FC = () => {
             {/* Help Center & Support */}
             <div
               onClick={() => setIsHelpCenterOpen(true)}
-              className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors"
+              className="flex items-center justify-between p-3.5 hover:bg-orange-50/50 rounded-2xl cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#FFF4EC] text-[#F95721] flex items-center justify-center">
                   <HelpCircle className="w-5 h-5" />
                 </div>
                 <div>
@@ -492,10 +494,10 @@ export const ProfileView: React.FC = () => {
                       <h4 className="text-xs md:text-sm font-black text-gray-900">
                         Admin & Store Manager
                       </h4>
-                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[#F95721] text-white">
+                      <span className="text-[11px] font-black uppercase px-2 py-0.5 rounded-full bg-[#F95721] text-white">
                         {activeAdminRole || 'ADMIN'}
                       </span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-200/60 flex items-center gap-0.5">
+                      <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-200/60 flex items-center gap-0.5">
                         <ShieldCheck className="w-2.5 h-2.5" />
                         Google Auth
                       </span>
@@ -508,14 +510,16 @@ export const ProfileView: React.FC = () => {
             )}
           </div>
 
-          {/* Logout Button matching Screenshot 2 */}
-          <button
-            onClick={() => setIsLoggedOutModal(true)}
-            className="w-full py-3.5 bg-white hover:bg-red-50 text-red-500 border border-red-200 font-bold text-xs md:text-sm rounded-2xl flex items-center justify-center gap-2 transition-colors tap-active shadow-subtle"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Logout from SBS Store</span>
-          </button>
+          {/* Logout Button (only shown when user is logged in) */}
+          {authUser && (
+            <button
+              onClick={() => setIsLoggedOutModal(true)}
+              className="w-full py-3.5 bg-white hover:bg-red-50 text-red-500 border border-red-200 font-bold text-xs md:text-sm rounded-2xl flex items-center justify-center gap-2 transition-colors tap-active shadow-subtle"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout from SBS Store</span>
+            </button>
+          )}
         </div>
       </div>
 

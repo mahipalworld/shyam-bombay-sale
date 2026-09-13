@@ -21,7 +21,11 @@ import {
   Zap,
   Flame,
   Star,
-  ExternalLink
+  ExternalLink,
+  Phone,
+  MessageCircle,
+  MapPin,
+  Clock
 } from 'lucide-react';
 
 export const HomeView: React.FC = () => {
@@ -41,7 +45,8 @@ export const HomeView: React.FC = () => {
     setActiveTab, 
     setSelectedCategoryFilter, 
     setSelectedSubcategoryFilter,
-    setSelectedProductDetail
+    setSelectedProductDetail,
+    recentlyViewedIds
   } = useStore();
 
   const [activeCategoryPill, setActiveCategoryPill] = React.useState<string>('all');
@@ -294,13 +299,29 @@ export const HomeView: React.FC = () => {
     return products.filter((p) => p.isBestSeller || (p.rating >= 4.5 && p.reviewCount >= 5)).slice(0, 8);
   }, [products, bestSellersConfig]);
 
-  // Active Deals
+  // Active Deals (Deduplicated)
   const activeTodayDeals = React.useMemo(() => {
     if (todayDeals && todayDeals.length > 0) {
-      return todayDeals.filter(d => d.enabled !== false);
+      const enabled = todayDeals.filter(d => d.enabled !== false);
+      const seen = new Set<string>();
+      return enabled.filter(d => {
+        const key = d.productId || d.id;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     }
     return [];
   }, [todayDeals]);
+
+  // Recently Viewed Products
+  const recentlyViewedProducts = React.useMemo(() => {
+    if (!recentlyViewedIds || recentlyViewedIds.length === 0) return [];
+    return recentlyViewedIds
+      .map((id) => products.find((p) => p.id === id))
+      .filter((p): p is Product => Boolean(p))
+      .slice(0, 6);
+  }, [recentlyViewedIds, products]);
 
   // Navigation Handlers
   const handleCategoryClick = (categoryId: string) => {
@@ -602,13 +623,13 @@ export const HomeView: React.FC = () => {
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-bold text-gray-900 truncate">{qa.label}</span>
                   {qa.badge && (
-                    <span className="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-red-50 text-red-600 border border-red-200">
+                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-red-50 text-red-600 border border-red-200">
                       {qa.badge}
                     </span>
                   )}
                 </div>
                 {qa.subtitle && (
-                  <p className="text-[10px] text-gray-500 line-clamp-1">{qa.subtitle}</p>
+                  <p className="text-[11px] text-gray-500 line-clamp-1">{qa.subtitle}</p>
                 )}
               </div>
             </button>
@@ -631,7 +652,7 @@ export const HomeView: React.FC = () => {
               <span className="sm:hidden">Free Delivery</span>
               <span className="hidden sm:inline">Free Express Delivery</span>
             </p>
-            <p className="text-[9px] sm:text-[11px] md:text-xs text-gray-500 mt-0.5 leading-tight">
+            <p className="text-[10px] sm:text-xs md:text-xs text-gray-500 mt-0.5 leading-tight">
               <span className="sm:hidden">Above ₹{storeSettings?.freeDeliveryThreshold ?? 499}</span>
               <span className="hidden sm:inline">On all orders above ₹{storeSettings?.freeDeliveryThreshold ?? 499}</span>
             </p>
@@ -647,7 +668,7 @@ export const HomeView: React.FC = () => {
               <span className="sm:hidden">7 Days Return</span>
               <span className="hidden sm:inline">7 Days Easy Return</span>
             </p>
-            <p className="text-[9px] sm:text-[11px] md:text-xs text-gray-500 mt-0.5 leading-tight">
+            <p className="text-[10px] sm:text-xs md:text-xs text-gray-500 mt-0.5 leading-tight">
               <span className="sm:hidden">Easy replacement</span>
               <span className="hidden sm:inline">Hassle-free replacement</span>
             </p>
@@ -663,7 +684,7 @@ export const HomeView: React.FC = () => {
               <span className="sm:hidden">100% Genuine</span>
               <span className="hidden sm:inline">SBS Quality Certified</span>
             </p>
-            <p className="text-[9px] sm:text-[11px] md:text-xs text-gray-500 mt-0.5 leading-tight">
+            <p className="text-[10px] sm:text-xs md:text-xs text-gray-500 mt-0.5 leading-tight">
               <span className="sm:hidden">Quality verified</span>
               <span className="hidden sm:inline">100% Genuine products</span>
             </p>
@@ -696,12 +717,12 @@ export const HomeView: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
+        <div className="flex sm:grid sm:grid-cols-4 md:grid-cols-8 gap-3 overflow-x-auto no-scrollbar py-1">
           {visibleCategories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => handleCategoryClick(cat.id)}
-              className="flex flex-col items-center gap-2 group tap-active"
+              className="flex flex-col items-center gap-2 group tap-active flex-shrink-0 w-20 sm:w-auto"
             >
               <div 
                 style={{ backgroundColor: cat.bgColor }}
@@ -713,7 +734,7 @@ export const HomeView: React.FC = () => {
                   className="w-full h-full object-contain mix-blend-multiply"
                 />
               </div>
-              <span className="text-[11px] md:text-xs font-bold text-gray-800 text-center leading-tight capitalize">
+              <span className="text-[11px] md:text-xs font-bold text-gray-800 text-center leading-tight capitalize line-clamp-2">
                 {cat.name}
               </span>
             </button>
@@ -842,7 +863,7 @@ export const HomeView: React.FC = () => {
             <div
               key={`${item.categoryId}-${item.sub.id}`}
               onClick={() => handleSubcategoryClick(item.categoryId, item.sub.id)}
-              className="group relative flex-shrink-0 w-[126px] sm:w-[145px] md:w-[155px] flex flex-col items-center justify-between p-3 sm:p-3.5 rounded-3xl bg-white border border-gray-100 hover:border-orange-300 shadow-2xs hover:shadow-card transition-all duration-300 cursor-pointer tap-active select-none"
+              className="group relative flex-shrink-0 w-[42vw] min-w-[126px] sm:w-[145px] md:w-[155px] flex flex-col items-center justify-between p-3 sm:p-3.5 rounded-3xl bg-white border border-gray-100 hover:border-orange-300 shadow-2xs hover:shadow-card transition-all duration-300 cursor-pointer tap-active select-none"
             >
               <div
                 style={{ backgroundColor: item.cat.bgColor || '#FFF0E6' }}
@@ -852,7 +873,7 @@ export const HomeView: React.FC = () => {
               <div className="relative z-10 w-full flex items-center justify-center">
                 <span
                   style={{ color: item.cat.accentColor || '#EA580C' }}
-                  className="text-[9px] font-black uppercase tracking-wider line-clamp-1 text-center bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded-full border border-black/5 shadow-2xs"
+                  className="text-[10px] font-black uppercase tracking-wider line-clamp-1 text-center bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded-full border border-black/5 shadow-2xs"
                 >
                   {item.cat.name}
                 </span>
@@ -878,12 +899,12 @@ export const HomeView: React.FC = () => {
 
                 <div className="flex items-center justify-center">
                   {item.minPrice ? (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-extrabold text-[#F95721] bg-orange-50/90 border border-orange-200/70 px-2 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-0.5 text-[11px] font-extrabold text-[#F95721] bg-orange-50/90 border border-orange-200/70 px-2 py-0.5 rounded-full">
                       From ₹{item.minPrice}
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                      {item.productCount} items
+                    <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                      {item.productCount} {item.productCount === 1 ? 'item' : 'items'}
                     </span>
                   )}
                 </div>
@@ -1054,7 +1075,7 @@ export const HomeView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 md:space-y-8 pb-24 md:pb-12 animate-fadeIn">
+    <div className="space-y-6 md:space-y-8 pb-36 md:pb-12 animate-fadeIn">
       {/* Dynamic Sections in order configured in admin panel */}
       {homepageSections
         .filter((sec) => sec.enabled !== false)
@@ -1066,10 +1087,114 @@ export const HomeView: React.FC = () => {
         onClose={() => setIsScratchModalOpen(false)}
       />
 
+      {/* Recently Viewed Products Strip */}
+      {recentlyViewedProducts.length > 0 && (
+        <section className="pt-2">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">👁️</span>
+              <div>
+                <h2 className="text-base sm:text-lg font-black text-gray-900">Recently Viewed</h2>
+                <p className="text-[11px] text-gray-500">Pick up where you left off</p>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+            {recentlyViewedProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Notification Reward Card */}
       <section>
         <NotificationRewardCard variant="compact" />
       </section>
+
+      {/* Mobile-First Trust & Info Footer */}
+      <footer className="mt-8 pt-8 pb-4 border-t border-gray-100/80 space-y-6">
+        {/* Brand & Value Proposition */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2">
+            <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#F95721] to-[#FF7A45] text-white font-black text-sm flex items-center justify-center shadow-xs">
+              SBS
+            </span>
+            <span className="text-base font-black text-gray-900 tracking-tight">
+              {storeSettings?.storeName || 'Shyam Bombay Sale'}
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 max-w-sm mx-auto">
+            Your destination for smart everyday utilities, kitchen innovations, and lifestyle essentials at wholesale prices.
+          </p>
+        </div>
+
+        {/* Quick Help & Contact Cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <a
+            href={storeSettings?.contactPhone ? `https://wa.me/${storeSettings.contactPhone.replace(/\D/g, '')}` : '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2.5 p-3 rounded-2xl bg-emerald-50/70 border border-emerald-100 hover:bg-emerald-100/60 transition-colors group"
+          >
+            <div className="w-8 h-8 rounded-xl bg-[#00A859] text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+              <MessageCircle className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[11px] font-bold text-gray-500 block">WhatsApp Us</span>
+              <span className="text-xs font-black text-emerald-800 truncate block">Chat Support</span>
+            </div>
+          </a>
+
+          <a
+            href={`tel:${storeSettings?.contactPhone || '919876543210'}`}
+            className="flex items-center gap-2.5 p-3 rounded-2xl bg-orange-50/70 border border-orange-100 hover:bg-orange-100/60 transition-colors group"
+          >
+            <div className="w-8 h-8 rounded-xl bg-[#F95721] text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+              <Phone className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[11px] font-bold text-gray-500 block">Helpline</span>
+              <span className="text-xs font-black text-[#F95721] truncate block">
+                {storeSettings?.contactPhone || '+91 98765 43210'}
+              </span>
+            </div>
+          </a>
+        </div>
+
+        {/* Trust Badges Row */}
+        <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-gray-500 font-semibold border-t border-b border-gray-100 py-3">
+          <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-[#00A859]" /> 100% Genuine</span>
+          <span>•</span>
+          <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5 text-[#F95721]" /> Fast Delivery</span>
+          <span>•</span>
+          <span className="flex items-center gap-1"><RotateCcw className="w-3.5 h-3.5 text-[#0284C7]" /> 7-Day Returns</span>
+        </div>
+
+        {/* Operating Hours & Location */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-[11px] text-gray-500 text-center">
+          {storeSettings?.businessHours && (
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3 text-gray-400" /> {storeSettings.businessHours}
+            </span>
+          )}
+          {storeSettings?.address && (
+            <>
+              <span className="hidden sm:inline">•</span>
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-gray-400" /> {storeSettings.address}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Copyright */}
+        <div className="text-center pt-1">
+          <p className="text-[11px] text-gray-400">
+            © {new Date().getFullYear()} {storeSettings?.storeName || 'Shyam Bombay Sale'}. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };

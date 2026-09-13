@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   CheckCircle2 
 } from 'lucide-react';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export const WishlistView: React.FC = () => {
   const { 
@@ -19,6 +20,7 @@ export const WishlistView: React.FC = () => {
     addToCart, 
     setActiveTab, 
     setSelectedProductDetail,
+    products,
     showToast 
   } = useStore();
 
@@ -29,24 +31,96 @@ export const WishlistView: React.FC = () => {
     showToast('Price drop alerts enabled for your wishlist! 🔔');
   };
 
+  const recommendedItems = products.slice(0, 4);
+
   if (wishlist.length === 0) {
     return (
-      <div className="py-16 flex flex-col items-center justify-center text-center space-y-4 pb-24 animate-fadeIn">
-        <div className="w-24 h-24 rounded-full bg-red-50 flex items-center justify-center text-[#E53E3E]">
-          <Heart className="w-12 h-12" />
+      <div className="py-8 space-y-8 pb-28 animate-fadeIn">
+        <div className="flex flex-col items-center justify-center text-center space-y-3 pt-4">
+          <div className="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center text-[#F95721]">
+            <Heart className="w-10 h-10" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900">Your Wishlist is Empty</h2>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-sm">
+              Save items you love to revisit anytime and receive instant price drop alerts!
+            </p>
+          </div>
+          <button
+            onClick={() => setActiveTab('home')}
+            className="px-6 py-2.5 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95"
+          >
+            Explore Catalog
+          </button>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Your Wishlist is Empty</h2>
-          <p className="text-xs md:text-sm text-gray-500 mt-1 max-w-sm">
-            Save items you love to revisit anytime and receive instant price drop alerts!
-          </p>
-        </div>
-        <button
-          onClick={() => setActiveTab('home')}
-          className="px-8 py-3.5 bg-[#F95721] hover:bg-[#E44813] text-white text-xs md:text-sm font-bold rounded-xl shadow-float transition-all tap-active"
-        >
-          Explore Catalog
-        </button>
+
+        {/* You Might Also Like Recommendation Grid */}
+        {recommendedItems.length > 0 && (
+          <div className="space-y-3 pt-4 border-t border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black text-gray-900">You Might Also Like</h3>
+                <p className="text-[11px] text-gray-500">Popular bestselling items picked for you</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('categories')}
+                className="text-xs font-bold text-[#F95721] hover:underline"
+              >
+                View All →
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {recommendedItems.map((prod) => (
+                <div
+                  key={prod.id}
+                  onClick={() => setSelectedProductDetail(prod)}
+                  className="bg-white border border-gray-100 rounded-2xl p-2.5 shadow-subtle hover:shadow-card transition-all cursor-pointer group flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="aspect-square rounded-xl bg-gray-50 p-2 overflow-hidden mb-2 relative">
+                      <ResolvedImage
+                        src={prod.image}
+                        alt={prod.name}
+                        className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
+                      />
+                      {prod.discountPercentage > 0 && (
+                        <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-[#F95721] text-white text-[11px] font-black rounded-md">
+                          {prod.discountPercentage}% OFF
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="text-xs font-bold text-gray-900 line-clamp-1 group-hover:text-[#F95721] transition-colors">
+                      {prod.name}
+                    </h4>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-xs font-black text-gray-900">
+                        ₹{prod.price.toLocaleString('en-IN')}
+                      </span>
+                      {prod.originalPrice > prod.price && (
+                        <span className="text-[11px] text-gray-400 line-through">
+                          ₹{prod.originalPrice.toLocaleString('en-IN')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if ('vibrate' in navigator) navigator.vibrate(10);
+                      addToCart(prod, 1, e.currentTarget);
+                    }}
+                    className="mt-2.5 w-full py-1.5 bg-[#FFF4EC] hover:bg-[#F95721] text-[#F95721] hover:text-white text-[11px] font-bold rounded-xl flex items-center justify-center gap-1 transition-colors active:scale-95"
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    <span>Add to Cart</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -95,8 +169,7 @@ export const WishlistView: React.FC = () => {
                 onClick={() => setSelectedProductDetail(product)}
                 className="cursor-pointer aspect-square w-full rounded-xl sm:rounded-2xl bg-[#F9FAFB] flex items-center justify-center p-2.5 overflow-hidden relative"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <ResolvedImage
                   src={product.image}
                   alt={product.name}
                   className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
@@ -125,7 +198,7 @@ export const WishlistView: React.FC = () => {
                     <span className="text-[11px] text-gray-400 line-through">
                       ₹{product.originalPrice.toLocaleString('en-IN')}
                     </span>
-                    <span className="text-[9px] sm:text-[10px] font-bold text-[#EA580C] bg-[#FFF4EC] px-1.5 py-0.5 rounded">
+                    <span className="text-[11px] font-bold text-[#EA580C] bg-[#FFF4EC] px-1.5 py-0.5 rounded">
                       {product.discountPercentage}% OFF
                     </span>
                   </div>
@@ -141,7 +214,10 @@ export const WishlistView: React.FC = () => {
 
                 {/* Single Clean Full-Width Add to Cart Button */}
                 <button
-                  onClick={() => addToCart(product, 1)}
+                  onClick={() => {
+                    if ('vibrate' in navigator) navigator.vibrate(10);
+                    addToCart(product, 1);
+                  }}
                   className="mt-3 w-full h-9 px-3 bg-gradient-to-r from-[#F95721] to-[#FA7035] hover:from-[#E44813] hover:to-[#F95721] active:scale-98 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition-all"
                 >
                   <ShoppingCart className="w-3.5 h-3.5 flex-shrink-0" />

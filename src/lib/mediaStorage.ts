@@ -94,38 +94,44 @@ export async function checkStorageStatus(): Promise<StorageStatus> {
 export async function resolveMediaUrl(keyOrUrl?: string): Promise<string> {
   if (!keyOrUrl) return '';
 
-  // If it's already an absolute or relative static URL (Unsplash, local asset, base64)
-  if (
+  const cleanKey = keyOrUrl.startsWith('/') ? keyOrUrl.slice(1) : keyOrUrl;
+  const isS3 = cleanKey.startsWith('products/images/') ||
+               cleanKey.startsWith('products/videos/') ||
+               cleanKey.startsWith('products/thumbnails/') ||
+               cleanKey.startsWith('products/');
+
+  // If it's already an absolute or relative static URL (Unsplash, local asset, base64) and not an S3 key
+  if (!isS3 && (
     keyOrUrl.startsWith('http://') ||
     keyOrUrl.startsWith('https://') ||
     keyOrUrl.startsWith('/') ||
     keyOrUrl.startsWith('data:')
-  ) {
+  )) {
     return keyOrUrl;
   }
 
   // Check in-memory cache
-  const cached = deliveryUrlCache.get(keyOrUrl);
+  const cached = deliveryUrlCache.get(cleanKey);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.url;
   }
 
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/storage/delivery-url?key=${encodeURIComponent(keyOrUrl)}`);
+    const res = await fetch(`${getApiBaseUrl()}/api/storage/delivery-url?key=${encodeURIComponent(cleanKey)}`);
     if (!res.ok) {
-      return keyOrUrl; // fallback
+      return ''; // do not return raw S3 key as it causes 404 in <img> tags
     }
     const data = await res.json();
     if (data.url) {
       // Cache for 55 minutes (token expires in 60 minutes)
       const expiresAt = Date.now() + (data.expiresIn ? (data.expiresIn - 300) * 1000 : 55 * 60 * 1000);
-      deliveryUrlCache.set(keyOrUrl, { url: data.url, expiresAt });
+      deliveryUrlCache.set(cleanKey, { url: data.url, expiresAt });
       return data.url;
     }
-    return keyOrUrl;
+    return '';
   } catch (err) {
-    console.warn('Failed to resolve delivery URL for key:', keyOrUrl);
-    return keyOrUrl;
+    console.warn('Failed to resolve delivery URL for key:', cleanKey);
+    return '';
   }
 }
 

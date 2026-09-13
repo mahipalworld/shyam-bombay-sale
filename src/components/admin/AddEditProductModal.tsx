@@ -28,11 +28,21 @@ import {
   RefreshCw,
   ArrowLeft,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  Smartphone,
+  HelpCircle,
+  Truck,
+  RotateCcw,
+  ShieldCheck,
+  Zap,
+  Award,
+  CheckCircle2,
+  Tag
 } from 'lucide-react';
 import { Product, ProductDescriptionBlock, S3MediaItem } from '@/types';
 import { ResolvedImage, ResolvedVideo } from '../common/ResolvedMedia';
 import { uploadMediaToS3, listS3Files } from '@/lib/mediaStorage';
+import { getProductMediaList } from '@/lib/productMedia';
 
 interface AddEditProductModalProps {
   isOpen: boolean;
@@ -76,12 +86,44 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
     material: '',
     color: '',
     warranty: '',
+    // Rich Modern PDP Attributes
+    subtitle: '',
+    features: [] as string[],
+    featureIcons: [] as { icon: string; label: string }[],
+    specifications: [] as { label: string; value: string }[],
+    faqs: [] as { question: string; answer: string }[],
+    shippingInfo: '',
+    returnPolicy: '',
     // Publishing status
     publishStatus: 'active' as 'active' | 'draft' | 'out_of_stock',
     isTrending: false,
     isBestSeller: false,
     isDealOfDay: false,
+    isFeatured: false,
+    isSuperDeal: false,
+    isTopRated: false,
   });
+
+  // State for adding new feature highlight bullet
+  const [newFeatureText, setNewFeatureText] = useState('');
+
+  // State for adding new feature badge icon
+  const [newFeatureIcon, setNewFeatureIcon] = useState({ icon: '⚡', label: '' });
+
+  // State for adding new custom specification
+  const [newSpec, setNewSpec] = useState({ label: '', value: '' });
+
+  // State for adding new FAQ
+  const [newFaq, setNewFaq] = useState({ question: '', answer: '' });
+
+  // Live Mobile PDP Simulator Toggle
+  const [showLivePreview, setShowLivePreview] = useState(false);
+
+  // Gallery interactive tester state
+  const [testGalleryIdx, setTestGalleryIdx] = useState(0);
+  const [testDragOffset, setTestDragOffset] = useState(0);
+  const [isTestDragging, setIsTestDragging] = useState(false);
+  const testTouchStartRef = React.useRef<{ x: number; y: number } | null>(null);
 
   // New Block Form State
   const [newBlock, setNewBlock] = useState<ProductDescriptionBlock>({
@@ -153,10 +195,20 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         material: 'Virgin Plastic / Stainless Steel',
         color: 'Pastel Slate',
         warranty: '6 Months Replacement',
+        subtitle: productToEdit.subtitle || '',
+        features: productToEdit.features || [],
+        featureIcons: productToEdit.featureIcons || [],
+        specifications: productToEdit.specifications || [],
+        faqs: productToEdit.faqs || [],
+        shippingInfo: productToEdit.shippingInfo || '',
+        returnPolicy: productToEdit.returnPolicy || '',
         publishStatus: productToEdit.inStock ? 'active' : 'out_of_stock',
         isTrending: !!productToEdit.isTrending,
         isBestSeller: !!productToEdit.isBestSeller,
         isDealOfDay: !!productToEdit.isDealOfDay,
+        isFeatured: !!productToEdit.isFeatured,
+        isSuperDeal: !!productToEdit.isSuperDeal,
+        isTopRated: !!productToEdit.isTopRated,
       });
     } else {
       // Default reset - blank product without dummy presets
@@ -185,10 +237,20 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         material: '',
         color: '',
         warranty: '',
+        subtitle: '',
+        features: [],
+        featureIcons: [],
+        specifications: [],
+        faqs: [],
+        shippingInfo: '',
+        returnPolicy: '',
         publishStatus: 'active',
         isTrending: false,
         isBestSeller: false,
         isDealOfDay: false,
+        isFeatured: false,
+        isSuperDeal: false,
+        isTopRated: false,
       });
     }
     setCurrentStep(1);
@@ -200,12 +262,12 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
 
   const stepsList = [
     { num: 1, title: 'Basic Info', icon: FileText },
-    { num: 2, title: 'Gallery', icon: ImageIcon },
-    { num: 3, title: 'Visual Story', icon: Layers },
-    { num: 4, title: 'Pricing', icon: DollarSign },
-    { num: 5, title: 'Inventory', icon: Boxes },
-    { num: 6, title: 'Specs', icon: Sparkles },
-    { num: 7, title: 'Publish', icon: Globe },
+    { num: 2, title: 'Gallery & Slide', icon: ImageIcon },
+    { num: 3, title: 'Highlights & Icons', icon: CheckCircle2 },
+    { num: 4, title: 'Visual Story', icon: Layers },
+    { num: 5, title: 'Pricing & Stock', icon: DollarSign },
+    { num: 6, title: 'Specs & FAQs', icon: Sparkles },
+    { num: 7, title: 'Publish & Preview', icon: Globe },
   ];
 
   const handleUploadImagesToS3 = async (files: FileList | File[]) => {
@@ -399,11 +461,20 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
     const primaryImg = formData.image || formData.images[0] || 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&auto=format&fit=crop&q=80';
     const allGalleryImages = formData.images.length > 0 ? formData.images : [primaryImg];
 
-    const dynamicFeatures: string[] = [];
-    if (formData.capacity) dynamicFeatures.push(`Capacity: ${formData.capacity}`);
-    if (formData.material) dynamicFeatures.push(`Material: ${formData.material}`);
-    if (formData.color) dynamicFeatures.push(`Color: ${formData.color}`);
-    if (formData.warranty) dynamicFeatures.push(`Warranty: ${formData.warranty}`);
+    // Build features bullet points (merging manually added features with adaptive specs if any)
+    const combinedFeatures: string[] = [...formData.features];
+    if (formData.capacity && !combinedFeatures.some(f => f.toLowerCase().includes('capacity'))) {
+      combinedFeatures.push(`Capacity: ${formData.capacity}`);
+    }
+    if (formData.material && !combinedFeatures.some(f => f.toLowerCase().includes('material'))) {
+      combinedFeatures.push(`Material: ${formData.material}`);
+    }
+    if (formData.color && !combinedFeatures.some(f => f.toLowerCase().includes('color'))) {
+      combinedFeatures.push(`Color: ${formData.color}`);
+    }
+    if (formData.warranty && !combinedFeatures.some(f => f.toLowerCase().includes('warranty'))) {
+      combinedFeatures.push(`Warranty: ${formData.warranty}`);
+    }
 
     if (productToEdit) {
       updateProduct(productToEdit.id, {
@@ -422,10 +493,19 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         stockCount,
         inStock,
         description: formData.description || formData.shortDescription,
-        features: dynamicFeatures.length > 0 ? dynamicFeatures : productToEdit.features,
+        features: combinedFeatures.length > 0 ? combinedFeatures : productToEdit.features,
+        subtitle: formData.subtitle || undefined,
+        featureIcons: formData.featureIcons.length > 0 ? formData.featureIcons : undefined,
+        specifications: formData.specifications.length > 0 ? formData.specifications : undefined,
+        faqs: formData.faqs.length > 0 ? formData.faqs : undefined,
+        shippingInfo: formData.shippingInfo || undefined,
+        returnPolicy: formData.returnPolicy || undefined,
         isTrending: formData.isTrending,
         isBestSeller: formData.isBestSeller,
         isDealOfDay: formData.isDealOfDay,
+        isFeatured: formData.isFeatured,
+        isSuperDeal: formData.isSuperDeal,
+        isTopRated: formData.isTopRated,
       });
       showToast(`Product "${formData.name}" updated successfully!`);
     } else {
@@ -447,10 +527,19 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         inStock,
         stockCount,
         description: formData.description || formData.shortDescription || 'Everyday home essential from SBS Store.',
-        features: dynamicFeatures,
+        features: combinedFeatures,
+        subtitle: formData.subtitle || undefined,
+        featureIcons: formData.featureIcons.length > 0 ? formData.featureIcons : undefined,
+        specifications: formData.specifications.length > 0 ? formData.specifications : undefined,
+        faqs: formData.faqs.length > 0 ? formData.faqs : undefined,
+        shippingInfo: formData.shippingInfo || undefined,
+        returnPolicy: formData.returnPolicy || undefined,
         isTrending: formData.isTrending,
         isBestSeller: formData.isBestSeller,
         isDealOfDay: formData.isDealOfDay,
+        isFeatured: formData.isFeatured,
+        isSuperDeal: formData.isSuperDeal,
+        isTopRated: formData.isTopRated,
       });
       showToast(`Product "${formData.name}" added to SBS catalog! 🎉`);
     }
@@ -470,12 +559,23 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
               {productToEdit ? 'Edit Product' : 'Create New Product'}
             </h2>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-200/80 text-gray-600 hover:text-black flex items-center justify-center"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowLivePreview(true)}
+              className="px-2.5 py-1 bg-orange-100 hover:bg-orange-200 text-[#F95721] rounded-xl text-xs font-extrabold flex items-center gap-1 shadow-2xs transition-all active:scale-95"
+              title="Preview on mobile smartphone screen"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Live PDP</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-gray-200/80 text-gray-600 hover:text-black flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Step Progress Pills */}
@@ -512,6 +612,20 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-semibold"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-bold text-gray-800">Product Subtitle / Micro Tagline</label>
+                  <span className="text-[11px] text-gray-400">Shows under title on PDP</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g. Multi-Blade Quick Slicer & Dicer with Safety Hand Guard"
+                  value={formData.subtitle}
+                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs"
                 />
               </div>
 
@@ -977,12 +1091,361 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     )}
                   </label>
                 )}
+
+                {/* Video poster thumbnail selector */}
+                {formData.video && (
+                  <div className="pt-2 border-t border-purple-200/60 flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-gray-800 flex items-center justify-between">
+                      <span>Video Poster Thumbnail (Optional)</span>
+                      <span className="text-[10px] text-gray-400">Shows before video starts playing</span>
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Paste image URL or S3 key for poster thumbnail..."
+                        value={formData.videoThumbnail}
+                        onChange={(e) => setFormData(prev => ({ ...prev, videoThumbnail: e.target.value }))}
+                        className="flex-1 border border-gray-200 rounded-xl px-3 py-1.5 outline-none focus:border-purple-500 text-xs font-mono"
+                      />
+                      {formData.images.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, videoThumbnail: prev.image || prev.images[0] }));
+                            showToast('Poster set from Cover Photo!');
+                          }}
+                          className="px-2.5 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-bold rounded-xl whitespace-nowrap"
+                        >
+                          Use Cover Photo
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. LIVE FINGER-SLIDE SIMULATOR (Admin Media Tester) */}
+              {formData.images.length > 1 && (
+                <div className="border border-orange-200 bg-gradient-to-b from-orange-50/60 to-white rounded-2xl p-4 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-orange-100 text-[#F95721] flex items-center justify-center font-bold">
+                        📱
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-gray-900">Mobile Finger-Slide Simulator</h4>
+                        <p className="text-[10px] text-gray-500">
+                          Swipe with finger or drag with mouse to test how customers slide your images
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] bg-orange-100 text-[#F95721] font-bold px-2 py-0.5 rounded-full">
+                      {testGalleryIdx + 1} / {formData.images.length}
+                    </span>
+                  </div>
+
+                  <div
+                    className="relative aspect-video max-w-sm mx-auto bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 select-none cursor-grab active:cursor-grabbing touch-pan-y shadow-xs"
+                    onTouchStart={(e) => {
+                      testTouchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                      setIsTestDragging(true);
+                      setTestDragOffset(0);
+                    }}
+                    onTouchMove={(e) => {
+                      if (!testTouchStartRef.current) return;
+                      const deltaX = e.touches[0].clientX - testTouchStartRef.current.x;
+                      setTestDragOffset(deltaX);
+                    }}
+                    onTouchEnd={() => {
+                      if (Math.abs(testDragOffset) > 40) {
+                        if (testDragOffset > 0 && testGalleryIdx > 0) {
+                          setTestGalleryIdx(prev => prev - 1);
+                        } else if (testDragOffset < 0 && testGalleryIdx < formData.images.length - 1) {
+                          setTestGalleryIdx(prev => prev + 1);
+                        }
+                      }
+                      setIsTestDragging(false);
+                      setTestDragOffset(0);
+                      testTouchStartRef.current = null;
+                    }}
+                    onMouseDown={(e) => {
+                      testTouchStartRef.current = { x: e.clientX, y: e.clientY };
+                      setIsTestDragging(true);
+                      setTestDragOffset(0);
+                    }}
+                    onMouseMove={(e) => {
+                      if (!isTestDragging || !testTouchStartRef.current) return;
+                      const deltaX = e.clientX - testTouchStartRef.current.x;
+                      setTestDragOffset(deltaX);
+                    }}
+                    onMouseUp={() => {
+                      if (Math.abs(testDragOffset) > 40) {
+                        if (testDragOffset > 0 && testGalleryIdx > 0) {
+                          setTestGalleryIdx(prev => prev - 1);
+                        } else if (testDragOffset < 0 && testGalleryIdx < formData.images.length - 1) {
+                          setTestGalleryIdx(prev => prev + 1);
+                        }
+                      }
+                      setIsTestDragging(false);
+                      setTestDragOffset(0);
+                      testTouchStartRef.current = null;
+                    }}
+                    onMouseLeave={() => {
+                      if (isTestDragging) {
+                        setIsTestDragging(false);
+                        setTestDragOffset(0);
+                        testTouchStartRef.current = null;
+                      }
+                    }}
+                  >
+                    <div
+                      className="w-full h-full flex"
+                      style={{
+                        transform: `translateX(calc(-${testGalleryIdx * 100}% + ${testDragOffset}px))`,
+                        transition: isTestDragging ? 'none' : 'transform 300ms cubic-bezier(0.22, 1, 0.36, 1)',
+                      }}
+                    >
+                      {formData.images.map((imgUrl, i) => (
+                        <div key={i} className="w-full h-full flex-shrink-0 flex items-center justify-center p-2 bg-white">
+                          <ResolvedImage src={imgUrl} alt={`Slide ${i + 1}`} className="w-full h-full object-contain pointer-events-none" />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Morphing Pagination Dots */}
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/40 backdrop-blur-xs px-2 py-0.8 rounded-full pointer-events-none">
+                      {formData.images.map((_, i) => (
+                        <span
+                          key={i}
+                          className={`h-1.5 rounded-full transition-all duration-300 ${
+                            testGalleryIdx === i ? 'w-3.5 bg-[#F95721]' : 'w-1.5 bg-white/60'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-center text-gray-500 font-medium">
+                    ← Swipe left / right to test slide animation & morphing dots →
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* STEP 3: Highlights & Feature Badge Icons */}
+          {currentStep === 3 && (
+            <div className="space-y-4">
+              {/* Bullet Features Editor */}
+              <div className="border border-green-200 bg-green-50/40 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-green-100 text-[#00A859] flex items-center justify-center">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-gray-900">Product Highlights (Bullet Points)</h4>
+                      <p className="text-[10px] text-gray-500">
+                        Shows with green checkmarks under Highlights section on PDP
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                    {formData.features.length} added
+                  </span>
+                </div>
+
+                {/* Add Input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. 100% BPA Free Food Grade Silicone & Stainless Steel..."
+                    value={newFeatureText}
+                    onChange={(e) => setNewFeatureText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (newFeatureText.trim()) {
+                          setFormData(prev => ({ ...prev, features: [...prev.features, newFeatureText.trim()] }));
+                          setNewFeatureText('');
+                        }
+                      }
+                    }}
+                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#00A859] text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newFeatureText.trim()) {
+                        setFormData(prev => ({ ...prev, features: [...prev.features, newFeatureText.trim()] }));
+                        setNewFeatureText('');
+                        showToast('Highlight bullet added!');
+                      }
+                    }}
+                    className="px-3 py-2 bg-[#00A859] hover:bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-xs flex-shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add</span>
+                  </button>
+                </div>
+
+                {/* Quick chip suggestions */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Quick Suggestions:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      '100% BPA Free Food Grade',
+                      'Dishwasher Safe & Easy Clean',
+                      'Rust-Proof Stainless Steel',
+                      'Ergonomic Non-Slip Grip',
+                      'Space-Saving Compact Design',
+                      'Long-Life Rechargeable Battery',
+                      'Heavy Duty Indian Motor'
+                    ].map((sugg, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          if (!formData.features.includes(sugg)) {
+                            setFormData(prev => ({ ...prev, features: [...prev.features, sugg] }));
+                            showToast(`Added "${sugg}"!`);
+                          }
+                        }}
+                        className="text-[10px] font-semibold bg-white hover:bg-green-100/70 border border-green-200 text-gray-700 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
+                      >
+                        <Plus className="w-2.5 h-2.5 text-[#00A859]" />
+                        <span>{sugg}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* List of current features */}
+                <div className="space-y-1.5 pt-1">
+                  {formData.features.length === 0 ? (
+                    <p className="text-[11px] text-gray-400 italic py-1">No custom bullet highlights added yet. Fallbacks will show on PDP if empty.</p>
+                  ) : (
+                    formData.features.map((feat, idx) => (
+                      <div key={idx} className="flex items-center justify-between gap-2 p-2 bg-white rounded-xl border border-gray-200 text-xs text-gray-800 shadow-2xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#00A859] shrink-0" />
+                          <span className="truncate">{feat}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, features: prev.features.filter((_, i) => i !== idx) }))}
+                          className="text-gray-400 hover:text-red-500 p-1 rounded-lg transition-colors shrink-0"
+                          title="Remove highlight"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* 4-Item Feature Badge Icons Builder */}
+              <div className="border border-orange-200 bg-orange-50/40 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-orange-100 text-[#F95721] flex items-center justify-center font-bold">
+                      ✨
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-gray-900">PDP Feature Badge Icons (Max 4)</h4>
+                      <p className="text-[10px] text-gray-500">
+                        Shows in the 4-box icon strip right under Highlights
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">
+                    {formData.featureIcons.length}/4 set
+                  </span>
+                </div>
+
+                {/* Add new icon badge */}
+                <div className="flex items-center gap-2">
+                  <select
+                    value={newFeatureIcon.icon}
+                    onChange={(e) => setNewFeatureIcon(prev => ({ ...prev, icon: e.target.value }))}
+                    className="border border-gray-200 rounded-xl px-2 py-2 text-base outline-none bg-white font-mono shrink-0"
+                  >
+                    <option value="⚡">⚡ Lightning</option>
+                    <option value="🛡️">🛡️ Shield</option>
+                    <option value="🔋">🔋 Battery</option>
+                    <option value="✨">✨ Sparkle</option>
+                    <option value="🌿">🌿 Eco</option>
+                    <option value="💧">💧 Waterproof</option>
+                    <option value="🔥">🔥 Heat Proof</option>
+                    <option value="🏆">🏆 Certified</option>
+                    <option value="🚀">🚀 Express</option>
+                    <option value="💎">💎 Premium</option>
+                  </select>
+
+                  <input
+                    type="text"
+                    placeholder="Short label, e.g. 'Food Grade' or '1-Yr Motor'"
+                    maxLength={18}
+                    value={newFeatureIcon.label}
+                    onChange={(e) => setNewFeatureIcon(prev => ({ ...prev, label: e.target.value }))}
+                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F95721] text-xs font-semibold"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newFeatureIcon.label.trim()) {
+                        showToast('Please enter a badge label', 'error');
+                        return;
+                      }
+                      if (formData.featureIcons.length >= 4) {
+                        showToast('Maximum 4 badge icons allowed', 'error');
+                        return;
+                      }
+                      setFormData(prev => ({ ...prev, featureIcons: [...prev.featureIcons, { ...newFeatureIcon, label: newFeatureIcon.label.trim() }] }));
+                      setNewFeatureIcon({ icon: '⚡', label: '' });
+                      showToast('Feature badge icon added!');
+                    }}
+                    className="px-3 py-2 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-xs shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add</span>
+                  </button>
+                </div>
+
+                {/* Display Feature Icons Strip */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                  {(formData.featureIcons.length > 0 ? formData.featureIcons : [
+                    { icon: '⚡', label: 'High Speed' },
+                    { icon: '🛡️', label: 'Verified Safe' },
+                    { icon: '🔋', label: 'Long Life' },
+                    { icon: '✨', label: 'Premium Build' },
+                  ]).map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white border border-orange-200 rounded-xl p-2 text-center flex flex-col items-center gap-0.5 relative group shadow-2xs"
+                    >
+                      <span className="text-lg">{item.icon}</span>
+                      <span className="text-[11px] font-bold text-gray-800 truncate w-full">{item.label}</span>
+                      {formData.featureIcons.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, featureIcons: prev.featureIcons.filter((_, i) => i !== idx) }))}
+                          className="absolute top-1 right-1 text-gray-300 hover:text-red-500 transition-colors"
+                          title="Remove icon"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
-          {/* STEP 3: Visual Story & Supporting Images Builder */}
-          {currentStep === 3 && (
+          {/* STEP 4: Visual Story & Supporting Images Builder */}
+          {currentStep === 4 && (
             <div className="space-y-4">
               <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-3 flex items-center justify-between gap-3">
                 <div>
@@ -1173,8 +1636,8 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
             </div>
           )}
 
-          {/* STEP 4: Pricing */}
-          {currentStep === 4 && (
+          {/* STEP 5: Pricing & Stock Inventory */}
+          {currentStep === 5 && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -1217,139 +1680,366 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                   </p>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* STEP 5: Inventory */}
-          {currentStep === 5 && (
-            <div className="space-y-4">
-              <div>
-                <label className="block font-bold text-gray-800 mb-1">Product SKU Code</label>
-                <input
-                  type="text"
-                  value={formData.sku}
-                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-mono"
-                />
-              </div>
+              {/* Inventory & SKU Controls */}
+              <div className="pt-2 border-t border-gray-100 space-y-3">
+                <h4 className="text-xs font-bold text-gray-900">Inventory & Shelf Stock</h4>
 
-              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-gray-800 mb-1">Available Stock Count</label>
+                  <label className="block font-bold text-gray-800 mb-1">Product SKU Code</label>
                   <input
-                    type="number"
-                    value={formData.stockCount}
-                    onChange={(e) => setFormData({ ...formData, stockCount: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-bold"
+                    type="text"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-mono"
                   />
                 </div>
 
-                <div>
-                  <label className="block font-bold text-gray-800 mb-1">Low-Stock Alert Level</label>
-                  <input
-                    type="number"
-                    value={formData.lowStockThreshold}
-                    onChange={(e) => setFormData({ ...formData, lowStockThreshold: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-bold text-amber-600"
-                  />
-                </div>
-              </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-gray-800 mb-1">Available Stock Units</label>
+                    <input
+                      type="number"
+                      value={formData.stockCount}
+                      onChange={(e) => setFormData({ ...formData, stockCount: e.target.value })}
+                      className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-bold"
+                    />
+                  </div>
 
-              {/* Stock Health Banner */}
-              <div className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between ${
-                parseInt(formData.stockCount) === 0
-                  ? 'bg-red-50 border-red-200 text-red-700'
-                  : parseInt(formData.stockCount) <= parseInt(formData.lowStockThreshold)
-                  ? 'bg-amber-50 border-amber-200 text-amber-700'
-                  : 'bg-emerald-50 border-emerald-200 text-emerald-700'
-              }`}>
-                <span>Inventory Status:</span>
-                <span>
-                  {parseInt(formData.stockCount) === 0 
-                    ? '⚠️ Out of Stock' 
+                  <div>
+                    <label className="block font-bold text-gray-800 mb-1">Low-Stock Alert Level</label>
+                    <input
+                      type="number"
+                      value={formData.lowStockThreshold}
+                      onChange={(e) => setFormData({ ...formData, lowStockThreshold: e.target.value })}
+                      className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs font-bold text-amber-600"
+                    />
+                  </div>
+                </div>
+
+                {/* Stock Health Banner */}
+                <div className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between ${
+                  parseInt(formData.stockCount) === 0
+                    ? 'bg-red-50 border-red-200 text-red-700'
                     : parseInt(formData.stockCount) <= parseInt(formData.lowStockThreshold)
-                    ? '⚠️ Low Stock Warning' 
-                    : '✅ Healthy Stock'}
-                </span>
+                    ? 'bg-amber-50 border-amber-200 text-amber-700'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                }`}>
+                  <span>Inventory Status:</span>
+                  <span>
+                    {parseInt(formData.stockCount) === 0 
+                      ? '⚠️ Out of Stock' 
+                      : parseInt(formData.stockCount) <= parseInt(formData.lowStockThreshold)
+                      ? '⚠️ Low Stock Warning' 
+                      : '✅ Healthy Stock'}
+                  </span>
+                </div>
               </div>
             </div>
           )}
 
-          {/* STEP 6: Specs & Adaptive Details */}
+          {/* STEP 6: Specifications, FAQs & Store Policies */}
           {currentStep === 6 && (
-            <div className="space-y-3.5">
-              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-2.5 text-[11px] text-gray-600">
-                💡 Attribute fields adapted for <span className="font-bold text-[#F95721] capitalize">{formData.category}</span>
-              </div>
+            <div className="space-y-4">
+              {/* Quick Specs Builder */}
+              <div className="border border-blue-200 bg-blue-50/40 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                      <Award className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-gray-900">Custom Specifications Table</h4>
+                      <p className="text-[10px] text-gray-500">
+                        Rendered in the alternating striped specifications table on PDP
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                    {formData.specifications.length} custom specs
+                  </span>
+                </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-gray-800 mb-1">Capacity / Volume</label>
+                {/* Add new key-value row */}
+                <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="e.g. 500ml / 20L / 1.5L"
-                    value={formData.capacity}
-                    onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
+                    placeholder="Label (e.g. Blade Material / Voltage)"
+                    value={newSpec.label}
+                    onChange={(e) => setNewSpec(prev => ({ ...prev, label: e.target.value }))}
+                    className="w-1/3 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500 text-xs font-semibold"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Value (e.g. 420J2 Japanese Steel / 220V 50Hz)"
+                    value={newSpec.value}
+                    onChange={(e) => setNewSpec(prev => ({ ...prev, value: e.target.value }))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (newSpec.label.trim() && newSpec.value.trim()) {
+                          setFormData(prev => ({ ...prev, specifications: [...prev.specifications, { label: newSpec.label.trim(), value: newSpec.value.trim() }] }));
+                          setNewSpec({ label: '', value: '' });
+                        }
+                      }
+                    }}
+                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500 text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newSpec.label.trim() || !newSpec.value.trim()) {
+                        showToast('Please enter both label and value', 'error');
+                        return;
+                      }
+                      setFormData(prev => ({ ...prev, specifications: [...prev.specifications, { label: newSpec.label.trim(), value: newSpec.value.trim() }] }));
+                      setNewSpec({ label: '', value: '' });
+                      showToast('Specification row added!');
+                    }}
+                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-xs shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add</span>
+                  </button>
+                </div>
+
+                {/* Quick Preset Specs Buttons */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase">Quick Add:</span>
+                  {[
+                    { label: 'Origin', value: 'Mumbai Central Hub, India' },
+                    { label: 'Condition', value: 'Brand New (100% Sealed)' },
+                    { label: 'Package Includes', value: '1x Main Unit, User Guide & Accessories' },
+                    { label: 'Quality Standard', value: 'ISO 9001 Certified Quality' }
+                  ].map((preset, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        if (!formData.specifications.some(s => s.label === preset.label)) {
+                          setFormData(prev => ({ ...prev, specifications: [...prev.specifications, preset] }));
+                          showToast(`Added ${preset.label}!`);
+                        }
+                      }}
+                      className="text-[10px] font-semibold bg-white hover:bg-blue-50 border border-blue-200 text-gray-700 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
+                    >
+                      <Plus className="w-2.5 h-2.5 text-blue-600" />
+                      <span>{preset.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Current Specifications list */}
+                <div className="space-y-1.5 pt-1">
+                  {formData.specifications.length === 0 ? (
+                    <p className="text-[11px] text-gray-400 italic">No custom specs added. Default standard specs will be used on PDP.</p>
+                  ) : (
+                    formData.specifications.map((spec, idx) => (
+                      <div key={idx} className="flex items-center justify-between gap-2 p-2 bg-white rounded-xl border border-gray-200 text-xs shadow-2xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-bold text-gray-700 w-28 shrink-0 truncate">{spec.label}:</span>
+                          <span className="font-semibold text-gray-900 truncate">{spec.value}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, specifications: prev.specifications.filter((_, i) => i !== idx) }))}
+                          className="text-gray-400 hover:text-red-500 p-1 rounded-lg transition-colors shrink-0"
+                          title="Remove spec"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Adaptive Standard Attributes */}
+              <div className="border border-gray-200 rounded-2xl p-4 space-y-3 bg-gray-50/50">
+                <h4 className="text-xs font-bold text-gray-900">Standard Product Dimensions & Material</h4>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1 text-[11px]">Capacity / Volume</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 500ml / 1.5L"
+                      value={formData.capacity}
+                      onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-1.5 outline-none focus:border-[#F95721] text-xs bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1 text-[11px]">Item Weight</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 350g"
+                      value={formData.weight}
+                      onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-1.5 outline-none focus:border-[#F95721] text-xs bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1 text-[11px]">Dimensions</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 20 x 15 x 10 cm"
+                      value={formData.dimensions}
+                      onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-1.5 outline-none focus:border-[#F95721] text-xs bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1 text-[11px]">Color / Variant</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Pastel Green"
+                      value={formData.color}
+                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-1.5 outline-none focus:border-[#F95721] text-xs bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1 text-[11px]">Material / Build</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Food Grade Stainless Steel & BPA Free Plastic"
+                    value={formData.material}
+                    onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-1.5 outline-none focus:border-[#F95721] text-xs bg-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-800 mb-1">Item Weight</label>
+                  <label className="block font-bold text-gray-700 mb-1 text-[11px]">Warranty & Support</label>
                   <input
                     type="text"
-                    placeholder="e.g. 350g"
-                    value={formData.weight}
-                    onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
+                    placeholder="e.g. 6 Months Replacement Warranty"
+                    value={formData.warranty}
+                    onChange={(e) => setFormData({ ...formData, warranty: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-1.5 outline-none focus:border-[#F95721] text-xs bg-white"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Product FAQ Builder */}
+              <div className="border border-purple-200 bg-purple-50/40 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
+                      <HelpCircle className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-gray-900">Frequently Asked Questions (FAQs)</h4>
+                      <p className="text-[10px] text-gray-500">
+                        Shows in expandable FAQ accordion section on PDP
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
+                    {formData.faqs.length} FAQs
+                  </span>
+                </div>
+
+                {/* Add new FAQ */}
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Question (e.g. Is this dishwasher safe?)"
+                    value={newFaq.question}
+                    onChange={(e) => setNewFaq(prev => ({ ...prev, question: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-purple-500 text-xs font-semibold bg-white"
+                  />
+                  <div className="flex gap-2">
+                    <textarea
+                      rows={2}
+                      placeholder="Answer (e.g. Yes, all silicone and stainless parts can be detached and washed in dishwasher.)"
+                      value={newFaq.answer}
+                      onChange={(e) => setNewFaq(prev => ({ ...prev, answer: e.target.value }))}
+                      className="flex-1 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-purple-500 text-xs bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!newFaq.question.trim() || !newFaq.answer.trim()) {
+                          showToast('Please enter both question and answer', 'error');
+                          return;
+                        }
+                        setFormData(prev => ({ ...prev, faqs: [...prev.faqs, { question: newFaq.question.trim(), answer: newFaq.answer.trim() }] }));
+                        setNewFaq({ question: '', answer: '' });
+                        showToast('FAQ added!');
+                      }}
+                      className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-xs shrink-0 self-end"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add FAQ</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* List of FAQs */}
+                <div className="space-y-1.5 pt-1">
+                  {formData.faqs.length === 0 ? (
+                    <p className="text-[11px] text-gray-400 italic">No custom FAQs added. Store standard FAQs will be displayed.</p>
+                  ) : (
+                    formData.faqs.map((faq, idx) => (
+                      <div key={idx} className="p-2.5 bg-white rounded-xl border border-gray-200 text-xs shadow-2xs space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-gray-900">Q: {faq.question}</span>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, faqs: prev.faqs.filter((_, i) => i !== idx) }))}
+                            className="text-gray-400 hover:text-red-500 transition-colors"
+                            title="Remove FAQ"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <p className="text-gray-600 text-[11px] leading-relaxed">A: {faq.answer}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Product Shipping & Return Policy Custom Remarks */}
+              <div className="border border-gray-200 rounded-2xl p-4 space-y-3 bg-white">
+                <h4 className="text-xs font-bold text-gray-900">Shipping & Returns Copy Override (Optional)</h4>
+
                 <div>
-                  <label className="block font-bold text-gray-800 mb-1">Dimensions</label>
+                  <label className="block font-bold text-gray-700 mb-1 text-[11px] flex items-center gap-1">
+                    <Truck className="w-3 h-3 text-[#00A859]" />
+                    <span>Special Shipping Notice</span>
+                  </label>
                   <input
                     type="text"
-                    placeholder="e.g. 20 x 15 x 10 cm"
-                    value={formData.dimensions}
-                    onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
+                    placeholder="e.g. Ships within 12 business hours. Extra protective bubble wrap included."
+                    value={formData.shippingInfo}
+                    onChange={(e) => setFormData({ ...formData, shippingInfo: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-800 mb-1">Color / Variant</label>
+                  <label className="block font-bold text-gray-700 mb-1 text-[11px] flex items-center gap-1">
+                    <RotateCcw className="w-3 h-3 text-[#F95721]" />
+                    <span>Special Return Policy Window</span>
+                  </label>
                   <input
                     type="text"
-                    placeholder="e.g. Pastel Green"
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-full border border-gray-200 rounded-2xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
+                    placeholder="e.g. 7 Days Hassle-Free Replacement via WhatsApp unboxing video."
+                    value={formData.returnPolicy}
+                    onChange={(e) => setFormData({ ...formData, returnPolicy: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F95721] text-xs"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-gray-800 mb-1">Material / Build</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Food Grade Stainless Steel & BPA Free Plastic"
-                  value={formData.material}
-                  onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F95721] text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-gray-800 mb-1">Warranty & Replacement</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 6 Months Replacement Warranty"
-                  value={formData.warranty}
-                  onChange={(e) => setFormData({ ...formData, warranty: e.target.value })}
-                  className="w-full border border-gray-200 rounded-2xl px-3.5 py-2 outline-none focus:border-[#F95721] text-xs"
-                />
               </div>
             </div>
           )}
@@ -1432,6 +2122,75 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     className="w-4 h-4 rounded text-[#F95721] accent-[#F95721]"
                   />
                 </label>
+
+                <label className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 hover:bg-orange-50/50 border border-gray-100 cursor-pointer transition-colors">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🏷️</span>
+                    <div>
+                      <p className="font-bold text-gray-900 text-xs">Super Deal Badge</p>
+                      <p className="text-[10px] text-gray-500">Highlight in Super Deals promotions</p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={formData.isSuperDeal}
+                    onChange={(e) => setFormData({ ...formData, isSuperDeal: e.target.checked })}
+                    className="w-4 h-4 rounded text-[#F95721] accent-[#F95721]"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 hover:bg-orange-50/50 border border-gray-100 cursor-pointer transition-colors">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">💎</span>
+                    <div>
+                      <p className="font-bold text-gray-900 text-xs">Featured Product</p>
+                      <p className="text-[10px] text-gray-500">Show on curated Homepage Hero sections</p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={formData.isFeatured}
+                    onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                    className="w-4 h-4 rounded text-[#F95721] accent-[#F95721]"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 hover:bg-orange-50/50 border border-gray-100 cursor-pointer transition-colors">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🎖️</span>
+                    <div>
+                      <p className="font-bold text-gray-900 text-xs">Top Rated Collection</p>
+                      <p className="text-[10px] text-gray-500">Highlight in 4.5+ star customer favorites</p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={formData.isTopRated}
+                    onChange={(e) => setFormData({ ...formData, isTopRated: e.target.checked })}
+                    className="w-4 h-4 rounded text-[#F95721] accent-[#F95721]"
+                  />
+                </label>
+              </div>
+
+              {/* Live Mobile Simulator Launcher Card */}
+              <div className="p-4 bg-gradient-to-r from-orange-500 to-[#F95721] rounded-2xl text-white flex items-center justify-between shadow-md">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
+                    Storefront Simulator
+                  </span>
+                  <h4 className="text-xs font-black">Live Mobile PDP Preview</h4>
+                  <p className="text-[11px] text-orange-100">
+                    Test finger-sliding images and review before shoppers see it
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowLivePreview(true)}
+                  className="px-3.5 py-2 bg-white text-[#F95721] hover:bg-orange-50 font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-transform active:scale-95 shrink-0"
+                >
+                  <Smartphone className="w-4 h-4" />
+                  <span>Preview</span>
+                </button>
               </div>
             </div>
           )}
@@ -1672,6 +2431,155 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                 className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold"
               >
                 Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live Mobile PDP Simulator Modal (390px Viewport) */}
+      {showLivePreview && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-fadeIn"
+          onClick={() => setShowLivePreview(false)}
+        >
+          <div
+            className="bg-white w-full max-w-[390px] h-[92vh] max-h-[844px] rounded-[40px] border-4 border-gray-900 shadow-2xl flex flex-col overflow-hidden relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Phone Top Notch / Speaker Bar */}
+            <div className="bg-gray-900 px-6 py-2 flex items-center justify-between text-white shrink-0">
+              <span className="text-[11px] font-bold">9:41</span>
+              <div className="w-20 h-4 bg-black rounded-full mx-auto flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-gray-800" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLivePreview(false)}
+                className="w-5 h-5 rounded-full bg-gray-800 text-gray-300 hover:text-white flex items-center justify-center text-[10px]"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Sub-header Bar */}
+            <div className="p-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[11px] font-black text-gray-900 uppercase">Live PDP Simulator</span>
+              </div>
+              <span className="text-[10px] bg-orange-100 text-[#F95721] font-bold px-2 py-0.5 rounded-full">
+                Interactive
+              </span>
+            </div>
+
+            {/* Scrollable Phone Screen Content */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-3 text-xs no-scrollbar">
+              {/* Image Carousel Mockup */}
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 border border-gray-200">
+                <ResolvedImage
+                  src={formData.image || formData.images[0] || 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&auto=format&fit=crop&q=80'}
+                  alt={formData.name || 'Preview'}
+                  className="w-full h-full object-contain mix-blend-multiply p-2"
+                />
+                {formData.images.length > 1 && (
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-full">
+                    {formData.images.slice(0, 5).map((_, i) => (
+                      <span key={i} className={`h-1.5 rounded-full ${i === 0 ? 'w-3.5 bg-[#F95721]' : 'w-1.5 bg-white/70'}`} />
+                    ))}
+                  </div>
+                )}
+                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                  {formData.isBestSeller && (
+                    <span className="text-[9px] font-black bg-amber-500 text-white px-2 py-0.5 rounded-md">BESTSELLER</span>
+                  )}
+                  {formData.isDealOfDay && (
+                    <span className="text-[9px] font-black bg-[#F95721] text-white px-2 py-0.5 rounded-md">DEAL OF DAY</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Title & Price */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase text-gray-400">{formData.category}</span>
+                <h3 className="text-sm font-black text-gray-900 leading-snug">{formData.name || 'Product Title Placeholder'}</h3>
+                {formData.subtitle && (
+                  <p className="text-[11px] font-semibold text-gray-500">{formData.subtitle}</p>
+                )}
+                <div className="flex items-baseline gap-2 pt-1">
+                  <span className="text-base font-black text-[#F95721]">₹{formData.price || '0'}</span>
+                  {formData.mrp && (
+                    <span className="text-xs text-gray-400 line-through">₹{formData.mrp}</span>
+                  )}
+                  {formData.discountPercentage > 0 && (
+                    <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                      {formData.discountPercentage}% OFF
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Highlights */}
+              <div className="bg-gray-50 border border-gray-100 rounded-2xl p-3 space-y-1.5">
+                <span className="text-[10px] font-black uppercase text-gray-700 tracking-wider">Product Highlights</span>
+                <ul className="space-y-1.5">
+                  {(formData.features.length > 0 ? formData.features : [
+                    'Premium ergonomic design for effortless daily use',
+                    'Durability tested for high performance & longevity'
+                  ]).slice(0, 4).map((feat, i) => (
+                    <li key={i} className="flex items-start gap-1.5 text-[11px] text-gray-700 leading-tight">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#00A859] shrink-0 mt-0.5" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Feature Icons Strip */}
+              <div className="grid grid-cols-4 gap-1.5">
+                {(formData.featureIcons.length > 0 ? formData.featureIcons : [
+                  { icon: '⚡', label: 'Speed' },
+                  { icon: '🛡️', label: 'Safe' },
+                  { icon: '🔋', label: 'Battery' },
+                  { icon: '✨', label: 'Premium' },
+                ]).map((f, i) => (
+                  <div key={i} className="bg-orange-50/50 border border-orange-100 rounded-xl p-1.5 text-center flex flex-col items-center">
+                    <span className="text-sm">{f.icon}</span>
+                    <span className="text-[9px] font-bold text-gray-700 truncate w-full">{f.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Specifications */}
+              {formData.specifications.length > 0 && (
+                <div className="border border-gray-100 rounded-2xl p-3 space-y-1.5">
+                  <span className="text-[10px] font-black uppercase text-gray-700">Specifications</span>
+                  <div className="divide-y divide-gray-100 rounded-xl overflow-hidden border border-gray-100 text-[11px]">
+                    {formData.specifications.slice(0, 4).map((s, i) => (
+                      <div key={i} className={`flex py-1 px-2 ${i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                        <span className="w-2/5 font-bold text-gray-600 truncate">{s.label}</span>
+                        <span className="w-3/5 font-semibold text-gray-900 truncate">{s.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Bar Mockup */}
+            <div className="p-3 bg-white border-t border-gray-100 flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                className="flex-1 py-2.5 bg-[#F95721] text-white font-black rounded-xl text-xs flex items-center justify-center gap-1 shadow-xs"
+              >
+                Add to Cart
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowLivePreview(false)}
+                className="px-3 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl text-xs"
+              >
+                Close
               </button>
             </div>
           </div>

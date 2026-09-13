@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useStore } from '@/context/StoreContext';
-import { Search, X, TrendingUp, Sparkles } from 'lucide-react';
+import { Search, X, TrendingUp, Sparkles, SlidersHorizontal, PackageSearch } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
+
+type SortOption = 'relevance' | 'price_low' | 'price_high' | 'rating';
 
 export const SearchModal: React.FC = () => {
   const { isSearchOpen, setIsSearchOpen, products, setSelectedProductDetail } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
-
-  if (!isSearchOpen) return null;
+  const [sortBy, setSortBy] = useState<SortOption>('relevance');
 
   const popularSearches = [
     'Washing Machine',
@@ -21,14 +22,32 @@ export const SearchModal: React.FC = () => {
     'Storage Box'
   ];
 
-  const filteredProducts = searchTerm.trim()
-    ? products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.description.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm.trim()) return [];
+    
+    const query = searchTerm.toLowerCase();
+    const matches = products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(query) ||
+        p.category.toLowerCase().includes(query) ||
+        (p.subcategory && p.subcategory.toLowerCase().includes(query)) ||
+        p.description.toLowerCase().includes(query)
+    );
+
+    switch (sortBy) {
+      case 'price_low':
+        return [...matches].sort((a, b) => a.price - b.price);
+      case 'price_high':
+        return [...matches].sort((a, b) => b.price - a.price);
+      case 'rating':
+        return [...matches].sort((a, b) => b.rating - a.rating);
+      case 'relevance':
+      default:
+        return matches;
+    }
+  }, [products, searchTerm, sortBy]);
+
+  if (!isSearchOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-xs flex items-start justify-center p-0 sm:p-4 animate-fadeIn">
@@ -101,13 +120,62 @@ export const SearchModal: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div>
-              <p className="text-xs text-gray-500 mb-3">
-                Found <span className="font-bold text-gray-900">{filteredProducts.length}</span> results for &ldquo;{searchTerm}&rdquo;
-              </p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500">
+                  Found <span className="font-bold text-gray-900">{filteredProducts.length}</span> results
+                </p>
+              </div>
+
+              {/* Sort Pills */}
+              {filteredProducts.length > 0 && (
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                  <button
+                    onClick={() => setSortBy('relevance')}
+                    className={`px-3 py-1 text-[11px] font-bold rounded-full whitespace-nowrap transition-all ${
+                      sortBy === 'relevance'
+                        ? 'bg-[#F95721] text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Relevance
+                  </button>
+                  <button
+                    onClick={() => setSortBy('price_low')}
+                    className={`px-3 py-1 text-[11px] font-bold rounded-full whitespace-nowrap transition-all ${
+                      sortBy === 'price_low'
+                        ? 'bg-[#F95721] text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Price: Low to High
+                  </button>
+                  <button
+                    onClick={() => setSortBy('price_high')}
+                    className={`px-3 py-1 text-[11px] font-bold rounded-full whitespace-nowrap transition-all ${
+                      sortBy === 'price_high'
+                        ? 'bg-[#F95721] text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Price: High to Low
+                  </button>
+                  <button
+                    onClick={() => setSortBy('rating')}
+                    className={`px-3 py-1 text-[11px] font-bold rounded-full whitespace-nowrap transition-all ${
+                      sortBy === 'rating'
+                        ? 'bg-[#F95721] text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Top Rated
+                  </button>
+                </div>
+              )}
 
               {filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 pt-1">
                   {filteredProducts.map((p) => (
                     <ProductCard
                       key={p.id}
@@ -119,9 +187,33 @@ export const SearchModal: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 space-y-2">
-                  <p className="text-sm font-bold text-gray-800">No products found</p>
-                  <p className="text-xs text-gray-500">Try searching for &apos;washing&apos;, &apos;trimmer&apos;, or &apos;mop&apos;</p>
+                <div className="text-center py-10 px-4 space-y-3">
+                  <div className="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 text-[#F95721] mx-auto flex items-center justify-center shadow-xs">
+                    <PackageSearch className="w-7 h-7" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-black text-gray-900">No products found</p>
+                    <p className="text-xs text-gray-500">
+                      We couldn&apos;t find anything matching &ldquo;{searchTerm}&rdquo;
+                    </p>
+                  </div>
+                  <div className="pt-2 flex flex-wrap justify-center gap-1.5 max-w-xs mx-auto">
+                    {popularSearches.slice(0, 4).map((term, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSearchTerm(term)}
+                        className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-orange-50 text-[11px] font-semibold text-gray-700 hover:text-[#F95721] transition-colors"
+                      >
+                        {term}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="inline-block mt-2 text-xs font-bold text-[#F95721] hover:underline"
+                  >
+                    Clear Search
+                  </button>
                 </div>
               )}
             </div>

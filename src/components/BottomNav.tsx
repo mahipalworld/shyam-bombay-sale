@@ -5,7 +5,9 @@ import { useStore } from '@/context/StoreContext';
 import { Home, LayoutGrid, ShoppingCart, Heart, User, ArrowRight, Sparkles } from 'lucide-react';
 
 export const BottomNav: React.FC = () => {
-  const { activeTab, setActiveTab, cart, wishlist, cartSubtotal, storeSettings } = useStore();
+  const { activeTab, setActiveTab, cart, wishlist, cartSubtotal, storeSettings, isSearchOpen } = useStore();
+  if (isSearchOpen) return null;
+
   const totalCartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   // Only show docked quick-cart header when on Home or Wishlist with items in cart
@@ -31,7 +33,7 @@ export const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex flex-col items-center select-none pointer-events-none">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex flex-col items-center select-none pointer-events-none sticky-gpu">
       {/* 1. Seamlessly Joined Compact Quick-Cart Header */}
       {showDockedCart && (
         <div className="w-full max-w-md px-3 pb-1.5 pointer-events-auto animate-slideUp">
@@ -105,7 +107,7 @@ export const BottomNav: React.FC = () => {
       )}
 
       {/* 2. Main Mobile Bottom Tabs Bar */}
-      <div className="w-full bg-white/95 backdrop-blur-xl border-t border-gray-100/90 py-1.5 px-3 shadow-[0_-4px_25px_rgba(0,0,0,0.06)] pointer-events-auto">
+      <div className="w-full bg-white/95 backdrop-blur-xl border-t border-gray-100/90 py-1.5 px-3 shadow-[0_-4px_25px_rgba(0,0,0,0.06)] pointer-events-auto safe-bottom">
         <div className="max-w-md mx-auto flex items-center justify-around">
           {navItems.map((item) => {
             const Icon = item.icon;

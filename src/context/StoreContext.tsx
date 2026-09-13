@@ -116,6 +116,7 @@ interface StoreContextType {
   bestSellersConfig: BestSellersConfig;
   homepageSections: HomepageSection[];
   storeSettings: StoreSettings;
+  recentlyViewedIds: string[];
 
   // Actions
   setActiveTab: (tab: string) => void;
@@ -330,7 +331,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setSelectedCategoryFilterState(category);
     setSelectedSubcategoryFilter(null);
   };
-  const [selectedProductDetail, setSelectedProductDetail] = useState<Product | null>(null);
+  const [selectedProductDetail, setSelectedProductDetailState] = useState<Product | null>(null);
+  const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
+
+  const setSelectedProductDetail = (product: Product | null) => {
+    setSelectedProductDetailState(product);
+    if (product && product.id) {
+      setRecentlyViewedIds((prev) => {
+        const next = [product.id, ...prev.filter((id) => id !== product.id)].slice(0, 10);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('sbs_recently_viewed_ids', JSON.stringify(next));
+        }
+        return next;
+      });
+    }
+  };
+
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
   const [selectedOrderForModal, setSelectedOrderForModal] = useState<Order | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
@@ -355,7 +371,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       targetAudience: 'ALL',
       actionUrl: 'offers',
       imageUrl: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&auto=format&fit=crop&q=80',
-      read: false,
+      read: true,
       status: 'SENT',
       sentAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
@@ -368,7 +384,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       type: 'promo',
       targetAudience: 'CUSTOMERS',
       actionUrl: 'categories',
-      read: false,
+      read: true,
       status: 'SENT',
       sentAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
@@ -833,6 +849,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       const savedBestConfig = localStorage.getItem('sbs_bestsellers_config');
       if (savedBestConfig) setBestSellersConfig(JSON.parse(savedBestConfig));
+
+      const savedRecent = localStorage.getItem('sbs_recently_viewed_ids');
+      if (savedRecent) {
+        try {
+          setRecentlyViewedIds(JSON.parse(savedRecent));
+        } catch { }
+      }
 
       const savedSections = localStorage.getItem('sbs_homepage_sections');
       if (savedSections) {
@@ -2770,6 +2793,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         is_featured: Boolean(newProduct.isFeatured),
         is_super_deal: Boolean(newProduct.isSuperDeal),
         is_top_rated: Boolean(newProduct.isTopRated),
+        subtitle: newProduct.subtitle || null,
+        feature_icons: newProduct.featureIcons || [],
+        specifications: newProduct.specifications || [],
+        faqs: newProduct.faqs || [],
+        shipping_info: newProduct.shippingInfo || null,
+        return_policy: newProduct.returnPolicy || null,
       }).then(({ error }) => {
         if (error) console.error('Supabase add product error:', error);
       });
@@ -2819,6 +2848,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (updates.isFeatured !== undefined) dbUpdates.is_featured = updates.isFeatured;
       if (updates.isSuperDeal !== undefined) dbUpdates.is_super_deal = updates.isSuperDeal;
       if (updates.isTopRated !== undefined) dbUpdates.is_top_rated = updates.isTopRated;
+      if (updates.subtitle !== undefined) dbUpdates.subtitle = updates.subtitle;
+      if (updates.featureIcons !== undefined) dbUpdates.feature_icons = updates.featureIcons;
+      if (updates.specifications !== undefined) dbUpdates.specifications = updates.specifications;
+      if (updates.faqs !== undefined) dbUpdates.faqs = updates.faqs;
+      if (updates.shippingInfo !== undefined) dbUpdates.shipping_info = updates.shippingInfo;
+      if (updates.returnPolicy !== undefined) dbUpdates.return_policy = updates.returnPolicy;
 
       supabase.from('products').update(dbUpdates).eq('id', id).then(({ error }) => {
         if (error) console.error('Supabase update product error:', error);
@@ -3621,6 +3656,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         bestSellersConfig,
         homepageSections,
         storeSettings,
+        recentlyViewedIds,
 
         setActiveTab,
         setSelectedCategoryFilter,

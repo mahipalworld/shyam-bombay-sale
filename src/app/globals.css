@@ -6,6 +6,17 @@
 
 :root {
   --font-inter: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  /* Safe area insets for notched phones (iPhone X+, modern Android) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  :root {
+    --safe-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 html, body {
@@ -47,6 +58,24 @@ body {
   transition: transform 0.1s ease-in-out;
 }
 
+/* GPU-accelerated sticky bars — prevents iOS Safari paint flicker */
+.sticky-gpu {
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Safe area bottom padding for notched phones */
+.safe-bottom {
+  padding-bottom: calc(0.75rem + var(--safe-bottom));
+}
+
+.safe-bottom-lg {
+  padding-bottom: calc(1.5rem + var(--safe-bottom));
+}
+
 /* Custom animated gradient for Deals banner */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
@@ -75,5 +104,32 @@ input[type="checkbox"] {
 
 .animate-cart-bounce {
   animation: cartBounce 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Toast slide-down animation (replaces jarring bounce) */
+@keyframes slideDown {
+  0% { opacity: 0; transform: translate(-50%, -20px); }
+  100% { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes slideUp {
+  0% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -20px); }
+}
+
+.animate-toast-in {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+/* PDP gallery skeleton shimmer */
+@keyframes galleryShimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton-gallery {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 400px 100%;
+  animation: galleryShimmer 1.5s infinite;
 }
 

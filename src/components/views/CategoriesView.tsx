@@ -39,7 +39,9 @@ export const CategoriesView: React.FC = () => {
   const rightPaneRef = useRef<HTMLElement | null>(null);
   const isProgrammaticScrollRef = useRef(false);
 
-  // If selectedCategoryFilter is set externally (e.g. from banner or search), scroll to it
+  const formatItemCount = (count: number) => `${count} ${count === 1 ? 'item' : 'items'}`;
+
+  // Find currently active category using IntersectionObserverxternally (e.g. from banner or search), scroll to it
   useEffect(() => {
     if (selectedCategoryFilter && sectionRefs.current[selectedCategoryFilter]) {
       setActiveCategoryId(selectedCategoryFilter);
@@ -201,7 +203,7 @@ export const CategoriesView: React.FC = () => {
                 </div>
 
                 {/* Category Title */}
-                <span className={`text-[10px] sm:text-xs leading-tight mt-1.5 line-clamp-2 px-0.5 tracking-tight ${
+                <span className={`text-[11px] sm:text-xs leading-tight mt-1.5 line-clamp-2 px-0.5 tracking-tight ${
                   isActive ? 'text-gray-900 font-extrabold' : 'text-gray-600 font-semibold'
                 }`}>
                   {cat.name}
@@ -209,7 +211,7 @@ export const CategoriesView: React.FC = () => {
 
                 {/* Optional Offers/Hot Pill */}
                 {isOffers && (
-                  <span className="mt-0.5 text-[8px] font-black uppercase text-[#F95721] bg-orange-100/90 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
+                  <span className="mt-0.5 text-[9px] font-black uppercase text-[#F95721] bg-orange-100/90 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
                     <Flame className="w-2.5 h-2.5 fill-[#F95721]" /> Hot
                   </span>
                 )}
@@ -249,8 +251,8 @@ export const CategoriesView: React.FC = () => {
                   <h2 className="text-sm sm:text-base md:text-lg font-black text-gray-900 tracking-tight whitespace-nowrap">
                     {cat.name}
                   </h2>
-                  <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full flex-shrink-0">
-                    {categoryProductCount} items
+                  <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                    {formatItemCount(categoryProductCount)}
                   </span>
                 </div>
 
@@ -284,7 +286,7 @@ export const CategoriesView: React.FC = () => {
                     <h3 className="text-xs font-black text-gray-900 group-hover:text-[#F95721] line-clamp-2 leading-tight min-h-[28px] flex items-center justify-center text-center px-0.5">
                       All {cat.name}
                     </h3>
-                    <span className="inline-block text-[10px] text-[#F95721] font-extrabold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200/60">
+                    <span className="inline-block text-[11px] text-[#F95721] font-extrabold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200/60">
                       {categoryProductCount} Products →
                     </span>
                   </div>
@@ -317,8 +319,8 @@ export const CategoriesView: React.FC = () => {
                         <h3 className="text-xs font-bold text-gray-900 group-hover:text-[#F95721] line-clamp-2 leading-tight min-h-[28px] flex items-center justify-center text-center px-0.5">
                           {sub.name}
                         </h3>
-                        <span className="inline-block text-[10px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-full">
-                          {subProductCount > 0 ? `${subProductCount} Items` : 'Explore'}
+                        <span className="inline-block text-[11px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-full">
+                          {subProductCount > 0 ? formatItemCount(subProductCount) : 'Explore'}
                         </span>
                       </div>
                     </button>
@@ -351,7 +353,7 @@ export const CategoriesView: React.FC = () => {
           onClick={() => setActiveSubcategoryModal(null)}
         >
           <div 
-            className="w-full max-w-2xl bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 space-y-4 max-h-[90vh] flex flex-col"
+            className="w-full max-w-2xl bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 pb-[calc(1.25rem+var(--safe-bottom))] sm:pb-6 space-y-4 max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}

@@ -32,6 +32,12 @@ export interface Product {
   isFeatured?: boolean;
   isSuperDeal?: boolean;
   isTopRated?: boolean;
+  subtitle?: string;
+  featureIcons?: { icon: string; label: string }[];
+  specifications?: { label: string; value: string }[];
+  faqs?: { question: string; answer: string }[];
+  shippingInfo?: string;
+  returnPolicy?: string;
 }
 
 export interface CartItem {

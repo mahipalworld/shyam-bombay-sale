@@ -118,7 +118,7 @@ export const ProductStories: React.FC = () => {
             className="flex flex-col items-center gap-1.5 flex-shrink-0 group tap-active focus:outline-none"
           >
             {/* Gradient Ring Outer Frame */}
-            <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full p-[2.5px] bg-gradient-to-tr from-[#F95721] via-[#F59E0B] to-[#EC4899] shadow-xs group-hover:scale-105 transition-transform">
+            <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full p-[2.5px] bg-gradient-to-tr from-[#F95721] via-[#FF7038] to-[#EC4899] shadow-xs group-hover:scale-105 transition-transform">
               <div className="w-full h-full rounded-full border-2 border-white overflow-hidden bg-gray-50 flex items-center justify-center relative">
                 {isStoryVideo(story) ? (
                   <ResolvedVideo
@@ -144,7 +144,7 @@ export const ProductStories: React.FC = () => {
             </div>
 
             {/* Title & Tag */}
-            <span className="text-[11px] font-bold text-gray-800 line-clamp-1 max-w-[70px] text-center leading-tight">
+            <span className="text-[11px] font-bold text-gray-800 line-clamp-2 max-w-[76px] min-h-[26px] text-center leading-tight">
               {story.title}
             </span>
           </button>

@@ -25,9 +25,14 @@ import {
   CheckCircle2,
   LogIn,
   UserPlus,
-  Lock
+  Lock,
+  Sparkles,
+  Tag,
+  ArrowRight,
+  ChevronRight
 } from 'lucide-react';
 import { Address, Order } from '@/types';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export const CheckoutModal: React.FC = () => {
   const { 
@@ -457,32 +462,38 @@ export const CheckoutModal: React.FC = () => {
         
         {/* Header */}
         <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-4 py-3.5 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
             {checkoutStep === 'UPI_PAYMENT' && (
               <button
                 onClick={() => setCheckoutStep('FORM')}
-                className="p-1 -ml-1 text-gray-500 hover:text-gray-900 rounded-full hover:bg-gray-100 transition-colors"
+                className="p-1.5 -ml-1 text-gray-500 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-colors"
                 title="Back to Checkout Form"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
             )}
-            <div>
-              <h2 className="text-base font-black text-gray-900">
-                {checkoutStep === 'FORM' && 'Secure Checkout'}
-                {checkoutStep === 'UPI_PAYMENT' && 'UPI Payment'}
-                {checkoutStep === 'WHATSAPP_CONFIRMATION' && 'Payment Confirmation'}
-              </h2>
-              <p className="text-[10px] text-gray-500 font-medium">
-                {checkoutStep === 'FORM' && (supabaseUser ? 'Signed In & Encrypted' : 'Sign in required to place order')}
-                {checkoutStep === 'UPI_PAYMENT' && `Order ID: ${activeOrder?.orderNumber || 'SBS-XXXX'}`}
-                {checkoutStep === 'WHATSAPP_CONFIRMATION' && `Order ID: ${activeOrder?.orderNumber || 'SBS-XXXX'}`}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight">
+                  {checkoutStep === 'FORM' && 'Secure Checkout'}
+                  {checkoutStep === 'UPI_PAYMENT' && 'UPI Payment'}
+                  {checkoutStep === 'WHATSAPP_CONFIRMATION' && 'Order Verification'}
+                </h2>
+                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
+                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                  SSL Encrypted
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 font-medium truncate mt-0.5">
+                {checkoutStep === 'FORM' && (supabaseUser ? '✓ Signed In • Direct Delivery' : 'Sign in required to place order')}
+                {checkoutStep === 'UPI_PAYMENT' && `Order #${activeOrder?.orderNumber || 'SBS-XXXX'}`}
+                {checkoutStep === 'WHATSAPP_CONFIRMATION' && `Order #${activeOrder?.orderNumber || 'SBS-XXXX'}`}
               </p>
             </div>
           </div>
           <button
             onClick={handleCloseModal}
-            className="p-1.5 text-gray-400 hover:text-black rounded-full hover:bg-gray-100 transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-900 rounded-2xl hover:bg-gray-100 transition-colors flex-shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -496,27 +507,25 @@ export const CheckoutModal: React.FC = () => {
             <div className="p-4 space-y-4">
 
               {/* Sign In Required Prompt Banner (When Not Logged In) */}
-              {!supabaseUser && (
-                <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/5 border-2 border-orange-200 rounded-3xl p-4 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-[#F95721] text-white flex items-center justify-center flex-shrink-0 shadow-xs">
-                      <Lock className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-black text-gray-900 text-xs">Sign In Required</h3>
-                      <p className="text-[11px] text-gray-600 leading-relaxed mt-0.5 font-medium">
-                        Please sign in or create an account to save your address, complete your purchase, and receive order updates.
-                      </p>
-                    </div>
+              {(!supabaseUser && !authUser) ? (
+                <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/5 border-2 border-orange-200 rounded-3xl p-5 space-y-3.5 text-center shadow-xs">
+                  <div className="w-12 h-12 rounded-2xl bg-[#F95721] text-white flex items-center justify-center mx-auto shadow-xs">
+                    <Lock className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-gray-900 text-base">Sign In Required to Deliver Order</h3>
+                    <p className="text-xs text-gray-600 leading-relaxed mt-1">
+                      Please sign in to select or enter your delivery address, track real-time dispatch, and complete your checkout securely.
+                    </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div className="grid grid-cols-2 gap-2.5 pt-1">
                     <button
                       type="button"
                       onClick={() => openAuthModal('login')}
-                      className="py-2.5 px-3 bg-[#F95721] hover:bg-[#E44813] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
+                      className="py-3 px-3 bg-[#F95721] hover:bg-[#E44813] text-white font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
                     >
-                      <LogIn className="w-3.5 h-3.5" />
+                      <LogIn className="w-4 h-4" />
                       <span>Sign In / Register</span>
                     </button>
 
@@ -524,9 +533,9 @@ export const CheckoutModal: React.FC = () => {
                       type="button"
                       disabled={isGoogleLoading}
                       onClick={handleGoogleSignInFromCheckout}
-                      className="py-2.5 px-3 bg-white border border-gray-200 hover:border-gray-400 text-gray-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
+                      className="py-3 px-3 bg-white border border-gray-200 hover:border-gray-400 text-gray-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
                     >
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
@@ -536,348 +545,441 @@ export const CheckoutModal: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              )}
+              ) : (
+                /* Delivery Address Section */
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between pb-1">
+                    <span className="text-sm font-black text-gray-900 flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-orange-100 text-[#F95721] flex items-center justify-center">
+                        <MapPin className="w-3.5 h-3.5" />
+                      </div>
+                      Delivery Address
+                    </span>
+                    {addresses.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddingNewAddress(!isAddingNewAddress);
+                          setFormError(null);
+                        }}
+                        className="text-xs font-bold text-[#F95721] hover:text-[#E44813] flex items-center gap-0.5"
+                      >
+                        {isAddingNewAddress ? 'Select Saved Address' : '+ Add Address'}
+                      </button>
+                    )}
+                  </div>
 
-              {/* Delivery Address */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-gray-900 flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4 text-[#F95721]" />
-                    Delivery Address *
-                  </span>
-                  {addresses.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAddingNewAddress(!isAddingNewAddress);
-                        setFormError(null);
-                      }}
-                      className="text-[11px] font-bold text-[#F95721] hover:underline flex items-center gap-0.5"
-                    >
-                      {isAddingNewAddress ? 'Select Existing Address' : '+ Add Another Address'}
-                    </button>
+                  {addresses.length === 0 && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-start gap-2.5 text-xs text-amber-900">
+                      <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-xs leading-relaxed">
+                        <span className="font-extrabold block text-amber-950">No Address Saved Yet</span>
+                        Please enter your delivery details below to proceed with your order.
+                      </div>
+                    </div>
+                  )}
+
+                  {isAddingNewAddress || addresses.length === 0 ? (
+                    <form onSubmit={handleAddNewAddress} className="bg-orange-50/50 border-2 border-orange-200 rounded-3xl p-4 space-y-3 shadow-2xs">
+                      <div className="flex items-center justify-between pb-2 border-b border-orange-200/60">
+                        <span className="font-black text-gray-900 text-sm">Add New Shipping Address</span>
+                        <div className="flex gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setNewAddr({ ...newAddr, type: 'HOME' })}
+                            className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all ${
+                              newAddr.type === 'HOME' ? 'bg-[#F95721] text-white shadow-xs' : 'bg-white text-gray-600 border border-gray-200'
+                            }`}
+                          >
+                            <Home className="w-3 h-3" /> Home
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setNewAddr({ ...newAddr, type: 'WORK' })}
+                            className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all ${
+                              newAddr.type === 'WORK' ? 'bg-[#F95721] text-white shadow-xs' : 'bg-white text-gray-600 border border-gray-200'
+                            }`}
+                          >
+                            <Briefcase className="w-3 h-3" /> Work
+                          </button>
+                        </div>
+                      </div>
+
+                      {formError && (
+                        <p className="text-xs font-bold text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-200">
+                          {formError}
+                        </p>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-xs font-extrabold text-gray-700 mb-1 tracking-wide">Full Name *</label>
+                          <input
+                            type="text"
+                            placeholder="Recipient Name"
+                            required
+                            value={newAddr.name}
+                            onChange={(e) => setNewAddr({ ...newAddr, name: e.target.value })}
+                            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-white outline-none focus:border-[#F95721] focus:ring-2 focus:ring-orange-100 text-sm font-medium transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-extrabold text-gray-700 mb-1 tracking-wide">Mobile Number *</label>
+                          <input
+                            type="tel"
+                            placeholder="10-digit mobile"
+                            required
+                            value={newAddr.phone}
+                            onChange={(e) => setNewAddr({ ...newAddr, phone: e.target.value })}
+                            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-white outline-none focus:border-[#F95721] focus:ring-2 focus:ring-orange-100 text-sm font-medium transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-extrabold text-gray-700 mb-1 tracking-wide">House / Flat / Street / Area *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Flat 302, Sai Residency, Laxmipura"
+                          required
+                          value={newAddr.street}
+                          onChange={(e) => setNewAddr({ ...newAddr, street: e.target.value })}
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-white outline-none focus:border-[#F95721] focus:ring-2 focus:ring-orange-100 text-sm font-medium transition-all"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block text-xs font-extrabold text-gray-700 mb-1 tracking-wide">City *</label>
+                          <input
+                            type="text"
+                            placeholder="Vadodara"
+                            required
+                            value={newAddr.city}
+                            onChange={(e) => setNewAddr({ ...newAddr, city: e.target.value })}
+                            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-white outline-none focus:border-[#F95721] focus:ring-2 focus:ring-orange-100 text-sm font-medium transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-extrabold text-gray-700 mb-1 tracking-wide">State *</label>
+                          <input
+                            type="text"
+                            placeholder="Gujarat"
+                            required
+                            value={newAddr.state}
+                            onChange={(e) => setNewAddr({ ...newAddr, state: e.target.value })}
+                            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-white outline-none focus:border-[#F95721] focus:ring-2 focus:ring-orange-100 text-sm font-medium transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-extrabold text-gray-700 mb-1 tracking-wide">Pincode *</label>
+                          <input
+                            type="text"
+                            placeholder="390023"
+                            maxLength={6}
+                            required
+                            value={newAddr.pincode}
+                            onChange={(e) => setNewAddr({ ...newAddr, pincode: e.target.value })}
+                            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-white outline-none focus:border-[#F95721] focus:ring-2 focus:ring-orange-100 text-sm font-medium transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full py-3 bg-[#F95721] hover:bg-[#E44813] text-white font-black rounded-xl text-xs sm:text-sm shadow-xs active:scale-98 transition-all"
+                      >
+                        Save & Select Address
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="space-y-2">
+                      {addresses.map((addr) => {
+                        const isSelected = selectedAddressId === addr.id;
+                        return (
+                          <label
+                            key={addr.id}
+                            className={`block p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                              isSelected
+                                ? 'border-[#F95721] bg-orange-50/40 shadow-xs ring-1 ring-orange-200'
+                                : 'border-gray-200 hover:border-gray-300 bg-white'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="radio"
+                                name="address"
+                                checked={isSelected}
+                                onChange={() => setSelectedAddressId(addr.id)}
+                                className="mt-1 accent-[#F95721] w-4 h-4 cursor-pointer"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-black text-gray-900">{addr.name}</span>
+                                  <span className="text-[10px] bg-orange-100 text-[#F95721] px-2 py-0.5 rounded-md font-black uppercase tracking-wider">
+                                    {addr.type}
+                                  </span>
+                                  {isSelected && (
+                                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full ml-auto">
+                                      ✓ Active
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-600 leading-relaxed mt-1">{addr.street}, {addr.city}, {addr.state} - {addr.pincode}</p>
+                                <p className="text-xs font-bold text-gray-700 mt-1">📞 {addr.phone}</p>
+                              </div>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
-
-                {addresses.length === 0 && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-start gap-2.5 text-xs text-amber-900">
-                    <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-[11px] leading-relaxed">
-                      <span className="font-extrabold block text-amber-950">Address Not Entered</span>
-                      Please fill in your delivery details below first to proceed with your order.
-                    </div>
-                  </div>
-                )}
-
-                {isAddingNewAddress || addresses.length === 0 ? (
-                  <form onSubmit={handleAddNewAddress} className="bg-orange-50/50 border-2 border-orange-200 rounded-2xl p-3.5 space-y-2.5 text-xs">
-                    <div className="flex items-center justify-between pb-1 border-b border-orange-200/60">
-                      <span className="font-bold text-gray-900 text-xs">Add New Shipping Address</span>
-                      <div className="flex gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setNewAddr({ ...newAddr, type: 'HOME' })}
-                          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 ${
-                            newAddr.type === 'HOME' ? 'bg-[#F95721] text-white' : 'bg-white text-gray-600 border border-gray-200'
-                          }`}
-                        >
-                          <Home className="w-3 h-3" /> Home
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setNewAddr({ ...newAddr, type: 'WORK' })}
-                          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 ${
-                            newAddr.type === 'WORK' ? 'bg-[#F95721] text-white' : 'bg-white text-gray-600 border border-gray-200'
-                          }`}
-                        >
-                          <Briefcase className="w-3 h-3" /> Work
-                        </button>
-                      </div>
-                    </div>
-
-                    {formError && (
-                      <p className="text-[11px] font-bold text-red-600 bg-red-50 p-2 rounded-xl border border-red-100">
-                        {formError}
-                      </p>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Full Name *</label>
-                        <input
-                          type="text"
-                          placeholder="Your Name"
-                          required
-                          value={newAddr.name}
-                          onChange={(e) => setNewAddr({ ...newAddr, name: e.target.value })}
-                          className="w-full border border-gray-200 rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721] text-xs font-medium"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Mobile Number *</label>
-                        <input
-                          type="tel"
-                          placeholder="10-digit mobile"
-                          required
-                          value={newAddr.phone}
-                          onChange={(e) => setNewAddr({ ...newAddr, phone: e.target.value })}
-                          className="w-full border border-gray-200 rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721] text-xs font-medium"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-700 mb-0.5">House / Flat / Street / Area *</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Flat 302, Sai Residency, Laxmipura"
-                        required
-                        value={newAddr.street}
-                        onChange={(e) => setNewAddr({ ...newAddr, street: e.target.value })}
-                        className="w-full border border-gray-200 rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721] text-xs font-medium"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-700 mb-0.5">City *</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Vadodara"
-                          required
-                          value={newAddr.city}
-                          onChange={(e) => setNewAddr({ ...newAddr, city: e.target.value })}
-                          className="w-full border border-gray-200 rounded-xl px-2.5 py-2 bg-white outline-none focus:border-[#F95721] text-xs font-medium"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-700 mb-0.5">State *</label>
-                        <input
-                          type="text"
-                          placeholder="State"
-                          required
-                          value={newAddr.state}
-                          onChange={(e) => setNewAddr({ ...newAddr, state: e.target.value })}
-                          className="w-full border border-gray-200 rounded-xl px-2.5 py-2 bg-white outline-none focus:border-[#F95721] text-xs font-medium"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Pincode *</label>
-                        <input
-                          type="text"
-                          placeholder="6-digit PIN"
-                          maxLength={6}
-                          required
-                          value={newAddr.pincode}
-                          onChange={(e) => setNewAddr({ ...newAddr, pincode: e.target.value })}
-                          className="w-full border border-gray-200 rounded-xl px-2.5 py-2 bg-white outline-none focus:border-[#F95721] text-xs font-medium"
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="w-full py-2.5 bg-[#F95721] hover:bg-[#E44813] text-white font-bold rounded-xl text-xs shadow-xs active:scale-98 transition-all"
-                    >
-                      Save & Use This Address
-                    </button>
-                  </form>
-                ) : (
-                  <div className="space-y-2">
-                    {addresses.map((addr) => (
-                      <label
-                        key={addr.id}
-                        className={`block p-3 rounded-2xl border cursor-pointer transition-all ${
-                          selectedAddressId === addr.id
-                            ? 'border-[#F95721] bg-[#FFF8F4] ring-1 ring-orange-200 shadow-2xs'
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-start gap-2.5">
-                          <input
-                            type="radio"
-                            name="address"
-                            checked={selectedAddressId === addr.id}
-                            onChange={() => setSelectedAddressId(addr.id)}
-                            className="mt-0.5 accent-[#F95721]"
-                          />
-                          <div className="text-xs flex-1">
-                            <div className="flex items-center gap-1.5 font-bold text-gray-900">
-                              <span>{addr.name}</span>
-                              <span className="text-[9px] bg-orange-100 text-[#F95721] px-1.5 py-0.5 rounded font-black uppercase">
-                                {addr.type}
-                              </span>
-                            </div>
-                            <p className="text-gray-600 mt-0.5">{addr.street}, {addr.city}, {addr.state} - {addr.pincode}</p>
-                            <p className="text-gray-500 text-[11px] mt-0.5">📞 {addr.phone}</p>
-                          </div>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
+              )}
 
               {/* Payment Method */}
-              <div className="space-y-2 pt-2 border-t border-gray-100">
-                <span className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                  <CreditCard className="w-4 h-4 text-[#F95721]" />
-                  Select Payment Mode
-                </span>
+              <div className="space-y-2.5 pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-between pb-1">
+                  <span className="text-sm font-black text-gray-900 flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-emerald-100 text-[#00A859] flex items-center justify-center">
+                      <CreditCard className="w-3.5 h-3.5" />
+                    </div>
+                    Payment Method
+                  </span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Zero Extra Fees</span>
+                </div>
 
                 <div className="space-y-2">
                   {/* UPI */}
                   <label
-                    className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${
-                      selectedPayment === 'UPI' ? 'border-[#F95721] bg-[#FFF8F4] ring-1 ring-orange-200' : 'border-gray-200 bg-white'
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                      selectedPayment === 'UPI' 
+                        ? 'border-[#F95721] bg-orange-50/40 shadow-xs ring-1 ring-orange-200' 
+                        : 'border-gray-200 hover:border-gray-300 bg-white'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       <input
                         type="radio"
                         name="payment"
                         checked={selectedPayment === 'UPI'}
                         onChange={() => setSelectedPayment('UPI')}
-                        className="accent-[#F95721]"
+                        className="accent-[#F95721] w-4 h-4"
                       />
-                      <div className="flex items-center gap-2">
-                        <Smartphone className="w-4 h-4 text-[#00A859]" />
-                        <span className="text-xs font-bold text-gray-900">UPI (GPay / PhonePe / Paytm / QR)</span>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-100 text-[#00A859] flex items-center justify-center font-bold">
+                          <Smartphone className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-sm font-extrabold text-gray-900 block leading-tight">
+                            UPI Payment
+                          </span>
+                          <span className="text-xs text-gray-500 font-medium">
+                            GPay, PhonePe, Paytm, QR & Netbanking
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold text-[#00A859] bg-[#EBF7F0] px-2 py-0.5 rounded-full">
-                      Instant & Zero Fee
+                    <span className="text-[10px] font-black text-[#00A859] bg-[#EBF7F0] border border-[#00A859]/20 px-2.5 py-1 rounded-full whitespace-nowrap">
+                      Fast & Free
                     </span>
                   </label>
 
-
                   {/* Cash on Delivery */}
                   <label
-                    className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${
-                      selectedPayment === 'COD' ? 'border-[#F95721] bg-[#FFF8F4] ring-1 ring-orange-200' : 'border-gray-200 bg-white'
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                      selectedPayment === 'COD' 
+                        ? 'border-[#F95721] bg-orange-50/40 shadow-xs ring-1 ring-orange-200' 
+                        : 'border-gray-200 hover:border-gray-300 bg-white'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       <input
                         type="radio"
                         name="payment"
                         checked={selectedPayment === 'COD'}
                         onChange={() => setSelectedPayment('COD')}
-                        className="accent-[#F95721]"
+                        className="accent-[#F95721] w-4 h-4"
                       />
-                      <div className="flex items-center gap-2">
-                        <Banknote className="w-4 h-4 text-[#D97706]" />
-                        <span className="text-xs font-bold text-gray-900">Cash on Delivery (COD)</span>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                          <Banknote className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-sm font-extrabold text-gray-900 block leading-tight">
+                            Cash on Delivery (COD)
+                          </span>
+                          <span className="text-xs text-gray-500 font-medium">
+                            Pay with cash when your package arrives
+                          </span>
+                        </div>
                       </div>
                     </div>
+                    <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full whitespace-nowrap">
+                      Doorstep Cash
+                    </span>
                   </label>
                 </div>
               </div>
 
-              {/* Order Items Quick Preview */}
-              <div className="bg-gray-50 rounded-2xl p-3 space-y-1.5 text-xs">
-                <span className="font-bold text-gray-700 block text-[11px]">Order Items ({selectedCartItems.length})</span>
-                {selectedCartItems.map((item) => (
-                  <div key={item.id} className="flex justify-between text-gray-600 text-[11px]">
-                    <span className="line-clamp-1">{item.product?.name} × {item.quantity}</span>
-                    <span className="font-semibold text-gray-900">₹{((item.product?.price ?? 0) * item.quantity).toLocaleString('en-IN')}</span>
-                  </div>
-                ))}
+              {/* Order Items Preview with Product Thumbnails */}
+              <div className="bg-gray-50/80 border border-gray-100 rounded-3xl p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-gray-700 uppercase tracking-wider">
+                    Order Items ({selectedCartItems.length})
+                  </span>
+                  <span className="text-xs font-bold text-[#F95721]">
+                    Subtotal: ₹{cartSubtotal.toLocaleString('en-IN')}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {selectedCartItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-3 bg-white p-2 rounded-2xl border border-gray-100">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 p-0.5 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                          <ResolvedImage src={item.product?.image || ''} alt={item.product?.name || ''} className="w-full h-full object-contain" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-gray-900 truncate">{item.product?.name}</p>
+                          <p className="text-[11px] text-gray-500 font-medium">Qty: {item.quantity} × ₹{item.product?.price?.toLocaleString('en-IN')}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-black text-gray-900 flex-shrink-0">
+                        ₹{((item.product?.price ?? 0) * item.quantity).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* SBS Rewards Points Redemption Card */}
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl p-3 text-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🎁</span>
-                    <div>
-                      <span className="font-extrabold text-amber-950 block text-xs">SBS Rewards</span>
-                      <span className="text-[11px] text-amber-800 font-medium">
-                        Balance: <strong className="text-amber-950 font-bold">{availablePoints}</strong> points
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-3xl p-3.5 space-y-2.5 shadow-2xs">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold text-base flex-shrink-0 shadow-xs">
+                      🎁
+                    </div>
+                    <div className="min-w-0">
+                      <span className="font-black text-amber-950 block text-sm leading-tight">SBS Club Rewards</span>
+                      <span className="text-xs text-amber-800 font-medium">
+                        Balance: <strong className="text-amber-950 font-black">{availablePoints}</strong> points
                       </span>
                     </div>
                   </div>
+
                   {canRedeemPoints ? (
-                    <label className="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1.5 rounded-xl border border-amber-300 shadow-2xs hover:bg-amber-50/50 transition-colors">
+                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-2 rounded-xl border border-amber-300 shadow-2xs hover:bg-amber-50/50 transition-colors flex-shrink-0">
                       <input
                         type="checkbox"
                         checked={redeemPointsChecked}
                         onChange={(e) => setRedeemPointsChecked(e.target.checked)}
                         className="accent-amber-600 rounded w-4 h-4 cursor-pointer"
                       />
-                      <span className="text-[11px] font-bold text-amber-950">
-                        Use {pointsThreshold} pts (-₹{pointsDiscountAmount})
+                      <span className="text-xs font-black text-amber-950">
+                        -₹{pointsDiscountAmount} OFF
                       </span>
                     </label>
                   ) : (
-                    <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/70 px-2 py-1 rounded-lg">
-                      Need {Math.max(0, pointsThreshold - availablePoints)} more pts for ₹{pointsDiscountAmount} OFF
+                    <span className="text-[11px] font-bold text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-xl flex-shrink-0">
+                      Need {Math.max(0, pointsThreshold - availablePoints)} more pts
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Amount Breakdown */}
-              <div className="border-t border-gray-100 pt-2 space-y-1.5 text-xs">
-                <div className="flex justify-between text-gray-500">
-                  <span>Items Total ({selectedCartItems.length} items)</span>
-                  <span>₹{cartSubtotal.toLocaleString('en-IN')}</span>
+              {/* Bill Details / Amount Breakdown */}
+              <div className="bg-white border border-gray-100 rounded-3xl p-4 space-y-2.5 shadow-2xs">
+                <div className="flex items-center justify-between pb-1 border-b border-gray-100">
+                  <span className="text-xs font-black text-gray-900 uppercase tracking-wider">Bill Summary</span>
+                  <span className="text-[11px] text-gray-400 font-medium">{selectedCartItems.length} items</span>
                 </div>
-                {cartDiscountMRP > 0 && (
-                  <div className="flex justify-between text-gray-500">
-                    <span>Product Savings (on MRP)</span>
-                    <span className="text-[#00A859] font-semibold">-₹{cartDiscountMRP.toLocaleString('en-IN')}</span>
+
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex justify-between text-gray-600">
+                    <span className="font-medium">Items Total</span>
+                    <span className="font-bold text-gray-900">₹{cartSubtotal.toLocaleString('en-IN')}</span>
                   </div>
-                )}
-                {appliedCoupon && couponDiscount > 0 && (
-                  <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 font-semibold text-[11px]">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-emerald-600 text-white rounded-md">
-                        {appliedCoupon.code}
-                      </span>
-                      <span>Coupon Discount</span>
+
+                  {cartDiscountMRP > 0 && (
+                    <div className="flex justify-between items-center text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-xl">
+                      <span className="font-semibold">Product MRP Savings</span>
+                      <span className="font-black text-[#00A859]">-₹{cartDiscountMRP.toLocaleString('en-IN')}</span>
                     </div>
-                    <span className="font-black text-[#00A859]">-₹{couponDiscount.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
-                {pointsDiscount > 0 && (
-                  <div className="flex justify-between items-center text-amber-800 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200 font-semibold text-[11px]">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm">🎁</span>
-                      <span>SBS Rewards Discount</span>
+                  )}
+
+                  {appliedCoupon && couponDiscount > 0 && (
+                    <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-emerald-600 text-white rounded-md">
+                          {appliedCoupon.code}
+                        </span>
+                        <span className="font-bold">Coupon Savings</span>
+                      </div>
+                      <span className="font-black text-[#00A859]">-₹{couponDiscount.toLocaleString('en-IN')}</span>
                     </div>
-                    <span className="font-black text-amber-700">-₹{pointsDiscount.toLocaleString('en-IN')}</span>
+                  )}
+
+                  {pointsDiscount > 0 && (
+                    <div className="flex justify-between items-center text-amber-800 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+                      <span className="font-bold">🎁 Rewards Point Discount</span>
+                      <span className="font-black text-amber-700">-₹{pointsDiscount.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center text-gray-600">
+                    <span className="font-medium">Delivery Charges</span>
+                    <span>
+                      {cartDeliveryCharge === 0 ? (
+                        <span className="text-[#00A859] font-black bg-emerald-50 px-2 py-0.5 rounded-full text-xs">
+                          FREE DELIVERY
+                        </span>
+                      ) : (
+                        <span className="font-bold text-gray-900">₹{cartDeliveryCharge}</span>
+                      )}
+                    </span>
                   </div>
-                )}
-                <div className="flex justify-between text-gray-500">
-                  <span>Delivery Charges</span>
-                  <span>{cartDeliveryCharge === 0 ? <span className="text-[#00A859] font-bold">FREE</span> : `₹${cartDeliveryCharge}`}</span>
                 </div>
-                <div className="flex justify-between items-baseline pt-2 border-t font-bold text-sm text-gray-900">
-                  <span>Total Payable</span>
-                  <span className="text-lg text-[#F95721]">₹{payableTotal.toLocaleString('en-IN')}</span>
+
+                <div className="flex justify-between items-baseline pt-2.5 border-t border-gray-100">
+                  <div>
+                    <span className="text-sm font-black text-gray-900 block">Total Payable</span>
+                    <span className="text-[10px] text-gray-400 font-medium">Inclusive of all taxes</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-2xl font-black text-[#F95721] tracking-tight">
+                      ₹{payableTotal.toLocaleString('en-IN')}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Action Button */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4">
+            {/* Split Sticky Checkout Bar */}
+            <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-gray-100 p-3.5 sm:p-4 shadow-lg flex items-center justify-between gap-3">
+              <div>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">To Pay</span>
+                <p className="text-2xl font-black text-gray-900 tracking-tight leading-tight">
+                  ₹{payableTotal.toLocaleString('en-IN')}
+                </p>
+              </div>
+
               <button
                 disabled={isProcessingOrder}
                 onClick={handleProceedCheckout}
-                className="w-full py-3.5 bg-[#F95721] hover:bg-[#E44813] disabled:bg-gray-400 text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
+                className="flex-1 max-w-[260px] py-3.5 px-4 bg-gradient-to-r from-[#F95721] to-[#E44813] hover:brightness-105 disabled:bg-gray-400 text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
               >
                 {isProcessingOrder ? (
                   <span className="animate-pulse">Reserving Order...</span>
                 ) : !supabaseUser ? (
                   <>
                     <LogIn className="w-4 h-4" />
-                    <span>Sign In to Place Order • ₹{payableTotal.toLocaleString('en-IN')}</span>
+                    <span>Sign In to Continue</span>
                   </>
                 ) : (
                   <>
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>{selectedPayment === 'UPI' ? `Pay ₹${payableTotal.toLocaleString('en-IN')} via UPI` : `Place Order • ₹${payableTotal.toLocaleString('en-IN')}`}</span>
+                    <span>{selectedPayment === 'UPI' ? 'Proceed to Pay' : 'Place Order'}</span>
+                    <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
@@ -891,10 +993,11 @@ export const CheckoutModal: React.FC = () => {
         {checkoutStep === 'UPI_PAYMENT' && (
           <div className="p-4 space-y-4 animate-fadeIn">
             {/* Total Order Amount Banner */}
-            <div className="bg-gradient-to-br from-orange-500 to-[#F95721] text-white rounded-3xl p-4 text-center shadow-lg space-y-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-orange-100">Total Order Amount</span>
-              <p className="text-3xl font-black tracking-tight">₹{orderAmount.toLocaleString('en-IN')}</p>
-              <div className="inline-flex items-center gap-1.5 bg-black/20 px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white/90">
+            <div className="bg-gradient-to-br from-orange-500 to-[#F95721] text-white rounded-3xl p-5 text-center shadow-lg space-y-1 relative overflow-hidden">
+              <div className="absolute -right-8 -bottom-8 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none" />
+              <span className="text-xs font-bold uppercase tracking-wider text-orange-100">Total Order Amount</span>
+              <p className="text-4xl font-black tracking-tight">₹{orderAmount.toLocaleString('en-IN')}</p>
+              <div className="inline-flex items-center gap-1.5 bg-black/20 px-3 py-1 rounded-full text-xs font-bold text-white/90 mt-1">
                 <span>Order #{activeOrder?.orderNumber}</span>
               </div>
             </div>
@@ -905,7 +1008,7 @@ export const CheckoutModal: React.FC = () => {
                 ⚡ 1-Tap Pay with UPI App:
               </span>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2.5">
                 {/* Google Pay */}
                 <a
                   href={`intent://pay?pa=${encodeURIComponent(storeUpiId)}&pn=SBS&am=${orderAmount.toFixed(2)}&cu=INR#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`}
@@ -914,14 +1017,14 @@ export const CheckoutModal: React.FC = () => {
                       sessionStorage.setItem('sbs_active_checkout_session', JSON.stringify({ activeOrder, step: 'UPI_PAYMENT' }));
                     }
                   }}
-                  className="p-3 rounded-2xl bg-white border-2 border-gray-200 hover:border-[#F95721] hover:bg-orange-50/50 flex items-center gap-2.5 shadow-2xs active:scale-95 transition-all text-left"
+                  className="p-3.5 rounded-2xl bg-white border-2 border-gray-100 hover:border-[#F95721] hover:bg-orange-50/40 flex items-center gap-3 shadow-2xs active:scale-95 transition-all text-left"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center font-black text-blue-600 text-xs">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center font-black text-blue-600 text-sm shadow-xs flex-shrink-0">
                     G
                   </div>
-                  <div>
-                    <span className="text-xs font-bold text-gray-900 block leading-tight">Google Pay</span>
-                    <span className="text-[9px] text-gray-500">Instant</span>
+                  <div className="min-w-0">
+                    <span className="text-sm font-black text-gray-900 block leading-tight truncate">Google Pay</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase">Instant</span>
                   </div>
                 </a>
 
@@ -933,14 +1036,14 @@ export const CheckoutModal: React.FC = () => {
                       sessionStorage.setItem('sbs_active_checkout_session', JSON.stringify({ activeOrder, step: 'UPI_PAYMENT' }));
                     }
                   }}
-                  className="p-3 rounded-2xl bg-white border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50/50 flex items-center gap-2.5 shadow-2xs active:scale-95 transition-all text-left"
+                  className="p-3.5 rounded-2xl bg-white border-2 border-gray-100 hover:border-purple-500 hover:bg-purple-50/40 flex items-center gap-3 shadow-2xs active:scale-95 transition-all text-left"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center font-black text-purple-600 text-xs">
+                  <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center font-black text-purple-600 text-sm shadow-xs flex-shrink-0">
                     Pe
                   </div>
-                  <div>
-                    <span className="text-xs font-bold text-gray-900 block leading-tight">PhonePe</span>
-                    <span className="text-[9px] text-gray-500">Fast Pay</span>
+                  <div className="min-w-0">
+                    <span className="text-sm font-black text-gray-900 block leading-tight truncate">PhonePe</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase">Fast Pay</span>
                   </div>
                 </a>
 
@@ -952,14 +1055,14 @@ export const CheckoutModal: React.FC = () => {
                       sessionStorage.setItem('sbs_active_checkout_session', JSON.stringify({ activeOrder, step: 'UPI_PAYMENT' }));
                     }
                   }}
-                  className="p-3 rounded-2xl bg-white border-2 border-gray-200 hover:border-cyan-600 hover:bg-cyan-50/50 flex items-center gap-2.5 shadow-2xs active:scale-95 transition-all text-left"
+                  className="p-3.5 rounded-2xl bg-white border-2 border-gray-100 hover:border-cyan-600 hover:bg-cyan-50/40 flex items-center gap-3 shadow-2xs active:scale-95 transition-all text-left"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-cyan-50 flex items-center justify-center font-black text-cyan-600 text-xs">
+                  <div className="w-9 h-9 rounded-xl bg-cyan-50 flex items-center justify-center font-black text-cyan-600 text-sm shadow-xs flex-shrink-0">
                     Py
                   </div>
-                  <div>
-                    <span className="text-xs font-bold text-gray-900 block leading-tight">Paytm</span>
-                    <span className="text-[9px] text-gray-500">Direct</span>
+                  <div className="min-w-0">
+                    <span className="text-sm font-black text-gray-900 block leading-tight truncate">Paytm</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase">Direct</span>
                   </div>
                 </a>
 
@@ -971,29 +1074,29 @@ export const CheckoutModal: React.FC = () => {
                       sessionStorage.setItem('sbs_active_checkout_session', JSON.stringify({ activeOrder, step: 'UPI_PAYMENT' }));
                     }
                   }}
-                  className="p-3 rounded-2xl bg-white border-2 border-gray-200 hover:border-emerald-600 hover:bg-emerald-50/50 flex items-center gap-2.5 shadow-2xs active:scale-95 transition-all text-left"
+                  className="p-3.5 rounded-2xl bg-white border-2 border-gray-100 hover:border-emerald-600 hover:bg-emerald-50/40 flex items-center gap-3 shadow-2xs active:scale-95 transition-all text-left"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center font-black text-emerald-600 text-xs">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center font-black text-emerald-600 text-xs shadow-xs flex-shrink-0">
                     UPI
                   </div>
-                  <div>
-                    <span className="text-xs font-bold text-gray-900 block leading-tight">Any UPI App</span>
-                    <span className="text-[9px] text-gray-500">CRED / BHIM</span>
+                  <div className="min-w-0">
+                    <span className="text-sm font-black text-gray-900 block leading-tight truncate">Any App</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase">CRED / BHIM</span>
                   </div>
                 </a>
               </div>
             </div>
 
             {/* UPI ID Copy Card */}
-            <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-2.5 flex items-center justify-between gap-2 text-xs">
+            <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-3 flex items-center justify-between gap-3">
               <div className="text-left min-w-0">
-                <span className="text-[10px] text-gray-400 font-bold block uppercase">UPI ID</span>
-                <span className="font-mono font-bold text-gray-900 truncate block">{storeUpiId}</span>
+                <span className="text-[10px] text-gray-400 font-black block uppercase tracking-wider">Store UPI ID</span>
+                <span className="font-mono font-bold text-gray-900 text-xs truncate block">{storeUpiId}</span>
               </div>
               <button
                 type="button"
                 onClick={copyUpiId}
-                className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 hover:border-gray-400 rounded-xl font-bold text-gray-700 text-[11px] shadow-2xs active:scale-95 transition-all flex-shrink-0"
+                className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 hover:border-gray-400 rounded-xl font-bold text-gray-700 text-xs shadow-2xs active:scale-95 transition-all flex-shrink-0"
               >
                 {copiedUpi ? (
                   <>
@@ -1014,26 +1117,26 @@ export const CheckoutModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowQrCodeOnMobile(prev => !prev)}
-                className="w-full py-2 px-3 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                className="w-full py-2.5 px-3 rounded-2xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
               >
-                <QrCode className="w-3.5 h-3.5 text-[#F95721]" />
+                <QrCode className="w-4 h-4 text-[#F95721]" />
                 <span>{showQrCodeOnMobile ? 'Hide QR Code' : '📷 Show QR Code to Scan'}</span>
               </button>
 
               {showQrCodeOnMobile && (
-                <div className="bg-white border-2 border-orange-100 rounded-3xl p-4 text-center space-y-2 shadow-2xs mt-2 animate-fadeIn">
+                <div className="bg-white border-2 border-orange-100 rounded-3xl p-5 text-center space-y-2 shadow-2xs mt-2 animate-fadeIn">
                   <div className="flex justify-center py-1">
-                    <div className="p-2.5 bg-white rounded-2xl border-2 border-gray-100 shadow-xs inline-block">
+                    <div className="p-3 bg-white rounded-2xl border-2 border-gray-100 shadow-xs inline-block">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={qrCodeUrl}
                         alt="UPI Payment QR Code"
-                        className="w-44 h-44 object-contain rounded-lg"
+                        className="w-48 h-48 object-contain rounded-lg"
                         loading="eager"
                       />
                     </div>
                   </div>
-                  <p className="text-[10px] text-gray-500 font-medium">Scan with camera or payment scanner app</p>
+                  <p className="text-xs text-gray-500 font-medium">Scan with camera or payment scanner app</p>
                 </div>
               )}
             </div>
@@ -1043,12 +1146,12 @@ export const CheckoutModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCustomerConfirmedPayment}
-                className="w-full py-3.5 bg-[#F95721] hover:bg-[#E44813] text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
+                className="w-full py-4 bg-[#F95721] hover:bg-[#E44813] text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
               >
                 <CheckCircle2 className="w-5 h-5" />
                 <span>✓ I&apos;ve Paid • Confirm on WhatsApp</span>
               </button>
-              <p className="text-[10px] text-gray-400 text-center font-medium">
+              <p className="text-xs text-gray-400 text-center font-medium">
                 Tap after sending ₹{orderAmount.toLocaleString('en-IN')} to finish verification
               </p>
             </div>
@@ -1061,31 +1164,31 @@ export const CheckoutModal: React.FC = () => {
         {checkoutStep === 'WHATSAPP_CONFIRMATION' && (
           <div className="p-4 space-y-4 animate-fadeIn">
             {/* Confirmation Header Info */}
-            <div className="text-center space-y-2 py-2">
-              <div className="w-14 h-14 bg-orange-100 text-[#F95721] rounded-3xl flex items-center justify-center mx-auto shadow-inner">
-                <MessageCircle className="w-7 h-7" />
+            <div className="text-center space-y-2 py-3">
+              <div className="w-16 h-16 bg-orange-100 text-[#F95721] rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+                <MessageCircle className="w-8 h-8" />
               </div>
-              <h3 className="text-lg font-black text-gray-900">Payment Confirmation</h3>
-              <p className="text-xs text-gray-600 leading-relaxed px-2 font-medium">
+              <h3 className="text-xl font-black text-gray-900 tracking-tight">Payment Confirmation</h3>
+              <p className="text-xs text-gray-600 leading-relaxed px-3 font-medium">
                 Send us a quick WhatsApp message with your Order ID. We will verify your payment and update your order immediately!
               </p>
             </div>
 
             {/* Pre-filled Details Card */}
-            <div className="bg-orange-50/70 border border-orange-200 rounded-3xl p-4 space-y-2.5 text-xs">
+            <div className="bg-orange-50/70 border-2 border-orange-200/80 rounded-3xl p-4 space-y-3 shadow-2xs">
               <div className="flex justify-between items-center pb-2 border-b border-orange-200/60">
-                <span className="text-gray-500 font-bold">Order ID</span>
-                <span className="font-mono font-black text-gray-900 text-sm">{activeOrder?.orderNumber}</span>
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Order ID</span>
+                <span className="font-mono font-black text-gray-900 text-base">{activeOrder?.orderNumber}</span>
               </div>
               <div className="flex justify-between items-center pb-2 border-b border-orange-200/60">
-                <span className="text-gray-500 font-bold">Order Amount</span>
-                <span className="font-black text-[#F95721] text-sm">₹{activeOrder?.total.toLocaleString('en-IN')}</span>
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Order Amount</span>
+                <span className="font-black text-[#F95721] text-lg">₹{activeOrder?.total.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500 font-bold flex items-center gap-1">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-gray-400" /> Confirmation Time
                 </span>
-                <span className="font-bold text-gray-800">{paymentConfirmedTime || 'Just now'}</span>
+                <span className="text-xs font-black text-gray-800">{paymentConfirmedTime || 'Just now'}</span>
               </div>
             </div>
 
@@ -1095,23 +1198,23 @@ export const CheckoutModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSendWhatsAppConfirmation}
-                  className="w-full py-3.5 bg-[#25D366] hover:bg-[#20bd5a] active:bg-[#1caa4f] text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-98 transition-all"
+                  className="w-full py-4 bg-[#25D366] hover:bg-[#20bd5a] active:bg-[#1caa4f] text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-98 transition-all"
                 >
                   <MessageCircle className="w-5 h-5 fill-current" />
                   <span>💬 Send Confirmation on WhatsApp</span>
                 </button>
-                <p className="text-[10px] text-gray-400 text-center font-medium">
+                <p className="text-xs text-gray-400 text-center font-medium">
                   Opens WhatsApp with pre-filled order details automatically
                 </p>
               </div>
             ) : (
               <div className="space-y-3 pt-2">
                 {/* Confirmation Opened Badge */}
-                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 flex items-center gap-3 text-emerald-900">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-4 flex items-center gap-3 text-emerald-900 shadow-2xs">
                   <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0" />
                   <div>
-                    <span className="font-black block text-emerald-950 text-xs">WhatsApp message opened ✓</span>
-                    <span className="text-[11px] text-emerald-800">
+                    <span className="font-black block text-emerald-950 text-sm">WhatsApp message opened ✓</span>
+                    <span className="text-xs text-emerald-800 leading-relaxed mt-0.5 block">
                       We will verify your UPI payment and update your tracking timeline shortly.
                     </span>
                   </div>
@@ -1121,7 +1224,7 @@ export const CheckoutModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleViewOrdersAndTrack}
-                  className="w-full py-3.5 bg-[#F95721] hover:bg-[#E44813] text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
+                  className="w-full py-4 bg-[#F95721] hover:bg-[#E44813] text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
                 >
                   <Check className="w-4 h-4" />
                   <span>Done • View My Orders</span>
@@ -1131,7 +1234,7 @@ export const CheckoutModal: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleSendWhatsAppConfirmation}
-                    className="text-[11px] font-bold text-gray-500 hover:text-emerald-700 underline"
+                    className="text-xs font-bold text-gray-500 hover:text-emerald-700 underline"
                   >
                     Reopen WhatsApp message
                   </button>
