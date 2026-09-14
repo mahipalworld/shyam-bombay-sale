@@ -1172,20 +1172,24 @@ export const HomeView: React.FC = () => {
         </div>
 
         {/* Operating Hours & Location */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-[11px] text-gray-500 text-center">
-          {storeSettings?.businessHours && (
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3 text-gray-400" /> {storeSettings.businessHours}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-[11px] text-gray-500 text-center px-4">
+          <span className="flex items-center gap-1 justify-center">
+            <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            <span>{storeSettings?.businessHours || '10:00 AM - 09:30 PM'}</span>
+          </span>
+          <span className="hidden sm:inline text-gray-300">•</span>
+          <a
+            href="https://share.google/Pa5CkR6pMiRD0MMZm"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 justify-center hover:text-[#F95721] text-gray-600 transition-colors group"
+            title="View verified store on Google Maps"
+          >
+            <MapPin className="w-3.5 h-3.5 text-[#F95721] shrink-0" />
+            <span className="underline underline-offset-2 decoration-gray-300 group-hover:decoration-[#F95721] max-w-md">
+              {storeSettings?.address || 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023'}
             </span>
-          )}
-          {storeSettings?.address && (
-            <>
-              <span className="hidden sm:inline">•</span>
-              <span className="flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-gray-400" /> {storeSettings.address}
-              </span>
-            </>
-          )}
+          </a>
         </div>
 
         {/* Copyright */}

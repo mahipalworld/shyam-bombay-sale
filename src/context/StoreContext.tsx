@@ -585,6 +585,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     manualProductIds: ['p4', 'p5', 'p6']
   });
 
+  const sanitizeStoreSettings = (s: any): StoreSettings => {
+    const result = { ...s };
+    if (!result.address || result.address.includes('Jaipur') || result.address.includes('Shyam Bazaar') || result.address.includes('302001')) {
+      result.address = 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023';
+    }
+    if (!result.storeName || result.storeName === 'Shyam Business Store') {
+      result.storeName = 'Shyam Bombay Sale';
+    }
+    if (!result.contactPhone || result.contactPhone === '+91 99887 76655' || result.contactPhone === '9988776655') {
+      result.contactPhone = '+91 92262 94797';
+    }
+    if (!result.contactEmail || result.contactEmail === 'support@sbsstore.com') {
+      result.contactEmail = 'shyambombaysale@gmail.com';
+    }
+    if (!result.businessHours) {
+      result.businessHours = '10:00 AM - 09:30 PM';
+    }
+    if (!result.deliveryZones || result.deliveryZones.includes('Jaipur')) {
+      result.deliveryZones = ['Vadodara', 'Subhanpura', 'Gujarat', 'All India'];
+    }
+    return result;
+  };
+
   const [homepageSections, setHomepageSections] = useState<HomepageSection[]>(DEFAULT_HOMEPAGE_SECTIONS);
 
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
@@ -596,7 +619,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     businessHours: '10:00 AM - 09:30 PM',
     deliveryCharge: 40,
     freeDeliveryThreshold: 499,
-    deliveryZones: ['Jaipur', 'Jodhpur', 'Kota', 'Udaipur'],
+    deliveryZones: ['Vadodara', 'Subhanpura', 'Gujarat', 'All India'],
     codEnabled: true,
     upiId: 'suhanarajpurohit3@oksbi',
     lowStockThreshold: 5,
@@ -887,6 +910,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           if (parsed.contactPhone === '+91 99887 76655' || parsed.contactPhone === '9988776655' || !parsed.contactPhone) {
             parsed.contactPhone = '+91 92262 94797';
           }
+          if (!parsed.address || parsed.address.includes('Jaipur') || parsed.address.includes('Shyam Bazaar') || parsed.address.includes('302001')) {
+            parsed.address = 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023';
+          }
+          if (!parsed.storeName || parsed.storeName === 'Shyam Business Store') {
+            parsed.storeName = 'Shyam Bombay Sale';
+          }
+          if (!parsed.contactEmail || parsed.contactEmail === 'support@sbsstore.com') {
+            parsed.contactEmail = 'shyambombaysale@gmail.com';
+          }
+          if (!parsed.businessHours) {
+            parsed.businessHours = '10:00 AM - 09:30 PM';
+          }
+          if (!parsed.deliveryZones || parsed.deliveryZones.includes('Jaipur')) {
+            parsed.deliveryZones = ['Vadodara', 'Subhanpura', 'Gujarat', 'All India'];
+          }
           setStoreSettings(parsed);
           localStorage.setItem('sbs_store_settings', JSON.stringify(parsed));
         } catch {
@@ -1044,7 +1082,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             if (s.id === 'today_deals' && Array.isArray(s.data)) setTodayDeals(s.data);
             if (s.id === 'trending_products' && Array.isArray(s.data)) setTrendingNowProducts(s.data);
             if (s.id === 'best_sellers_config' && s.data) setBestSellersConfig(s.data);
-            if (s.id === 'store_settings' && s.data) setStoreSettings(s.data);
+            if (s.id === 'store_settings' && s.data) setStoreSettings(sanitizeStoreSettings(s.data));
           });
         }
       } catch (err) {
@@ -1325,7 +1363,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (s.id === 'today_deals' && Array.isArray(s.data)) setTodayDeals(s.data);
         if (s.id === 'trending_products' && Array.isArray(s.data)) setTrendingNowProducts(s.data);
         if (s.id === 'best_sellers_config' && s.data) setBestSellersConfig(s.data);
-        if (s.id === 'store_settings' && s.data) setStoreSettings(s.data);
+        if (s.id === 'store_settings' && s.data) setStoreSettings(sanitizeStoreSettings(s.data));
       })
       .subscribe();
 
