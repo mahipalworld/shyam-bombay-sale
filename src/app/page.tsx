@@ -106,7 +106,7 @@ export default function App() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/logo.png?v=3"
-                    alt="SBS — Shyam Business Store"
+                    alt="SBS Store — Shyam Bombay Sale"
                     className="h-8 w-auto object-contain flex-shrink-0 bg-white/10 p-1 rounded-lg"
                   />
                   <div className="flex flex-col leading-tight">
@@ -114,7 +114,7 @@ export default function App() {
                   </div>
                 </div>
                 <p className="text-xs text-gray-400 leading-relaxed">
-                  Smart Products. Better Prices. Everyday essentials curated for a modern and smarter home.
+                  Smart Products. Better Prices. Everyday essentials curated for a modern and smarter home by Shyam Bombay Sale (SBS Store).
                 </p>
               </div>
 
@@ -126,8 +126,8 @@ export default function App() {
                   <li><button onClick={() => { setSelectedCategoryFilter('offers'); setActiveTab('categories'); }} className="py-1 inline-block hover:text-[#F95721] transition-colors">Today&apos;s Deals</button></li>
                   <li><button onClick={() => setActiveTab('wishlist')} className="py-1 inline-block hover:text-[#F95721] transition-colors">Wishlist</button></li>
                   {/* Crawlable anchor links for Google — do not replace with buttons */}
-                  <li><a href="/about" className="py-1 inline-block hover:text-[#F95721] transition-colors">About SBS</a></li>
-                  <li><a href="/contact" className="py-1 inline-block hover:text-[#F95721] transition-colors">Contact Us</a></li>
+                  <li><a href="/about" className="py-1 inline-block hover:text-[#F95721] transition-colors">About Shyam Bombay Sale</a></li>
+                  <li><a href="/contact" className="py-1 inline-block hover:text-[#F95721] transition-colors">Store Location &amp; Contact</a></li>
                 </ul>
               </div>
 
@@ -154,7 +154,7 @@ export default function App() {
             </div>
 
             <div className="pt-6 border-t border-gray-800 flex justify-between items-center text-xs text-gray-400">
-              <p>© {new Date().getFullYear()} SBS Store. All rights reserved.</p>
+              <p>© {new Date().getFullYear()} SBS Store — Shyam Bombay Sale. All rights reserved.</p>
               <p className="flex items-center gap-1">Made with <Heart className="w-3.5 h-3.5 fill-[#F95721] text-[#F95721]" /> for Smart Living</p>
             </div>
           </div>

@@ -2,25 +2,25 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'About SBS — Shyam Bombay Sale | Who We Are & Store Story',
+  title: 'About SBS Store — Shyam Bombay Sale | Vadodara Retail Store & Online Shopping',
   description:
     'Learn about Shyam Bombay Sale (SBS Store), your trusted destination for smart everyday essentials, household cleaning products, and kitchenware in Vadodara and online across India.',
   alternates: {
     canonical: 'https://www.sbsstore.in/about',
   },
   openGraph: {
-    title: 'About SBS — Shyam Bombay Sale',
+    title: 'About SBS Store — Shyam Bombay Sale | Vadodara',
     description:
       'Learn about Shyam Bombay Sale (SBS Store), offering quality everyday essentials, home & kitchen goods in Subhanpura, Vadodara and delivered across India.',
     url: 'https://www.sbsstore.in/about',
-    siteName: 'SBS — Shyam Bombay Sale',
+    siteName: 'SBS Store — Shyam Bombay Sale',
     type: 'website',
     images: [
       {
         url: 'https://www.sbsstore.in/logo.png',
         width: 800,
         height: 600,
-        alt: 'SBS — Shyam Bombay Sale Logo',
+        alt: 'SBS Store — Shyam Bombay Sale Logo',
       },
     ],
   },
@@ -31,7 +31,7 @@ const aboutJsonLd = {
   '@type': 'AboutPage',
   '@id': 'https://www.sbsstore.in/about#webpage',
   'url': 'https://www.sbsstore.in/about',
-  'name': 'About SBS — Shyam Bombay Sale',
+  'name': 'About SBS Store — Shyam Bombay Sale',
   'description': 'About page for Shyam Bombay Sale (SBS Store).',
   'isPartOf': { '@id': 'https://www.sbsstore.in/#website' },
   'about': { '@id': 'https://www.sbsstore.in/#organization' },
@@ -51,7 +51,7 @@ export default function AboutPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/logo.png?v=3"
-                alt="SBS — Shyam Bombay Sale"
+                alt="SBS Store — Shyam Bombay Sale"
                 className="h-8 w-auto object-contain group-hover:scale-105 transition-transform"
               />
               <span className="text-base font-black text-gray-900 group-hover:text-[#F95721] transition-colors">
@@ -79,7 +79,7 @@ export default function AboutPage() {
               About Us
             </span>
             <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-4">
-              Shyam Bombay Sale (SBS)
+              Shyam Bombay Sale (SBS Store)
             </h1>
             <p className="text-lg text-gray-600 leading-relaxed max-w-2xl">
               Your destination for smart everyday essentials — quality products for your home, kitchen, and daily life, both in our offline store and delivered across India.
@@ -90,7 +90,7 @@ export default function AboutPage() {
             <section>
               <h2 className="text-xl font-black text-gray-900 mb-3">Who We Are</h2>
               <p>
-                <strong>Shyam Bombay Sale</strong> (also operating digitally as <strong>SBS — Shyam Business Store</strong>) is a trusted retail establishment based in <strong>Vadodara, Gujarat</strong>. We specialise in practical, well-made everyday essentials at fair prices, focusing on products that make daily life easier: household cleaning solutions, kitchen tools, personal care, and home organisation.
+                <strong>Shyam Bombay Sale (SBS Store)</strong> is a trusted retail establishment based in <strong>Subhanpura, Vadodara, Gujarat</strong>. We specialise in practical, well-made everyday essentials at fair wholesale and factory-direct prices, focusing on products that make daily life easier: household cleaning solutions, kitchen tools, personal care, and home organisation.
               </p>
               <p className="mt-3">
                 Whether you visit us at our local offline store in Subhanpura or order online through{' '}
@@ -107,14 +107,23 @@ export default function AboutPage() {
                 <p className="text-sm text-gray-600">
                   Open 7 days a week: <strong>10:00 AM to 9:30 PM</strong>.
                 </p>
-                <div>
+                <div className="flex items-center gap-4 flex-wrap pt-1">
                   <a
                     href="https://share.google/Pa5CkR6pMiRD0MMZm"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-800 underline underline-offset-4"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 underline underline-offset-4"
                   >
                     <span>Find Shyam Bombay Sale on Google Maps</span>
+                    <span>↗</span>
+                  </a>
+                  <a
+                    href="https://www.justdial.com/Vadodara/Shyam-Bombay-Sale-Subhanpura/0265PX265-X265-260124041911-U8Y6_BZDET"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0076D7] hover:underline underline-offset-4"
+                  >
+                    <span>View Verified Justdial Listing</span>
                     <span>↗</span>
                   </a>
                 </div>

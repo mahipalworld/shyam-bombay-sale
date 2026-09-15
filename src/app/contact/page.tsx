@@ -2,25 +2,25 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Contact SBS — Shyam Bombay Sale | Get in Touch & Store Location',
+  title: 'Contact SBS Store — Shyam Bombay Sale | Vadodara Store Location & Support',
   description:
-    'Contact SBS — Shyam Bombay Sale (Shyam Business Store). Reach us by phone, WhatsApp, or visit our offline store in Subhanpura, Vadodara, Gujarat.',
+    'Contact SBS Store (Shyam Bombay Sale). Reach us by phone, WhatsApp, or visit our offline retail showroom in Subhanpura, Vadodara, Gujarat.',
   alternates: {
     canonical: 'https://www.sbsstore.in/contact',
   },
   openGraph: {
-    title: 'Contact SBS — Shyam Bombay Sale | Store Location & Support',
+    title: 'Contact SBS Store — Shyam Bombay Sale | Vadodara Store Location',
     description:
       'Get in touch with Shyam Bombay Sale (SBS Store). Visit our store in Vadodara or reach our phone, WhatsApp, and email support available Mon–Sun, 10 AM to 9:30 PM.',
     url: 'https://www.sbsstore.in/contact',
-    siteName: 'SBS — Shyam Bombay Sale',
+    siteName: 'SBS Store — Shyam Bombay Sale',
     type: 'website',
     images: [
       {
         url: 'https://www.sbsstore.in/logo.png',
         width: 800,
         height: 600,
-        alt: 'SBS — Shyam Bombay Sale Logo',
+        alt: 'SBS Store — Shyam Bombay Sale Logo',
       },
     ],
   },
@@ -31,20 +31,21 @@ const contactJsonLd = {
   '@type': 'ContactPage',
   '@id': 'https://www.sbsstore.in/contact#webpage',
   'url': 'https://www.sbsstore.in/contact',
-  'name': 'Contact SBS — Shyam Bombay Sale',
+  'name': 'Contact SBS Store — Shyam Bombay Sale',
   'description': 'Contact page and store location for Shyam Bombay Sale (SBS Store).',
   'isPartOf': { '@id': 'https://www.sbsstore.in/#website' },
   'about': { '@id': 'https://www.sbsstore.in/#organization' },
 };
 
 // Contact constants
-const STORE_NAME = 'Shyam Bombay Sale (SBS)';
+const STORE_NAME = 'Shyam Bombay Sale (SBS Store)';
 const STORE_PHONE = '+91 92262 94797';
 const WHATSAPP_LINK = 'https://wa.me/919226294797?text=Hi%20Shyam%20Bombay%20Sale%2C%20I%20need%20assistance.';
 const STORE_EMAIL = 'shyambombaysale@gmail.com';
 const STORE_HOURS = 'Monday – Sunday, 10:00 AM – 9:30 PM';
 const STORE_ADDRESS = 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023';
 const GOOGLE_MAPS_LINK = 'https://share.google/Pa5CkR6pMiRD0MMZm';
+const JUSTDIAL_LINK = 'https://www.justdial.com/Vadodara/Shyam-Bombay-Sale-Subhanpura/0265PX265-X265-260124041911-U8Y6_BZDET';
 
 export default function ContactPage() {
   return (
@@ -60,7 +61,7 @@ export default function ContactPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/logo.png?v=3"
-                alt="SBS — Shyam Business Store"
+                alt="SBS Store — Shyam Bombay Sale"
                 className="h-8 w-auto object-contain group-hover:scale-105 transition-transform"
               />
               <span className="text-base font-black text-gray-900 group-hover:text-[#F95721] transition-colors">
@@ -88,7 +89,7 @@ export default function ContactPage() {
               Contact Us & Store Location
             </span>
             <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-4">
-              Get in Touch with Shyam Bombay Sale (SBS)
+              Get in Touch with Shyam Bombay Sale (SBS Store)
             </h1>
             <p className="text-lg text-gray-600 leading-relaxed max-w-2xl">
               Visit our offline retail store in Vadodara or reach our customer care team online. We are here to help!
@@ -106,28 +107,33 @@ export default function ContactPage() {
                   <span>Offline Store</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-black text-gray-900">
-                  Shyam Bombay Sale
+                  Shyam Bombay Sale (SBS Store)
                 </h2>
-                <p className="text-sm md:text-base text-gray-700 leading-relaxed">
-                  {STORE_ADDRESS}
+                <p className="text-sm font-semibold text-gray-800 leading-snug">
+                  📍 {STORE_ADDRESS}
                 </p>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 pt-1">
-                  <span>🕒 Open Daily: 10:00 AM – 9:30 PM</span>
-                  <span>📍 Subhanpura / Laxmipura Road, Vadodara</span>
-                </div>
+                <p className="text-xs text-gray-600">
+                  🕒 Open 7 days a week: <strong>{STORE_HOURS}</strong>.
+                </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row md:flex-col gap-3 shrink-0">
+              <div className="flex flex-col gap-2.5 flex-shrink-0">
                 <a
                   href={GOOGLE_MAPS_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-2xl shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02]"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all"
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  </svg>
                   <span>View on Google Maps</span>
+                  <span>↗</span>
+                </a>
+                <a
+                  href={JUSTDIAL_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-[#0076D7]/40 hover:bg-blue-50 text-[#0076D7] text-xs font-bold rounded-xl transition-all"
+                >
+                  <span>Justdial Profile</span>
                   <span>↗</span>
                 </a>
                 <a

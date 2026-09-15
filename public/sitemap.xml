@@ -8,41 +8,37 @@
         http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
 
   <!--
-    SBS — Shyam Business Store | Sitemap
-    Phase 1: Brand Foundation — only real, public, canonical pages.
-
-    When products launch (Phase 3), add:
-      <url><loc>https://www.sbsstore.in/categories/[slug]</loc></url>
-      <url><loc>https://www.sbsstore.in/products/[slug]</loc></url>
+    SBS Store — Shyam Bombay Sale | Sitemap
+    Official pages for Shyam Bombay Sale (SBS Store), Vadodara, Gujarat.
   -->
 
   <!-- Homepage — Primary SEO target -->
   <url>
     <loc>https://www.sbsstore.in/</loc>
-    <lastmod>2026-09-06T00:00:00+05:30</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-09-15T00:00:00+05:30</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://www.sbsstore.in/logo.png</image:loc>
-      <image:title>SBS — Shyam Business Store</image:title>
-      <image:caption>Official logo of SBS — Shyam Business Store, Vadodara, Gujarat.</image:caption>
+      <image:title>SBS Store — Shyam Bombay Sale</image:title>
+      <image:caption>Official logo of SBS Store — Shyam Bombay Sale, Vadodara, Gujarat.</image:caption>
     </image:image>
   </url>
 
   <!-- About page -->
   <url>
-    <loc>https://www.sbsstore.in/about</loc>
-    <lastmod>2026-09-06T00:00:00+05:30</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://www.sbsstore.in/about/</loc>
+    <lastmod>2026-09-15T00:00:00+05:30</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Contact page -->
   <url>
-    <loc>https://www.sbsstore.in/contact</loc>
-    <lastmod>2026-09-06T00:00:00+05:30</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <loc>https://www.sbsstore.in/contact/</loc>
+    <lastmod>2026-09-15T00:00:00+05:30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
 
 </urlset>

@@ -25,7 +25,10 @@ import {
   Phone,
   MessageCircle,
   MapPin,
-  Clock
+  Clock,
+  ChevronDown,
+  HelpCircle,
+  Store
 } from 'lucide-react';
 
 export const HomeView: React.FC = () => {
@@ -58,6 +61,7 @@ export const HomeView: React.FC = () => {
     minutes: 18, 
     seconds: 42 
   });
+  const [openFaqIndex, setOpenFaqIndex] = React.useState<number | null>(null);
   
   const subcategoryScrollRef = React.useRef<HTMLDivElement>(null);
   const touchStartXRef = React.useRef<number | null>(null);
@@ -506,9 +510,9 @@ export const HomeView: React.FC = () => {
                   <Sparkles className="w-3.5 h-3.5" /> 
                   {currentSlide.banner?.badgeText || 'Special Everyday Collection'}
                 </span>
-                <h1 className="text-2xl sm:text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
+                <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
                   {currentSlide.product ? currentSlide.product.name : currentSlide.banner?.heading}
-                </h1>
+                </h2>
                 <p className="text-xs sm:text-sm md:text-base text-gray-600 font-medium line-clamp-2">
                   {currentSlide.banner?.description || (currentSlide.product ? currentSlide.product.description : 'Smart everyday utilities at direct factory rates.')}
                 </p>
@@ -1076,6 +1080,30 @@ export const HomeView: React.FC = () => {
 
   return (
     <div className="space-y-6 md:space-y-8 pb-36 md:pb-12 animate-fadeIn">
+      {/* Primary Semantic H1 for Google Ranking — Exact Match: SBS Store & Shyam Bombay Sale */}
+      <h1 className="sr-only">
+        SBS Store — Shyam Bombay Sale | Official Online Shopping &amp; Retail Store Vadodara
+      </h1>
+
+      {/* Official Brand Identity Bar for Google & Shoppers */}
+      <div className="flex items-center justify-between px-3.5 py-2 sm:px-4 sm:py-2.5 bg-gradient-to-r from-orange-50/90 via-[#FFF9F5] to-orange-50/90 rounded-2xl border border-orange-200/60 shadow-xs text-xs">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-2 h-2 rounded-full bg-[#00A859] animate-pulse flex-shrink-0" />
+          <p className="text-gray-800 font-bold truncate">
+            <span className="text-[#F95721] font-black">Shyam Bombay Sale (SBS Store)</span>
+            <span className="hidden sm:inline text-gray-400 mx-1.5">•</span>
+            <span className="hidden sm:inline text-gray-600 font-medium">Subhanpura, Vadodara Retail Store &amp; Pan-India Online Delivery</span>
+          </p>
+        </div>
+        <a
+          href="#store-overview"
+          className="text-[11px] sm:text-xs font-bold text-[#F95721] hover:text-[#E44813] flex-shrink-0 flex items-center gap-0.5 hover:underline ml-2"
+        >
+          <span>Store Details</span>
+          <ArrowRight className="w-3 h-3" />
+        </a>
+      </div>
+
       {/* Dynamic Sections in order configured in admin panel */}
       {homepageSections
         .filter((sec) => sec.enabled !== false)
@@ -1110,6 +1138,149 @@ export const HomeView: React.FC = () => {
       {/* Notification Reward Card */}
       <section>
         <NotificationRewardCard variant="compact" />
+      </section>
+
+      {/* Comprehensive Brand & Local SEO Overview Section (Targeting 'SBS Store' & 'Shyam Bombay Sale') */}
+      <section id="store-overview" className="mt-8 pt-8 border-t border-gray-200/80 space-y-6">
+        {/* Brand Banner Card */}
+        <div className="p-5 sm:p-7 md:p-8 bg-gradient-to-br from-[#FFF5EE] via-white to-[#FFF0E6] rounded-3xl border border-orange-100/90 shadow-sm space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-orange-100/80 pb-5">
+            <div className="space-y-1.5">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/80 text-xs font-extrabold text-[#F95721]">
+                <Store className="w-3.5 h-3.5" /> Official Brand &amp; Retail Store
+              </span>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
+                Shyam Bombay Sale (SBS Store)
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-600 max-w-2xl font-medium leading-relaxed">
+                Vadodara’s trusted destination for smart everyday essentials, household cleaning products, kitchenware, and daily home utilities at honest factory &amp; wholesale rates.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <a
+                href="https://share.google/Pa5CkR6pMiRD0MMZm"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 shadow-xs hover:border-[#F95721] transition-all"
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#F95721]" />
+                <span>Google Maps</span>
+              </a>
+              <a
+                href="https://www.justdial.com/Vadodara/Shyam-Bombay-Sale-Subhanpura/0265PX265-X265-260124041911-U8Y6_BZDET"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0076D7]/10 hover:bg-[#0076D7]/20 border border-[#0076D7]/30 rounded-xl text-xs font-bold text-[#0076D7] shadow-xs transition-all"
+              >
+                <span>Justdial Verified</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+              <a
+                href="https://wa.me/919226294797?text=Hi%20Shyam%20Bombay%20Sale%2C%20I%20have%20an%20inquiry%20from%20sbsstore.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#00A859] hover:bg-[#008f4c] text-white rounded-xl text-xs font-bold shadow-xs transition-all"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>WhatsApp</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Key Value Pillars */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+            <div className="p-4 bg-white/80 rounded-2xl border border-gray-100 space-y-1.5 shadow-2xs">
+              <div className="flex items-center gap-2 text-xs font-black text-gray-900">
+                <MapPin className="w-4 h-4 text-[#F95721]" />
+                <span>Subhanpura Offline Showroom</span>
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Shop in person at <strong>Shop 1, Vrundvilla, Laxmipura Road, Near Rami School, Subhanpura, Vadodara 390023</strong>. Open 7 days a week (10 AM to 9:30 PM).
+              </p>
+            </div>
+
+            <div className="p-4 bg-white/80 rounded-2xl border border-gray-100 space-y-1.5 shadow-2xs">
+              <div className="flex items-center gap-2 text-xs font-black text-gray-900">
+                <Truck className="w-4 h-4 text-[#00A859]" />
+                <span>Express Doorstep Delivery</span>
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Order anytime online on <strong>sbsstore.in</strong> with quick delivery throughout Vadodara and safe courier shipping all over Gujarat and India.
+              </p>
+            </div>
+
+            <div className="p-4 bg-white/80 rounded-2xl border border-gray-100 space-y-1.5 shadow-2xs">
+              <div className="flex items-center gap-2 text-xs font-black text-gray-900">
+                <ShieldCheck className="w-4 h-4 text-[#0284C7]" />
+                <span>100% Genuine Quality</span>
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Every cleaning tool, kitchen essential, and organizer is verified for quality, honest wholesale pricing, and backed by our easy 7-day return guarantee.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive FAQ Section for Google Rich Results */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <h3 className="text-base sm:text-lg font-black text-gray-900 tracking-tight flex items-center gap-2">
+                <HelpCircle className="w-4 h-4 text-[#F95721]" />
+                Frequently Asked Questions about SBS Store
+              </h3>
+              <p className="text-xs text-gray-500">
+                Everything you need to know about shopping with Shyam Bombay Sale online and offline.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {[
+              {
+                q: 'Where is Shyam Bombay Sale (SBS Store) located in Vadodara?',
+                a: 'Shyam Bombay Sale is conveniently located at Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023. Our physical retail showroom is open 7 days a week from 10:00 AM to 9:30 PM. You are welcome to visit, inspect products in person, and purchase directly.',
+              },
+              {
+                q: 'What types of products are available at SBS Store — Shyam Bombay Sale?',
+                a: 'SBS Store specializes in smart everyday essentials across key categories: Household Cleaning Products (spin mops, microfiber wipes, sweepers), Smart Kitchen Essentials (choppers, sealers, cookware, storage jars), Home Utilities & Organizers, and Personal Grooming Accessories. All products are curated for everyday durability at direct factory rates.',
+              },
+              {
+                q: 'Can I order online from Shyam Bombay Sale for doorstep delivery?',
+                a: 'Yes! You can order directly right here on sbsstore.in. We provide prompt local doorstep delivery across all areas of Vadodara (Subhanpura, Laxmipura, Gotri, Alkapuri, Manjalpur, Karelibaug, etc.) as well as reliable nationwide shipping across India with live order tracking.',
+              },
+              {
+                q: 'What payment and buyer protection policies does SBS Store offer?',
+                a: 'SBS Store accepts UPI (Google Pay, PhonePe, Paytm, BHIM), Net Banking, Credit/Debit Cards, and Cash on Delivery (COD) for eligible areas. All purchases are backed by 100% Genuine SBS Quality verification and our 7-day hassle-free return and replacement policy.',
+              },
+            ].map((faq, idx) => {
+              const isOpen = openFaqIndex === idx;
+              return (
+                <div
+                  key={idx}
+                  className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-2xs transition-all"
+                >
+                  <button
+                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                    className="w-full text-left px-4 py-3.5 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-xs sm:text-sm font-bold text-gray-900 hover:text-[#F95721] transition-colors"
+                  >
+                    <span>{faq.q}</span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                        isOpen ? 'rotate-180 text-[#F95721]' : ''
+                      }`}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-4 sm:px-5 sm:pb-5 text-xs sm:text-sm text-gray-600 leading-relaxed border-t border-gray-50 pt-2 animate-fadeIn">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
       {/* Mobile-First Trust & Info Footer */}

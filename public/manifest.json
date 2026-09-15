@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "SBS — Shyam Business Store",
-  "short_name": "SBS",
-  "description": "Shop smart everyday essentials for cleaning, kitchen, personal care, and home at unbeatable prices.",
+  "name": "SBS Store — Shyam Bombay Sale",
+  "short_name": "SBS Store",
+  "description": "SBS Store (Shyam Bombay Sale) — Smart everyday essentials for cleaning, kitchenware, personal care, and home utilities in Vadodara and across India.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
