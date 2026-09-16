@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Product } from '@/types';
 import { useStore } from '@/context/StoreContext';
-import { Star, Heart, Plus, Minus, Film } from 'lucide-react';
+import { Heart, Plus, Minus, CheckCircle2 } from 'lucide-react';
 import { ResolvedImage } from './common/ResolvedMedia';
 
 interface ProductCardProps {
@@ -125,13 +125,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
         />
       </button>
 
-      {/* Video Indicator Pill */}
-      {product.video && (
-        <div className="absolute top-4 left-4 z-10 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
-          <Film className="w-2.5 h-2.5 text-purple-400" />
-          <span>Video</span>
-        </div>
-      )}
 
       {/* Product Image Area with Finger Sliding Animation */}
       <div 
@@ -188,11 +181,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
             {product.name}
           </h3>
 
-          {/* Rating */}
-          <div className="flex items-center gap-1 text-xs text-gray-600">
-            <Star className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
-            <span className="font-extrabold text-gray-900">{product.rating}</span>
-            <span className="text-gray-500 font-medium">({product.reviewCount.toLocaleString('en-IN')})</span>
+          {/* Verified Quality Badge */}
+          <div className="flex items-center gap-1 text-[11px] font-bold text-[#00A859]">
+            <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>Verified</span>
           </div>
 
           {/* Pricing Row */}

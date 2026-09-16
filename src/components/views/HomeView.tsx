@@ -1028,7 +1028,7 @@ export const HomeView: React.FC = () => {
             <span className="text-xl">⭐</span>
             <div>
               <h2 className="text-lg md:text-xl font-bold text-gray-900">Best Sellers</h2>
-              <p className="text-xs text-gray-500 hidden sm:block">Customer top picks with 4.5+ star reviews</p>
+              <p className="text-xs text-gray-500 hidden sm:block">Customer top picks • 100% Verified Quality</p>
             </div>
           </div>
           <button

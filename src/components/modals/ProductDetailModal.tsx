@@ -107,6 +107,18 @@ export const ProductDetailModal: React.FC = () => {
       setOpenAccordion(null);
       setCopiedCoupon(null);
       setIsScrolled(false);
+
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('product', selectedProductDetail.id);
+        window.history.replaceState({ product: selectedProductDetail.id }, '', url.toString());
+      }
+    } else if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('product')) {
+        url.searchParams.delete('product');
+        window.history.replaceState({}, '', url.toString());
+      }
     }
   }, [selectedProductDetail?.id]);
 
@@ -218,8 +230,13 @@ export const ProductDetailModal: React.FC = () => {
     }
   };
 
+  const getProductShareUrl = () => {
+    if (typeof window === 'undefined') return '';
+    return `${window.location.origin}/?product=${encodeURIComponent(p.id)}`;
+  };
+
   const handleShare = async () => {
-    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const productUrl = getProductShareUrl();
     const shareText = `Check out ${p.name} on SBS Store for only ₹${p.price.toLocaleString('en-IN')}!`;
 
     try {
@@ -227,11 +244,11 @@ export const ProductDetailModal: React.FC = () => {
         await navigator.share({
           title: p.name,
           text: shareText,
-          url: url,
+          url: productUrl,
         });
       } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        await navigator.clipboard.writeText(url);
-        showToast('Link copied to clipboard! 📋');
+        await navigator.clipboard.writeText(productUrl);
+        showToast('Product link copied to clipboard! 📋');
       }
     } catch {
       // User cancelled share or share dismissed safely
@@ -239,8 +256,8 @@ export const ProductDetailModal: React.FC = () => {
   };
 
   const handleWhatsAppShare = () => {
-    const url = typeof window !== 'undefined' ? window.location.href : '';
-    const text = encodeURIComponent(`Check out this deal on SBS Store: ${p.name} at ₹${p.price.toLocaleString('en-IN')}!\n${url}`);
+    const productUrl = getProductShareUrl();
+    const text = encodeURIComponent(`Check out this deal on SBS Store: ${p.name} at ₹${p.price.toLocaleString('en-IN')}!\n${productUrl}`);
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
@@ -382,13 +399,13 @@ export const ProductDetailModal: React.FC = () => {
   return (
     <>
       <div 
-        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center animate-fadeIn overflow-x-hidden"
+        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center animate-backdrop-in overflow-x-hidden"
         onClick={() => setSelectedProductDetail(null)}
       >
         <div 
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto overflow-x-hidden shadow-2xl flex flex-col relative no-scrollbar"
+          className="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto overflow-x-hidden shadow-2xl flex flex-col relative no-scrollbar animate-sheet-up"
           onClick={(e) => e.stopPropagation()}
         >
           {/* ======================================================== */}
@@ -632,17 +649,14 @@ export const ProductDetailModal: React.FC = () => {
                 </p>
               )}
 
-              {/* Rating Row */}
+              {/* Verified Product Badge */}
               <div className="flex items-center gap-2 flex-wrap pt-1">
-                <div className="flex items-center gap-1 bg-[#00A859] text-white px-2 py-0.5 rounded-md text-xs font-black">
-                  <span>{p.rating}</span>
-                  <Star className="w-3 h-3 fill-white" />
-                </div>
-                <span className="text-xs font-semibold text-gray-600">
-                  {p.reviewCount.toLocaleString('en-IN')} Ratings
+                <span className="inline-flex items-center gap-1.5 text-xs font-black text-[#00A859] bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 shadow-2xs">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#00A859]" />
+                  <span>Verified</span>
                 </span>
-                <span className="text-xs font-bold text-emerald-700 flex items-center gap-0.5">
-                  <CheckCircle2 className="w-3 h-3" /> Verified
+                <span className="text-xs font-semibold text-gray-500">
+                  100% Genuine & Quality Checked
                 </span>
               </div>
             </div>

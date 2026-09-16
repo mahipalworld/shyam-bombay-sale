@@ -323,6 +323,38 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
+
+  // Deep-link direct product landing (?product=ID or #product-ID)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && products.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const urlProdId = params.get('product') || (window.location.hash.startsWith('#product-') ? window.location.hash.replace('#product-', '') : null);
+      if (urlProdId) {
+        const found = products.find((p) => p.id === urlProdId || p.id.toLowerCase() === urlProdId.toLowerCase());
+        if (found) {
+          setSelectedProductDetailState(found);
+        }
+      }
+    }
+  }, [products]);
+
+  // Sync browser back/forward history with active product modal
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const urlProdId = params.get('product');
+        if (urlProdId && products.length > 0) {
+          const found = products.find((p) => p.id === urlProdId);
+          if (found) setSelectedProductDetailState(found);
+        } else if (!urlProdId) {
+          setSelectedProductDetailState(null);
+        }
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [products]);
   const [selectedCategoryFilter, setSelectedCategoryFilterState] = useState<string | null>(null);
   const [selectedSubcategoryFilter, setSelectedSubcategoryFilter] = useState<string | null>(null);
   const [activeSubcategoryModal, setActiveSubcategoryModal] = useState<{ category: Category; subcategory: Subcategory | null } | null>(null);

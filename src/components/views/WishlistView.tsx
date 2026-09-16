@@ -183,11 +183,10 @@ export const WishlistView: React.FC = () => {
                     {product.name}
                   </h3>
 
-                  {/* Rating */}
-                  <div className="flex items-center gap-1 mt-1 text-[11px] text-gray-500">
-                    <Star className="w-3 h-3 fill-[#F59E0B] text-[#F59E0B]" />
-                    <span className="font-semibold text-gray-800">{product.rating}</span>
-                    <span className="text-gray-400">({product.reviewCount})</span>
+                  {/* Verified Quality Badge */}
+                  <div className="flex items-center gap-1 mt-1 text-[11px] font-bold text-[#00A859]">
+                    <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>Verified</span>
                   </div>
 
                   {/* Pricing Row */}
