@@ -110,7 +110,7 @@ export const ProductStories: React.FC = () => {
   return (
     <>
       {/* Horizontal Story Bubble Strip */}
-      <div className="flex items-center gap-3 sm:gap-4 overflow-x-auto no-scrollbar py-2 -mx-1 px-1 select-none">
+      <div className="flex items-center gap-3 sm:gap-4 overflow-x-auto no-scrollbar pt-0.5 pb-2 -mx-1 px-1 select-none">
         {activeStories.map((story, idx) => (
           <button
             key={story.id}

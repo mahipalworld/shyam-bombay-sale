@@ -1053,7 +1053,7 @@ export const HomeView: React.FC = () => {
     switch (sectionId) {
       case 'stories':
         return (
-          <section key="stories" className="pt-1">
+          <section key="stories" className="pt-0">
             <ProductStories />
           </section>
         );
@@ -1079,17 +1079,17 @@ export const HomeView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 md:space-y-8 pb-36 md:pb-12 animate-fadeIn">
+    <>
       {/* Primary Semantic H1 for Google Ranking — Exact Match: SBS Store & Shyam Bombay Sale */}
       <h1 className="sr-only">
         SBS Store — Shyam Bombay Sale | Official Online Shopping &amp; Retail Store Vadodara
       </h1>
 
-
-      {/* Dynamic Sections in order configured in admin panel */}
-      {homepageSections
-        .filter((sec) => sec.enabled !== false)
-        .map((sec) => renderSectionById(sec.id))}
+      <div className="space-y-4 md:space-y-6 pb-36 md:pb-12 animate-fadeIn">
+        {/* Dynamic Sections in order configured in admin panel */}
+        {homepageSections
+          .filter((sec) => sec.enabled !== false)
+          .map((sec) => renderSectionById(sec.id))}
 
       {/* Scratch & Win Modal */}
       <ScratchCardModal
@@ -1353,5 +1353,6 @@ export const HomeView: React.FC = () => {
         </div>
       </footer>
     </div>
+    </>
   );
 };
