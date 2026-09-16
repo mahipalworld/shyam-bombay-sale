@@ -275,8 +275,8 @@ app.get('/api/storage/delivery-url', async (req, res) => {
     return res.status(400).json({ error: 'Media key is required.' });
   }
 
-  // Validate prefix & prevent path traversal
-  if (key.includes('..') || !key.startsWith('products/')) {
+  // Validate key & prevent path traversal
+  if (key.includes('..')) {
     return res.status(400).json({ error: 'Invalid media key.' });
   }
 
@@ -329,7 +329,7 @@ app.post('/api/storage/delivery-urls', async (req, res) => {
       continue;
     }
 
-    if (key.includes('..') || !key.startsWith('products/')) continue;
+    if (key.includes('..')) continue;
 
     if (cloudfrontDomain) {
       results[key] = `https://${cloudfrontDomain}/${key}`;
@@ -364,16 +364,22 @@ app.get('/api/storage/files', async (req, res) => {
     return res.status(503).json({ error: 'AWS S3 is not configured.' });
   }
 
-  const prefix = req.query.prefix || 'products/';
-  if (!prefix.startsWith('products/')) {
-    return res.status(400).json({ error: 'Allowed prefix must start with "products/".' });
+  let prefix = typeof req.query.prefix === 'string' ? req.query.prefix : 'products/';
+  if (prefix.includes('..')) {
+    return res.status(400).json({ error: 'Invalid prefix: path traversal not allowed.' });
   }
+
+  // Normalize common prefix variations
+  if (prefix === 'videos/') prefix = 'products/videos/';
+  else if (prefix === 'images/') prefix = 'products/images/';
+  else if (prefix === 'thumbnails/') prefix = 'products/thumbnails/';
+  else if (prefix === 'all' || prefix === 'ALL') prefix = '';
 
   try {
     const listCmd = new ListObjectsV2Command({
       Bucket: s3Bucket,
-      Prefix: prefix,
-      MaxKeys: 100,
+      Prefix: prefix || undefined,
+      MaxKeys: 1000,
       ContinuationToken: req.query.continuationToken || undefined
     });
 
@@ -476,15 +482,64 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
-// Products endpoint
+// Products endpoints
 app.get('/api/products', async (req, res) => {
   try {
     if (!supabase) return res.status(503).json({ error: 'Database service not configured' });
-    const { data, error } = await supabase.from('products').select('*');
+    const { data, error } = await supabase.from('products').select('*').order('name');
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/products', async (req, res) => {
+  try {
+    const auth = await verifyAdminAuth(req);
+    if (!auth.authorized) {
+      return res.status(403).json({ error: auth.reason || 'Unauthorized' });
+    }
+    if (!supabase) return res.status(503).json({ error: 'Database service not configured' });
+    const productData = req.body;
+    const { data, error } = await supabase.from('products').insert(productData).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error: ' + err.message });
+  }
+});
+
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const auth = await verifyAdminAuth(req);
+    if (!auth.authorized) {
+      return res.status(403).json({ error: auth.reason || 'Unauthorized' });
+    }
+    if (!supabase) return res.status(503).json({ error: 'Database service not configured' });
+    const { id } = req.params;
+    const updates = req.body;
+    const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error: ' + err.message });
+  }
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const auth = await verifyAdminAuth(req);
+    if (!auth.authorized) {
+      return res.status(403).json({ error: auth.reason || 'Unauthorized' });
+    }
+    if (!supabase) return res.status(503).json({ error: 'Database service not configured' });
+    const { id } = req.params;
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true, id });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error: ' + err.message });
   }
 });
 

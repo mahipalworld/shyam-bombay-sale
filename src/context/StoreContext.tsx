@@ -1029,10 +1029,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               isFeatured: Boolean(p.is_featured),
               isSuperDeal: Boolean(p.is_super_deal),
               isTopRated: Boolean(p.is_top_rated),
+              subtitle: p.subtitle || initMatch?.subtitle || undefined,
+              featureIcons: (p.feature_icons && p.feature_icons.length > 0) ? p.feature_icons : initMatch?.featureIcons,
+              specifications: (p.specifications && p.specifications.length > 0) ? p.specifications : initMatch?.specifications,
+              faqs: (p.faqs && p.faqs.length > 0) ? p.faqs : initMatch?.faqs,
+              shippingInfo: p.shipping_info || initMatch?.shippingInfo || undefined,
+              returnPolicy: p.return_policy || initMatch?.returnPolicy || undefined,
             };
           });
 
           setProducts(mappedRemote);
+          try {
+            localStorage.setItem('sbs_products', JSON.stringify(mappedRemote));
+          } catch (e) {}
         }
 
         if (coups && coups.length > 0) {
@@ -1125,14 +1134,25 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           isFeatured: Boolean(p.is_featured),
           isSuperDeal: Boolean(p.is_super_deal),
           isTopRated: Boolean(p.is_top_rated),
+          subtitle: p.subtitle || undefined,
+          featureIcons: p.feature_icons || [],
+          specifications: p.specifications || [],
+          faqs: p.faqs || [],
+          shippingInfo: p.shipping_info || undefined,
+          returnPolicy: p.return_policy || undefined,
         };
-        setProducts((prev) => (prev.some((x) => x.id === newProd.id) ? prev : [newProd, ...prev]));
+        setProducts((prev) => {
+          if (prev.some((x) => x.id === newProd.id)) return prev;
+          const updated = [newProd, ...prev];
+          try { localStorage.setItem('sbs_products', JSON.stringify(updated)); } catch (e) {}
+          return updated;
+        });
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products' }, (payload) => {
         const p = payload.new as any;
         if (!p || !p.id) return;
-        setProducts((prev) =>
-          prev.map((item) =>
+        setProducts((prev) => {
+          const updated = prev.map((item) =>
             item.id === p.id
               ? {
                   ...item,
@@ -1160,14 +1180,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   isFeatured: p.is_featured !== undefined ? Boolean(p.is_featured) : item.isFeatured,
                   isSuperDeal: p.is_super_deal !== undefined ? Boolean(p.is_super_deal) : item.isSuperDeal,
                   isTopRated: p.is_top_rated !== undefined ? Boolean(p.is_top_rated) : item.isTopRated,
+                  subtitle: p.subtitle !== undefined ? p.subtitle : item.subtitle,
+                  featureIcons: p.feature_icons !== undefined ? p.feature_icons : item.featureIcons,
+                  specifications: p.specifications !== undefined ? p.specifications : item.specifications,
+                  faqs: p.faqs !== undefined ? p.faqs : item.faqs,
+                  shippingInfo: p.shipping_info !== undefined ? p.shipping_info : item.shippingInfo,
+                  returnPolicy: p.return_policy !== undefined ? p.return_policy : item.returnPolicy,
                 }
               : item
-          )
-        );
+          );
+          try { localStorage.setItem('sbs_products', JSON.stringify(updated)); } catch (e) {}
+          return updated;
+        });
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'products' }, (payload) => {
         const old = payload.old as any;
-        if (old?.id) setProducts((prev) => prev.filter((p) => p.id !== old.id));
+        if (old?.id) {
+          setProducts((prev) => {
+            const updated = prev.filter((p) => p.id !== old.id);
+            try { localStorage.setItem('sbs_products', JSON.stringify(updated)); } catch (e) {}
+            return updated;
+          });
+        }
       })
       // Categories Realtime Sync
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'categories' }, (payload) => {
@@ -2793,61 +2827,74 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Admin Catalog Actions
-  const addProduct = (prod: Omit<Product, 'id'>) => {
+  const addProduct = async (prod: Omit<Product, 'id'>) => {
     const newId = `p_${Date.now()}`;
     const newProduct: Product = {
       ...prod,
       id: newId,
     };
-    setProducts((prev) => [newProduct, ...prev]);
+    setProducts((prev) => {
+      const updated = [newProduct, ...prev];
+      try {
+        localStorage.setItem('sbs_products', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
     addInventoryLog(newId, prod.stockCount, 'add', 'Initial stock on creation');
-    showToast(`Product "${newProduct.name}" added to store!`);
+    showToast(`Product "${newProduct.name}" added to store!`, 'success');
 
     // Sync to Supabase Cloud Database for all devices
     if (isSupabaseConfigured && supabase) {
-      supabase.from('products').insert({
-        id: newId,
-        name: newProduct.name,
-        category: newProduct.category,
-        subcategory: newProduct.subcategory || null,
-        price: newProduct.price,
-        original_price: newProduct.originalPrice,
-        discount_percentage: newProduct.discountPercentage,
-        rating: newProduct.rating,
-        review_count: newProduct.reviewCount,
-        image: newProduct.image,
-        images: newProduct.images || [newProduct.image],
-        video: newProduct.video || null,
-        videos: newProduct.videos || [],
-        video_thumbnail: newProduct.videoThumbnail || null,
-        in_stock: newProduct.inStock,
-        stock_count: newProduct.stockCount,
-        description: newProduct.description,
-        description_blocks: newProduct.descriptionBlocks || [],
-        features: newProduct.features || [],
-        is_trending: Boolean(newProduct.isTrending),
-        is_best_seller: Boolean(newProduct.isBestSeller),
-        is_deal_of_day: Boolean(newProduct.isDealOfDay),
-        is_featured: Boolean(newProduct.isFeatured),
-        is_super_deal: Boolean(newProduct.isSuperDeal),
-        is_top_rated: Boolean(newProduct.isTopRated),
-        subtitle: newProduct.subtitle || null,
-        feature_icons: newProduct.featureIcons || [],
-        specifications: newProduct.specifications || [],
-        faqs: newProduct.faqs || [],
-        shipping_info: newProduct.shippingInfo || null,
-        return_policy: newProduct.returnPolicy || null,
-      }).then(({ error }) => {
-        if (error) console.error('Supabase add product error:', error);
-      });
+      try {
+        const { error } = await supabase.from('products').insert({
+          id: newId,
+          name: newProduct.name,
+          category: newProduct.category,
+          subcategory: newProduct.subcategory || null,
+          price: newProduct.price,
+          original_price: newProduct.originalPrice,
+          discount_percentage: newProduct.discountPercentage,
+          rating: newProduct.rating,
+          review_count: newProduct.reviewCount,
+          image: newProduct.image,
+          images: newProduct.images || [newProduct.image],
+          video: newProduct.video || null,
+          videos: newProduct.videos || [],
+          video_thumbnail: newProduct.videoThumbnail || null,
+          in_stock: newProduct.inStock,
+          stock_count: newProduct.stockCount,
+          description: newProduct.description,
+          description_blocks: newProduct.descriptionBlocks || [],
+          features: newProduct.features || [],
+          is_trending: Boolean(newProduct.isTrending),
+          is_best_seller: Boolean(newProduct.isBestSeller),
+          is_deal_of_day: Boolean(newProduct.isDealOfDay),
+          is_featured: Boolean(newProduct.isFeatured),
+          is_super_deal: Boolean(newProduct.isSuperDeal),
+          is_top_rated: Boolean(newProduct.isTopRated),
+          subtitle: newProduct.subtitle || null,
+          feature_icons: newProduct.featureIcons || [],
+          specifications: newProduct.specifications || [],
+          faqs: newProduct.faqs || [],
+          shipping_info: newProduct.shippingInfo || null,
+          return_policy: newProduct.returnPolicy || null,
+        });
+        if (error) {
+          console.error('Supabase add product error:', error);
+          showToast(`Cloud sync warning: ${error.message}`, 'error');
+        } else {
+          console.log(`Product "${newProduct.name}" synced to Supabase successfully.`);
+        }
+      } catch (err: any) {
+        console.error('Supabase add product exception:', err);
+      }
     }
   };
 
   const updateProduct = (id: string, updates: Partial<Product>) => {
-    setProducts((prev) =>
-      prev.map((p) => {
+    setProducts((prev) => {
+      const updated = prev.map((p) => {
         if (p.id === id) {
-          // If stock count changed, log it
           if (updates.stockCount !== undefined && updates.stockCount !== p.stockCount) {
             const diff = updates.stockCount - p.stockCount;
             addInventoryLog(id, diff, diff > 0 ? 'add' : 'remove', 'Manual stock adjustment in edit');
@@ -2855,8 +2902,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           return { ...p, ...updates };
         }
         return p;
-      })
-    );
+      });
+      try {
+        localStorage.setItem('sbs_products', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
     showToast('Product updated successfully');
 
     // Sync updates to Supabase Cloud Database for all devices
@@ -2901,7 +2952,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const deleteProduct = (id: string) => {
     const p = products.find(prod => prod.id === id);
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    setProducts((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      try {
+        localStorage.setItem('sbs_products', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
     if (p) {
       addInventoryLog(id, -p.stockCount, 'remove', 'Product catalog deletion');
     }

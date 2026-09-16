@@ -6,6 +6,8 @@ import {
   X, 
   ChevronRight, 
   ChevronLeft, 
+  ChevronUp,
+  ChevronDown,
   Check, 
   Upload, 
   Image as ImageIcon, 
@@ -43,6 +45,43 @@ import { Product, ProductDescriptionBlock, S3MediaItem } from '@/types';
 import { ResolvedImage, ResolvedVideo } from '../common/ResolvedMedia';
 import { uploadMediaToS3, listS3Files } from '@/lib/mediaStorage';
 import { getProductMediaList } from '@/lib/productMedia';
+
+const PRESET_GROUPS = [
+  { id: 'all', label: 'All Presets' },
+  { id: 'general', label: 'General' },
+  { id: 'kitchen', label: 'Kitchen' },
+  { id: 'tech', label: 'Tech & Appliances' },
+  { id: 'home', label: 'Home & Living' },
+] as const;
+
+const SPEC_PRESETS = [
+  // General
+  { group: 'general', label: 'Brand', value: 'SBS Certified Quality' },
+  { group: 'general', label: 'Model Number', value: 'SBS-PRO-2026' },
+  { group: 'general', label: 'Country of Origin', value: 'India' },
+  { group: 'general', label: 'Condition', value: '100% Brand New (Sealed)' },
+  { group: 'general', label: 'Package Includes', value: '1x Main Unit, User Manual, Accessories' },
+  { group: 'general', label: 'Warranty & Support', value: '6 Months Replacement Warranty' },
+  // Kitchen
+  { group: 'kitchen', label: 'Material & Build', value: 'Food Grade Stainless Steel & BPA-Free' },
+  { group: 'kitchen', label: 'Capacity / Volume', value: '1.5 Litres' },
+  { group: 'kitchen', label: 'Blade Material', value: 'Japanese 420J2 High-Tensile Steel' },
+  { group: 'kitchen', label: 'Dishwasher Safe', value: 'Yes (Top Rack Safe)' },
+  { group: 'kitchen', label: 'Airtight Leakproof', value: 'Yes (100% Silicone Gasket)' },
+  // Tech & Appliances
+  { group: 'tech', label: 'Battery Backup', value: 'Up to 120 Mins Continuous Use' },
+  { group: 'tech', label: 'Charging Type', value: 'USB Type-C Fast Charging' },
+  { group: 'tech', label: 'Power / Wattage', value: '45W High-Efficiency Motor' },
+  { group: 'tech', label: 'Operating Voltage', value: '220-240V AC, 50Hz' },
+  { group: 'tech', label: 'Motor Speed', value: '12,000 RPM Super Turbo' },
+  { group: 'tech', label: 'Noise Level', value: 'Low Noise (<55dB)' },
+  // Home & Living
+  { group: 'home', label: 'Dimensions (L x W x H)', value: '25 x 15 x 10 cm' },
+  { group: 'home', label: 'Item Weight', value: '350 grams' },
+  { group: 'home', label: 'Color / Finish', value: 'Matte Pastel Slate' },
+  { group: 'home', label: 'Care Instructions', value: 'Wipe Clean with Soft Damp Cloth' },
+  { group: 'home', label: 'Assembly Required', value: 'No, Ready to Use Out of Box' },
+];
 
 interface AddEditProductModalProps {
   isOpen: boolean;
@@ -112,6 +151,75 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
 
   // State for adding new custom specification
   const [newSpec, setNewSpec] = useState({ label: '', value: '' });
+  const [selectedPresetGroup, setSelectedPresetGroup] = useState<'all' | 'general' | 'kitchen' | 'tech' | 'home'>('all');
+
+  const handleUpdateSpec = (idx: number, field: 'label' | 'value', val: string) => {
+    setFormData((prev) => {
+      const next = [...prev.specifications];
+      if (next[idx]) {
+        next[idx] = { ...next[idx], [field]: val };
+      }
+      return { ...prev, specifications: next };
+    });
+  };
+
+  const handleMoveSpec = (idx: number, direction: 'up' | 'down') => {
+    setFormData((prev) => {
+      const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= prev.specifications.length) return prev;
+      const next = [...prev.specifications];
+      const temp = next[idx];
+      next[idx] = next[targetIdx];
+      next[targetIdx] = temp;
+      return { ...prev, specifications: next };
+    });
+  };
+
+  const handleAddPresetSpec = (preset: { label: string; value: string }) => {
+    setFormData((prev) => {
+      const existingIdx = prev.specifications.findIndex(
+        (s) => s.label.toLowerCase() === preset.label.toLowerCase()
+      );
+      if (existingIdx !== -1) {
+        showToast(`"${preset.label}" is already in your specifications table. You can edit its value directly!`, 'info');
+        return prev;
+      }
+      showToast(`Added "${preset.label}"! You can edit its label or value anytime.`, 'success');
+      return {
+        ...prev,
+        specifications: [...prev.specifications, { label: preset.label, value: preset.value }],
+      };
+    });
+  };
+
+  const handleImportStandardAttrsToSpecs = () => {
+    const toImport: { label: string; value: string }[] = [];
+    if (formData.material?.trim()) toImport.push({ label: 'Material & Build', value: formData.material.trim() });
+    if (formData.dimensions?.trim()) toImport.push({ label: 'Dimensions (L x W x H)', value: formData.dimensions.trim() });
+    if (formData.weight?.trim()) toImport.push({ label: 'Item Weight', value: formData.weight.trim() });
+    if (formData.capacity?.trim()) toImport.push({ label: 'Capacity / Volume', value: formData.capacity.trim() });
+    if (formData.color?.trim()) toImport.push({ label: 'Color / Variant', value: formData.color.trim() });
+    if (formData.warranty?.trim()) toImport.push({ label: 'Warranty & Support', value: formData.warranty.trim() });
+
+    if (toImport.length === 0) {
+      showToast('Please fill in dimensions or material fields below first to import!', 'error');
+      return;
+    }
+
+    setFormData((prev) => {
+      const existing = [...prev.specifications];
+      toImport.forEach((item) => {
+        const matchIdx = existing.findIndex((s) => s.label.toLowerCase() === item.label.toLowerCase());
+        if (matchIdx >= 0) {
+          existing[matchIdx] = item;
+        } else {
+          existing.push(item);
+        }
+      });
+      return { ...prev, specifications: existing };
+    });
+    showToast(`Imported ${toImport.length} specifications into table! ✨`, 'success');
+  };
 
   // State for adding new FAQ
   const [newFaq, setNewFaq] = useState({ question: '', answer: '' });
@@ -1742,7 +1850,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
           {currentStep === 6 && (
             <div className="space-y-4">
               {/* Quick Specs Builder */}
-              <div className="border border-blue-200 bg-blue-50/40 rounded-2xl p-4 space-y-3">
+              <div className="border border-blue-200 bg-blue-50/40 rounded-2xl p-4 space-y-3.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
@@ -1751,112 +1859,221 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                     <div>
                       <h4 className="text-xs font-black text-gray-900">Custom Specifications Table</h4>
                       <p className="text-[10px] text-gray-500">
-                        Rendered in the alternating striped specifications table on PDP
+                        Add by yourself or choose presets — everything is 100% editable inline
                       </p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
-                    {formData.specifications.length} custom specs
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                      {formData.specifications.length} specs
+                    </span>
+                  </div>
                 </div>
 
-                {/* Add new key-value row */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Label (e.g. Blade Material / Voltage)"
-                    value={newSpec.label}
-                    onChange={(e) => setNewSpec(prev => ({ ...prev, label: e.target.value }))}
-                    className="w-1/3 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500 text-xs font-semibold"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Value (e.g. 420J2 Japanese Steel / 220V 50Hz)"
-                    value={newSpec.value}
-                    onChange={(e) => setNewSpec(prev => ({ ...prev, value: e.target.value }))}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (newSpec.label.trim() && newSpec.value.trim()) {
+                {/* 1. Custom Add Section */}
+                <div className="bg-white border border-blue-100 rounded-xl p-3 space-y-2 shadow-2xs">
+                  <span className="text-[11px] font-bold text-gray-700 block">Add Custom Specification</span>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      placeholder="Spec Name (e.g. Battery Life, Blade Type)"
+                      value={newSpec.label}
+                      onChange={(e) => setNewSpec(prev => ({ ...prev, label: e.target.value }))}
+                      className="w-full sm:w-2/5 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500 text-xs font-bold"
+                    />
+                    <div className="flex gap-2 flex-1">
+                      <input
+                        type="text"
+                        placeholder="Value (e.g. 120 mins / Stainless Steel)"
+                        value={newSpec.value}
+                        onChange={(e) => setNewSpec(prev => ({ ...prev, value: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (newSpec.label.trim() && newSpec.value.trim()) {
+                              setFormData(prev => ({ ...prev, specifications: [...prev.specifications, { label: newSpec.label.trim(), value: newSpec.value.trim() }] }));
+                              setNewSpec({ label: '', value: '' });
+                              showToast('Specification row added!');
+                            }
+                          }
+                        }}
+                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500 text-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newSpec.label.trim() || !newSpec.value.trim()) {
+                            showToast('Please enter both label and value', 'error');
+                            return;
+                          }
                           setFormData(prev => ({ ...prev, specifications: [...prev.specifications, { label: newSpec.label.trim(), value: newSpec.value.trim() }] }));
                           setNewSpec({ label: '', value: '' });
-                        }
-                      }
-                    }}
-                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500 text-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!newSpec.label.trim() || !newSpec.value.trim()) {
-                        showToast('Please enter both label and value', 'error');
-                        return;
-                      }
-                      setFormData(prev => ({ ...prev, specifications: [...prev.specifications, { label: newSpec.label.trim(), value: newSpec.value.trim() }] }));
-                      setNewSpec({ label: '', value: '' });
-                      showToast('Specification row added!');
-                    }}
-                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-xs shrink-0"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add</span>
-                  </button>
+                          showToast('Specification row added!');
+                        }}
+                        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-xs shrink-0"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Quick Preset Specs Buttons */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] text-gray-400 font-bold uppercase">Quick Add:</span>
-                  {[
-                    { label: 'Origin', value: 'Mumbai Central Hub, India' },
-                    { label: 'Condition', value: 'Brand New (100% Sealed)' },
-                    { label: 'Package Includes', value: '1x Main Unit, User Guide & Accessories' },
-                    { label: 'Quality Standard', value: 'ISO 9001 Certified Quality' }
-                  ].map((preset, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => {
-                        if (!formData.specifications.some(s => s.label === preset.label)) {
-                          setFormData(prev => ({ ...prev, specifications: [...prev.specifications, preset] }));
-                          showToast(`Added ${preset.label}!`);
-                        }
-                      }}
-                      className="text-[10px] font-semibold bg-white hover:bg-blue-50 border border-blue-200 text-gray-700 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
-                    >
-                      <Plus className="w-2.5 h-2.5 text-blue-600" />
-                      <span>{preset.label}</span>
-                    </button>
-                  ))}
-                </div>
+                {/* 2. Quick Preset Selector with Category Filter */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                      Quick Preset Library (Click to add & edit):
+                    </span>
+                  </div>
 
-                {/* Current Specifications list */}
-                <div className="space-y-1.5 pt-1">
-                  {formData.specifications.length === 0 ? (
-                    <p className="text-[11px] text-gray-400 italic">No custom specs added. Default standard specs will be used on PDP.</p>
-                  ) : (
-                    formData.specifications.map((spec, idx) => (
-                      <div key={idx} className="flex items-center justify-between gap-2 p-2 bg-white rounded-xl border border-gray-200 text-xs shadow-2xs">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-bold text-gray-700 w-28 shrink-0 truncate">{spec.label}:</span>
-                          <span className="font-semibold text-gray-900 truncate">{spec.value}</span>
-                        </div>
+                  {/* Category Pills */}
+                  <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5">
+                    {PRESET_GROUPS.map((grp) => (
+                      <button
+                        key={grp.id}
+                        type="button"
+                        onClick={() => setSelectedPresetGroup(grp.id as any)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all ${
+                          selectedPresetGroup === grp.id
+                            ? 'bg-blue-600 text-white shadow-2xs'
+                            : 'bg-white text-gray-600 hover:bg-blue-50 border border-blue-100'
+                        }`}
+                      >
+                        {grp.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Preset Chips */}
+                  <div className="flex items-center gap-1.5 flex-wrap max-h-36 overflow-y-auto pr-1">
+                    {SPEC_PRESETS.filter(
+                      (preset) => selectedPresetGroup === 'all' || preset.group === selectedPresetGroup
+                    ).map((preset, i) => {
+                      const isAdded = formData.specifications.some(
+                        (s) => s.label.toLowerCase() === preset.label.toLowerCase()
+                      );
+                      return (
                         <button
+                          key={i}
                           type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, specifications: prev.specifications.filter((_, i) => i !== idx) }))}
-                          className="text-gray-400 hover:text-red-500 p-1 rounded-lg transition-colors shrink-0"
-                          title="Remove spec"
+                          onClick={() => handleAddPresetSpec(preset)}
+                          className={`text-[10px] font-semibold px-2 py-1 rounded-lg transition-all flex items-center gap-1 border ${
+                            isAdded
+                              ? 'bg-blue-100/60 border-blue-300 text-blue-800'
+                              : 'bg-white hover:bg-blue-50 border-blue-200 text-gray-700'
+                          }`}
+                          title={`Click to add "${preset.label}" (${preset.value})`}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Plus className={`w-2.5 h-2.5 ${isAdded ? 'text-blue-700' : 'text-blue-500'}`} />
+                          <span className="font-bold">{preset.label}</span>
+                          <span className="text-gray-400 font-normal truncate max-w-[120px]">
+                            • {preset.value}
+                          </span>
                         </button>
-                      </div>
-                    ))
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Live Editable Specifications List */}
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-gray-800">
+                      Product Specifications ({formData.specifications.length}):
+                    </span>
+                    {formData.specifications.length > 0 && (
+                      <span className="text-[10px] text-gray-400">
+                        Type in any box to edit immediately
+                      </span>
+                    )}
+                  </div>
+
+                  {formData.specifications.length === 0 ? (
+                    <div className="p-4 bg-white/70 rounded-xl border border-dashed border-blue-200 text-center">
+                      <p className="text-xs font-semibold text-gray-500">No specifications added yet</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        Add custom specifications above or tap any preset button to get started!
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {formData.specifications.map((spec, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-1.5 p-2 bg-white rounded-xl border border-gray-200 text-xs shadow-2xs hover:border-blue-300 transition-colors"
+                        >
+                          <span className="w-5 text-center font-bold text-[10px] text-gray-400 shrink-0">
+                            #{idx + 1}
+                          </span>
+                          <input
+                            type="text"
+                            value={spec.label}
+                            onChange={(e) => handleUpdateSpec(idx, 'label', e.target.value)}
+                            placeholder="Specification Label"
+                            className="w-1/3 min-w-[90px] border border-gray-200 rounded-lg px-2 py-1.5 font-bold text-gray-800 bg-gray-50/50 focus:bg-white focus:border-blue-500 outline-none text-xs"
+                          />
+                          <input
+                            type="text"
+                            value={spec.value}
+                            onChange={(e) => handleUpdateSpec(idx, 'value', e.target.value)}
+                            placeholder="Specification Value"
+                            className="flex-1 min-w-[120px] border border-gray-200 rounded-lg px-2 py-1.5 font-semibold text-gray-900 bg-white focus:border-blue-500 outline-none text-xs"
+                          />
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveSpec(idx, 'up')}
+                              disabled={idx === 0}
+                              className="p-1 text-gray-400 hover:text-gray-700 disabled:opacity-20 rounded transition-colors"
+                              title="Move up"
+                            >
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveSpec(idx, 'down')}
+                              disabled={idx === formData.specifications.length - 1}
+                              className="p-1 text-gray-400 hover:text-gray-700 disabled:opacity-20 rounded transition-colors"
+                              title="Move down"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  specifications: prev.specifications.filter((_, i) => i !== idx),
+                                }))
+                              }
+                              className="p-1 text-gray-400 hover:text-red-600 rounded transition-colors ml-0.5"
+                              title="Delete specification"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
 
               {/* Adaptive Standard Attributes */}
               <div className="border border-gray-200 rounded-2xl p-4 space-y-3 bg-gray-50/50">
-                <h4 className="text-xs font-bold text-gray-900">Standard Product Dimensions & Material</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-gray-900">Standard Product Dimensions & Material</h4>
+                  <button
+                    type="button"
+                    onClick={handleImportStandardAttrsToSpecs}
+                    className="px-2.5 py-1 bg-orange-100 hover:bg-orange-200 text-[#F95721] rounded-xl text-[11px] font-bold flex items-center gap-1 transition-all shadow-2xs active:scale-95"
+                    title="Import dimensions and materials into specifications table above"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>Sync to Specs Table</span>
+                  </button>
+                </div>
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div>

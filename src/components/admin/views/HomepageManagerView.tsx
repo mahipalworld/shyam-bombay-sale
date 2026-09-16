@@ -135,13 +135,21 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
   });
 
   const handleUploadStoryVideoToS3 = async (file: File) => {
-    if (!file.type.startsWith('video/') && !file.name.match(/\.(mp4|webm|mov|m4v)$/i)) {
-      showToast('Please select a valid video file (MP4, WebM, MOV)', 'error');
+    const isVideo = file.type.startsWith('video/') || file.name.match(/\.(mp4|webm|mov|m4v)$/i);
+    const isImage = file.type.startsWith('image/') || file.name.match(/\.(png|jpe?g|webp|avif)$/i);
+
+    if (!isVideo && !isImage) {
+      showToast('Please select a valid video (MP4, WebM, MOV) or image (PNG, JPG, WebP)', 'error');
       return;
     }
 
-    if (file.size > 250 * 1024 * 1024) {
+    if (isVideo && file.size > 250 * 1024 * 1024) {
       showToast('Video exceeds 250MB limit', 'error');
+      return;
+    }
+
+    if (isImage && file.size > 15 * 1024 * 1024) {
+      showToast('Image exceeds 15MB limit', 'error');
       return;
     }
 
@@ -149,16 +157,17 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
     setStoryVideoUploadPct(0);
 
     try {
-      const item = await uploadMediaToS3(file, 'videos', (pct: number) => {
+      const targetCategory = isVideo ? 'videos' : 'images';
+      const item = await uploadMediaToS3(file, targetCategory, (pct: number) => {
         setStoryVideoUploadPct(pct);
       });
 
       setStoryForm((prev) => ({
         ...prev,
         media: item.key,
-        type: 'video',
+        type: isVideo ? 'video' : 'image',
       }));
-      showToast('Story video uploaded directly to AWS S3! 🎥☁️');
+      showToast(`Story ${isVideo ? 'video' : 'photo'} uploaded directly to AWS S3! ☁️`);
     } catch (err: any) {
       showToast(`AWS S3 upload failed: ${err?.message || 'Error'}`, 'error');
     } finally {
@@ -167,14 +176,16 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
     }
   };
 
-  const openStoryS3Picker = async (filter: 'ALL' | 'IMAGE' | 'VIDEO' = 'VIDEO') => {
+  const openStoryS3Picker = async (filter: 'ALL' | 'IMAGE' | 'VIDEO' = 'ALL') => {
     setStoryS3Filter(filter);
     setIsStoryS3LibraryOpen(true);
     setIsLoadingStoryS3Library(true);
     try {
-      const res = await listS3Files(filter === 'VIDEO' ? 'videos/' : '');
+      const res = await listS3Files('products/');
       setStoryS3Items(res.items || []);
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Failed to list S3 media files for story:', err);
+      showToast(`Could not load S3 files: ${err?.message || 'Error'}`, 'error');
       setStoryS3Items([]);
     } finally {
       setIsLoadingStoryS3Library(false);
@@ -1733,7 +1744,7 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-gray-900">AWS S3 Story Video</span>
+                        <span className="text-xs font-bold text-gray-900">AWS S3 Story Media</span>
                         <span className="text-[9px] bg-emerald-100 text-emerald-700 font-semibold px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
                           <Lock className="w-2 h-2" /> ap-south-1
                         </span>
@@ -1743,11 +1754,11 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
                   </div>
                   <button
                     type="button"
-                    onClick={() => openStoryS3Picker('VIDEO')}
+                    onClick={() => openStoryS3Picker('ALL')}
                     className="px-2.5 py-1 bg-white border border-purple-200 hover:bg-purple-100/50 text-purple-700 rounded-xl text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all"
                   >
                     <Sparkles className="w-3 h-3 text-purple-600" />
-                    <span>Browse S3</span>
+                    <span>Browse S3 Bucket</span>
                   </button>
                 </div>
 
@@ -1780,7 +1791,7 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-1.5">
                           <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
-                            {storyForm.type === 'video' || storyForm.media.includes('videos/') ? '🎥 AWS S3 Video' : '🖼️ S3 Media'}
+                            {storyForm.type === 'video' || storyForm.media.includes('videos/') ? '🎥 AWS S3 Video' : '🖼️ S3 Photo'}
                           </span>
                         </div>
                         <p className="text-[10px] font-mono text-gray-700 truncate font-semibold" title={storyForm.media}>
@@ -1795,10 +1806,10 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
                     <div className="flex items-center gap-1.5 pt-1 border-t border-gray-100">
                       <label className="flex-1 text-center py-1.5 px-2 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] rounded-xl cursor-pointer transition-colors flex items-center justify-center gap-1">
                         <Upload className="w-3 h-3" />
-                        <span>Upload New Video</span>
+                        <span>Upload Media</span>
                         <input
                           type="file"
-                          accept="video/mp4,video/webm,video/quicktime"
+                          accept="video/mp4,video/webm,video/quicktime,image/jpeg,image/png,image/webp"
                           disabled={isUploadingStoryVideo}
                           className="hidden"
                           onChange={(e) => {
@@ -1809,16 +1820,16 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
                       </label>
                       <button
                         type="button"
-                        onClick={() => openStoryS3Picker('VIDEO')}
+                        onClick={() => openStoryS3Picker('ALL')}
                         className="py-1.5 px-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[11px] rounded-xl transition-colors"
                       >
-                        Change
+                        Browse S3
                       </button>
                       <button
                         type="button"
                         onClick={() => setStoryForm({ ...storyForm, media: '', type: 'video' })}
                         className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors"
-                        title="Remove video"
+                        title="Remove media"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1832,7 +1843,7 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
                   }`}>
                     <input
                       type="file"
-                      accept="video/mp4,video/webm,video/quicktime"
+                      accept="video/mp4,video/webm,video/quicktime,image/jpeg,image/png,image/webp"
                       disabled={isUploadingStoryVideo}
                       className="hidden"
                       onChange={(e) => {
@@ -1849,10 +1860,10 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
                     </div>
                     <div>
                       <p className="text-xs font-bold text-gray-900">
-                        {isUploadingStoryVideo ? `Uploading Video to AWS S3 (${storyVideoUploadPct ?? 0}%)...` : 'Upload Story Video to AWS S3'}
+                        {isUploadingStoryVideo ? `Uploading Media to AWS S3 (${storyVideoUploadPct ?? 0}%)...` : 'Upload Video or Image to AWS S3'}
                       </p>
                       <p className="text-[10px] text-gray-500 mt-0.5">
-                        MP4, WebM, MOV up to 250MB • Private S3 Storage
+                        MP4, MOV, PNG, JPG up to 250MB
                       </p>
                     </div>
                   </label>
@@ -1969,12 +1980,21 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
+                  onClick={() => setStoryS3Filter('ALL')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
+                    storyS3Filter === 'ALL' ? 'bg-purple-600 text-white shadow-xs' : 'bg-white text-gray-700 border border-gray-200'
+                  }`}
+                >
+                  All Media ({storyS3Items.length})
+                </button>
+                <button
+                  type="button"
                   onClick={() => setStoryS3Filter('VIDEO')}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
                     storyS3Filter === 'VIDEO' ? 'bg-purple-600 text-white shadow-xs' : 'bg-white text-gray-700 border border-gray-200'
                   }`}
                 >
-                  Videos Only
+                  Videos ({storyS3Items.filter((i) => i.type === 'video').length})
                 </button>
                 <button
                   type="button"
@@ -1983,16 +2003,7 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
                     storyS3Filter === 'IMAGE' ? 'bg-purple-600 text-white shadow-xs' : 'bg-white text-gray-700 border border-gray-200'
                   }`}
                 >
-                  Images Only
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStoryS3Filter('ALL')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
-                    storyS3Filter === 'ALL' ? 'bg-purple-600 text-white shadow-xs' : 'bg-white text-gray-700 border border-gray-200'
-                  }`}
-                >
-                  All Media
+                  Images ({storyS3Items.filter((i) => i.type === 'image').length})
                 </button>
               </div>
 
