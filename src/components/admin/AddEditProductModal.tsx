@@ -83,6 +83,16 @@ const SPEC_PRESETS = [
   { group: 'home', label: 'Assembly Required', value: 'No, Ready to Use Out of Box' },
 ];
 
+const DEFAULT_PRODUCT_SPECIFICATIONS = (category = 'General', subcategory = 'General') => [
+  { label: 'Brand', value: 'SBS Certified' },
+  { label: 'Category', value: category },
+  { label: 'Subcategory', value: subcategory || 'General' },
+  { label: 'Condition', value: 'Brand New (100% Sealed)' },
+  { label: 'Warranty', value: '6 Months Manufacturer Support' },
+  { label: 'In The Box', value: '1x Main Unit, User Guide & Accessories' },
+  { label: 'Dispatch Origin', value: 'Mumbai Central Hub, India' },
+];
+
 interface AddEditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -129,7 +139,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
     subtitle: '',
     features: [] as string[],
     featureIcons: [] as { icon: string; label: string }[],
-    specifications: [] as { label: string; value: string }[],
+    specifications: DEFAULT_PRODUCT_SPECIFICATIONS(),
     faqs: [] as { question: string; answer: string }[],
     shippingInfo: '',
     returnPolicy: '',
@@ -306,7 +316,9 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         subtitle: productToEdit.subtitle || '',
         features: productToEdit.features || [],
         featureIcons: productToEdit.featureIcons || [],
-        specifications: productToEdit.specifications || [],
+        specifications: (productToEdit.specifications && productToEdit.specifications.length > 0)
+          ? productToEdit.specifications
+          : DEFAULT_PRODUCT_SPECIFICATIONS(productToEdit.category, productToEdit.subcategory),
         faqs: productToEdit.faqs || [],
         shippingInfo: productToEdit.shippingInfo || '',
         returnPolicy: productToEdit.returnPolicy || '',
@@ -348,7 +360,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         subtitle: '',
         features: [],
         featureIcons: [],
-        specifications: [],
+        specifications: DEFAULT_PRODUCT_SPECIFICATIONS(categories[0]?.id),
         faqs: [],
         shippingInfo: '',
         returnPolicy: '',
@@ -604,7 +616,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         features: combinedFeatures.length > 0 ? combinedFeatures : productToEdit.features,
         subtitle: formData.subtitle || undefined,
         featureIcons: formData.featureIcons.length > 0 ? formData.featureIcons : undefined,
-        specifications: formData.specifications.length > 0 ? formData.specifications : undefined,
+        specifications: formData.specifications,
         faqs: formData.faqs.length > 0 ? formData.faqs : undefined,
         shippingInfo: formData.shippingInfo || undefined,
         returnPolicy: formData.returnPolicy || undefined,
@@ -638,7 +650,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         features: combinedFeatures,
         subtitle: formData.subtitle || undefined,
         featureIcons: formData.featureIcons.length > 0 ? formData.featureIcons : undefined,
-        specifications: formData.specifications.length > 0 ? formData.specifications : undefined,
+        specifications: formData.specifications,
         faqs: formData.faqs.length > 0 ? formData.faqs : undefined,
         shippingInfo: formData.shippingInfo || undefined,
         returnPolicy: formData.returnPolicy || undefined,

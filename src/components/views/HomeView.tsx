@@ -11,7 +11,7 @@ import { Product, QuickActionItem, HeroBannerItem, TodayDealItem } from '@/types
 import { 
   ChevronRight, 
   ChevronLeft, 
-  ArrowRight, 
+  ArrowRight,
   Sparkles, 
   ShieldCheck, 
   Truck, 
@@ -1085,24 +1085,6 @@ export const HomeView: React.FC = () => {
         SBS Store — Shyam Bombay Sale | Official Online Shopping &amp; Retail Store Vadodara
       </h1>
 
-      {/* Official Brand Identity Bar for Google & Shoppers */}
-      <div className="flex items-center justify-between px-3.5 py-2 sm:px-4 sm:py-2.5 bg-gradient-to-r from-orange-50/90 via-[#FFF9F5] to-orange-50/90 rounded-2xl border border-orange-200/60 shadow-xs text-xs">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="w-2 h-2 rounded-full bg-[#00A859] animate-pulse flex-shrink-0" />
-          <p className="text-gray-800 font-bold truncate">
-            <span className="text-[#F95721] font-black">Shyam Bombay Sale (SBS Store)</span>
-            <span className="hidden sm:inline text-gray-400 mx-1.5">•</span>
-            <span className="hidden sm:inline text-gray-600 font-medium">Subhanpura, Vadodara Retail Store &amp; Pan-India Online Delivery</span>
-          </p>
-        </div>
-        <a
-          href="#store-overview"
-          className="text-[11px] sm:text-xs font-bold text-[#F95721] hover:text-[#E44813] flex-shrink-0 flex items-center gap-0.5 hover:underline ml-2"
-        >
-          <span>Store Details</span>
-          <ArrowRight className="w-3 h-3" />
-        </a>
-      </div>
 
       {/* Dynamic Sections in order configured in admin panel */}
       {homepageSections

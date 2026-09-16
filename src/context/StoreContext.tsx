@@ -2908,6 +2908,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } catch (e) {}
       return updated;
     });
+    setSelectedProductDetailState((prev) => (prev && prev.id === id ? { ...prev, ...updates } : prev));
     showToast('Product updated successfully');
 
     // Sync updates to Supabase Cloud Database for all devices

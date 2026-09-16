@@ -31,12 +31,33 @@ import {
   Award,
   Phone,
   MessageCircle,
-  FileText
+  FileText,
+  Edit3,
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 import { ResolvedImage, ResolvedVideo } from '../common/ResolvedMedia';
 import { getProductMediaList, ProductMediaItem } from '@/lib/productMedia';
 import { PincodeChecker } from '../common/PincodeChecker';
 import { Product } from '@/types';
+
+const SPEC_QUICK_PRESETS = [
+  { label: 'Brand', value: 'SBS Certified' },
+  { label: 'Model / SKU', value: 'SBS-2026-PRO' },
+  { label: 'Condition', value: 'Brand New (100% Sealed)' },
+  { label: 'Warranty', value: '6 Months Replacement Warranty' },
+  { label: 'In The Box', value: '1x Main Unit, User Guide & Accessories' },
+  { label: 'Material', value: 'Food Grade Stainless Steel & BPA-Free' },
+  { label: 'Dimensions (L x W x H)', value: '22 x 14 x 8 cm' },
+  { label: 'Item Weight', value: '380 grams' },
+  { label: 'Capacity / Volume', value: '1.5 Litres' },
+  { label: 'Color / Finish', value: 'Matte Pastel Slate' },
+  { label: 'Power / Wattage', value: '45W Turbo Motor' },
+  { label: 'Battery Backup', value: 'Up to 120 Mins Continuous Use' },
+  { label: 'Charging Type', value: 'USB Type-C Fast Charging' },
+  { label: 'Dispatch Origin', value: 'Mumbai Central Hub, India' },
+  { label: 'Country of Origin', value: 'India' },
+];
 
 export const ProductDetailModal: React.FC = () => {
   const { 
@@ -48,7 +69,8 @@ export const ProductDetailModal: React.FC = () => {
     setActiveTab,
     coupons,
     products,
-    showToast 
+    showToast,
+    updateProduct
   } = useStore();
 
   const [quantity, setQuantity] = useState(1);
@@ -66,12 +88,18 @@ export const ProductDetailModal: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Specifications Inline Editor State
+  const [isEditingSpecs, setIsEditingSpecs] = useState(false);
+  const [editingSpecsList, setEditingSpecsList] = useState<{ label: string; value: string }[]>([]);
+  const [isSavingSpecs, setIsSavingSpecs] = useState(false);
+
   useEffect(() => {
     if (selectedProductDetail) {
       setQuantity(1);
       setActiveMediaIndex(0);
       setDragOffset(0);
       setIsDragging(false);
+      setIsEditingSpecs(false);
       touchStartRef.current = null;
       isHorizontalSwipeRef.current = null;
       setLightboxImage(null);
@@ -265,6 +293,75 @@ export const ProductDetailModal: React.FC = () => {
     { label: 'In The Box', value: '1x Main Unit, User Guide & Accessories' },
     { label: 'Dispatch Origin', value: 'Mumbai Central Hub, India' },
   ];
+
+  const handleStartEditSpecs = () => {
+    setEditingSpecsList(specs.map(s => ({ ...s })));
+    setIsEditingSpecs(true);
+  };
+
+  const handleCancelEditSpecs = () => {
+    setIsEditingSpecs(false);
+  };
+
+  const handleUpdateEditingSpec = (index: number, field: 'label' | 'value', val: string) => {
+    setEditingSpecsList(prev => {
+      const next = [...prev];
+      if (next[index]) {
+        next[index] = { ...next[index], [field]: val };
+      }
+      return next;
+    });
+  };
+
+  const handleMoveEditingSpec = (index: number, direction: 'up' | 'down') => {
+    setEditingSpecsList(prev => {
+      const target = direction === 'up' ? index - 1 : index + 1;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      const temp = next[index];
+      next[index] = next[target];
+      next[target] = temp;
+      return next;
+    });
+  };
+
+  const handleDeleteEditingSpec = (index: number) => {
+    setEditingSpecsList(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddNewSpecRow = () => {
+    setEditingSpecsList(prev => [...prev, { label: '', value: '' }]);
+  };
+
+  const handleAddPresetToEditing = (preset: { label: string; value: string }) => {
+    setEditingSpecsList(prev => {
+      const exists = prev.some(s => s.label.toLowerCase() === preset.label.toLowerCase());
+      if (exists) {
+        showToast(`"${preset.label}" is already in specifications`, 'info');
+        return prev;
+      }
+      return [...prev, { label: preset.label, value: preset.value }];
+    });
+  };
+
+  const handleSaveSpecs = async () => {
+    if (!p) return;
+    const cleaned = editingSpecsList
+      .map(s => ({ label: s.label.trim(), value: s.value.trim() }))
+      .filter(s => s.label.length > 0 || s.value.length > 0);
+
+    setIsSavingSpecs(true);
+    try {
+      updateProduct(p.id, { specifications: cleaned });
+      showToast('Product specifications updated successfully! ✨', 'success');
+      setIsEditingSpecs(false);
+    } catch (err) {
+      console.error('Failed to save specifications:', err);
+      showToast('Failed to save specifications', 'error');
+    } finally {
+      setIsSavingSpecs(false);
+    }
+  };
 
   // Highlights fallback
   const highlights = p.features && p.features.length > 0 ? p.features : [
@@ -748,22 +845,160 @@ export const ProductDetailModal: React.FC = () => {
             </div>
 
             {/* ======================================================== */}
-            {/* 12. SPECIFICATIONS TABLE                                 */}
+            {/* 12. SPECIFICATIONS TABLE & INLINE EDITOR                 */}
             {/* ======================================================== */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-3.5 space-y-2.5 shadow-subtle">
-              <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Award className="w-4 h-4 text-[#F95721]" />
-                Product Specifications
-              </h3>
-              <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden text-xs">
-                {specs.map((spec, i) => (
-                  <div key={i} className={`flex py-2 px-3 ${i % 2 === 0 ? 'bg-gray-50/70' : 'bg-white'}`}>
-                    <span className="w-2/5 font-bold text-gray-600">{spec.label}</span>
-                    <span className="w-3/5 font-semibold text-gray-900">{spec.value}</span>
-                  </div>
-                ))}
+            {!isEditingSpecs ? (
+              <div className="bg-white border border-gray-100 rounded-2xl p-3.5 space-y-2.5 shadow-subtle">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-[#F95721]" />
+                    Product Specifications
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={handleStartEditSpecs}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#F95721] hover:text-[#E44813] bg-orange-50 hover:bg-orange-100/80 px-2.5 py-1 rounded-lg border border-orange-200/80 transition-all shadow-2xs cursor-pointer active:scale-95"
+                    title="Edit product specifications"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Edit Specs</span>
+                  </button>
+                </div>
+                <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden text-xs">
+                  {specs.map((spec, i) => (
+                    <div key={i} className={`flex py-2 px-3 ${i % 2 === 0 ? 'bg-gray-50/70' : 'bg-white'}`}>
+                      <span className="w-2/5 font-bold text-gray-600">{spec.label}</span>
+                      <span className="w-3/5 font-semibold text-gray-900">{spec.value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-white border-2 border-[#F95721]/30 rounded-2xl p-3.5 space-y-3 shadow-md animate-fadeIn">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                  <div className="flex items-center gap-1.5">
+                    <Edit3 className="w-4 h-4 text-[#F95721]" />
+                    <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider">
+                      Edit Specifications
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleCancelEditSpecs}
+                      className="px-2.5 py-1 text-xs font-bold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveSpecs}
+                      disabled={isSavingSpecs}
+                      className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold text-white bg-[#F95721] hover:bg-[#E44813] rounded-lg shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingSpecs ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Check className="w-3.5 h-3.5" />
+                      )}
+                      <span>Save</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick Presets Bar */}
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                    Add Common Attribute:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                    {SPEC_QUICK_PRESETS.map((preset) => {
+                      const isAdded = editingSpecsList.some(
+                        (s) => s.label.toLowerCase() === preset.label.toLowerCase()
+                      );
+                      return (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => handleAddPresetToEditing(preset)}
+                          className={`text-[11px] px-2 py-0.5 rounded-md font-semibold border transition-all cursor-pointer ${
+                            isAdded
+                              ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                              : 'bg-orange-50 text-[#F95721] border-orange-200/80 hover:bg-orange-100'
+                          }`}
+                          disabled={isAdded}
+                        >
+                          + {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Specifications List */}
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                  {editingSpecsList.map((spec, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-1.5 bg-gray-50/90 p-2 rounded-xl border border-gray-200/70 text-xs"
+                    >
+                      <input
+                        type="text"
+                        value={spec.label}
+                        onChange={(e) => handleUpdateEditingSpec(i, 'label', e.target.value)}
+                        placeholder="Label"
+                        className="w-2/5 px-2 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-800 focus:outline-none focus:border-[#F95721]"
+                      />
+                      <input
+                        type="text"
+                        value={spec.value}
+                        onChange={(e) => handleUpdateEditingSpec(i, 'value', e.target.value)}
+                        placeholder="Value"
+                        className="w-3/5 px-2 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-900 focus:outline-none focus:border-[#F95721]"
+                      />
+                      <div className="flex items-center gap-0.5 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveEditingSpec(i, 'up')}
+                          disabled={i === 0}
+                          className="p-1 text-gray-400 hover:text-gray-700 disabled:opacity-20 cursor-pointer"
+                          title="Move Up"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveEditingSpec(i, 'down')}
+                          disabled={i === editingSpecsList.length - 1}
+                          className="p-1 text-gray-400 hover:text-gray-700 disabled:opacity-20 cursor-pointer"
+                          title="Move Down"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteEditingSpec(i)}
+                          className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add Row Button */}
+                <button
+                  type="button"
+                  onClick={handleAddNewSpecRow}
+                  className="w-full py-2 border-2 border-dashed border-orange-200 hover:border-[#F95721] rounded-xl text-xs font-bold text-[#F95721] hover:bg-orange-50/50 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Specification Field</span>
+                </button>
+              </div>
+            )}
 
             {/* ======================================================== */}
             {/* 13. ACCORDIONS: Shipping, Return & Refund, FAQs          */}
