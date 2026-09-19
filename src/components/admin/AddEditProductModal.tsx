@@ -39,12 +39,15 @@ import {
   Zap,
   Award,
   CheckCircle2,
-  Tag
+  Tag,
+  Barcode,
+  Camera
 } from 'lucide-react';
 import { Product, ProductDescriptionBlock, S3MediaItem } from '@/types';
 import { ResolvedImage, ResolvedVideo } from '../common/ResolvedMedia';
 import { uploadMediaToS3, listS3Files } from '@/lib/mediaStorage';
 import { getProductMediaList } from '@/lib/productMedia';
+import { BarcodeScannerModal } from '../common/BarcodeScannerModal';
 
 const PRESET_GROUPS = [
   { id: 'all', label: 'All Presets' },
@@ -125,6 +128,8 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
     price: '',
     discountPercentage: 0,
     sku: '',
+    customId: '',
+    barcode: '',
     stockCount: '25',
     lowStockThreshold: '5',
     stockStatus: 'In Stock',
@@ -152,6 +157,9 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
     isSuperDeal: false,
     isTopRated: false,
   });
+
+  // Barcode Scanner Modal State
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
 
   // State for adding new feature highlight bullet
   const [newFeatureText, setNewFeatureText] = useState('');
@@ -304,6 +312,8 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         price: productToEdit.price.toString(),
         discountPercentage: productToEdit.discountPercentage,
         sku: `SKU-${productToEdit.id.toUpperCase()}`,
+        customId: productToEdit.id,
+        barcode: productToEdit.barcode || (productToEdit.id.startsWith('p_') ? '' : productToEdit.id),
         stockCount: productToEdit.stockCount.toString(),
         lowStockThreshold: storeSettings.lowStockThreshold.toString(),
         stockStatus: productToEdit.inStock ? 'In Stock' : 'Out of Stock',
@@ -348,6 +358,8 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         price: '',
         discountPercentage: 0,
         sku: `SKU-${Date.now().toString().slice(-5)}`,
+        customId: '',
+        barcode: '',
         stockCount: '10',
         lowStockThreshold: (storeSettings.lowStockThreshold || 5).toString(),
         stockStatus: 'In Stock',
@@ -598,6 +610,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
 
     if (productToEdit) {
       updateProduct(productToEdit.id, {
+        barcode: formData.barcode.trim() || undefined,
         name: formData.name,
         category: formData.category,
         subcategory: formData.subcategory || undefined,
@@ -630,6 +643,8 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
       showToast(`Product "${formData.name}" updated successfully!`);
     } else {
       addProduct({
+        id: formData.customId.trim() || (formData.barcode.trim() ? formData.barcode.trim() : undefined),
+        barcode: formData.barcode.trim() || undefined,
         name: formData.name,
         category: formData.category,
         subcategory: formData.subcategory || undefined,
@@ -747,6 +762,76 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                   onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
                   className="w-full border border-gray-200 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] text-xs"
                 />
+              </div>
+
+              {/* Product ID & Barcode Card */}
+              <div className="bg-gray-50/90 border border-gray-200/80 rounded-2xl p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Barcode className="w-4 h-4 text-[#F95721]" />
+                    <label className="font-bold text-gray-800 text-xs">
+                      Product ID & Barcode <span className="text-gray-400 font-normal">(Optional)</span>
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsBarcodeScannerOpen(true)}
+                    className="px-3 py-1.5 bg-[#F95721] hover:bg-[#E44813] text-white text-[11px] font-bold rounded-xl flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Scan Barcode</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 mb-1">
+                      Barcode / EAN / UPC
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Scan or type barcode"
+                        value={formData.barcode}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData(prev => ({
+                            ...prev,
+                            barcode: val,
+                            customId: !productToEdit && (!prev.customId || prev.customId === prev.barcode) ? val : prev.customId
+                          }));
+                        }}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F95721] text-xs font-mono bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 mb-1">
+                      Product Unique ID
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Auto-generated (p_...) if blank"
+                        value={formData.customId}
+                        onChange={(e) => setFormData({ ...formData, customId: e.target.value })}
+                        disabled={!!productToEdit}
+                        className={`w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[#F95721] text-xs font-mono ${productToEdit ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-gray-500 leading-tight">
+                  {formData.barcode ? (
+                    <span className="text-[#00A859] font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Barcode active: {formData.barcode}
+                    </span>
+                  ) : (
+                    'Leave blank to automatically generate a standard unique ID upon saving.'
+                  )}
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2814,6 +2899,22 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
           </div>
         </div>
       )}
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScannerModal
+        isOpen={isBarcodeScannerOpen}
+        onClose={() => setIsBarcodeScannerOpen(false)}
+        onScan={(scanned) => {
+          setFormData(prev => ({
+            ...prev,
+            barcode: scanned,
+            customId: !productToEdit ? scanned : prev.customId,
+            sku: prev.sku || `SKU-${scanned.slice(-6)}`
+          }));
+          showToast(`Barcode "${scanned}" captured! ⭐`, 'success');
+        }}
+        title={productToEdit ? `Scan Barcode for "${formData.name || 'Product'}"` : 'Scan New Product Barcode'}
+      />
     </div>
   );
 };

@@ -31,11 +31,14 @@ export const ProductSelectorModal: React.FC<ProductSelectorModalProps> = ({
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        !searchQuery.trim() ||
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        p.category?.toLowerCase().includes(q) ||
+        (p.barcode && p.barcode.toLowerCase().includes(q)) ||
+        p.id.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q);
 
       const matchesCategory =
         selectedCategoryFilter === 'all' || p.category === selectedCategoryFilter;

@@ -191,7 +191,7 @@ interface StoreContextType {
   awardOrderRewardPoints: (orderId: string, orderTotal: number) => Promise<void>;
 
   // Admin Catalog
-  addProduct: (product: Omit<Product, 'id'>) => void;
+  addProduct: (product: Omit<Product, 'id'> & { id?: string }) => void;
   updateProduct: (id: string, updates: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
   resetCatalogToDefault: () => void;
@@ -1037,6 +1037,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const initMatch = INITIAL_PRODUCTS.find((ip) => ip.id === p.id);
             return {
               id: p.id,
+              barcode: p.barcode || initMatch?.barcode || undefined,
               name: p.name,
               category: p.category,
               subcategory: p.subcategory || initMatch?.subcategory,
@@ -2859,11 +2860,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Admin Catalog Actions
-  const addProduct = async (prod: Omit<Product, 'id'>) => {
-    const newId = `p_${Date.now()}`;
+  const addProduct = async (prod: Omit<Product, 'id'> & { id?: string }) => {
+    const rawId = prod.id?.trim();
+    const newId = rawId && rawId.length > 0 ? rawId : `p_${Date.now()}`;
     const newProduct: Product = {
       ...prod,
       id: newId,
+      barcode: prod.barcode?.trim() || (rawId ? rawId : undefined),
     };
     setProducts((prev) => {
       const updated = [newProduct, ...prev];
@@ -2878,7 +2881,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Sync to Supabase Cloud Database for all devices
     if (isSupabaseConfigured && supabase) {
       try {
-        const { error } = await supabase.from('products').insert({
+        const insertPayload: any = {
           id: newId,
           name: newProduct.name,
           category: newProduct.category,
@@ -2910,7 +2913,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           faqs: newProduct.faqs || [],
           shipping_info: newProduct.shippingInfo || null,
           return_policy: newProduct.returnPolicy || null,
-        });
+        };
+        if (newProduct.barcode) {
+          insertPayload.barcode = newProduct.barcode;
+        }
+
+        const { error } = await supabase.from('products').insert(insertPayload);
         if (error) {
           console.error('Supabase add product error:', error);
           showToast(`Cloud sync warning: ${error.message}`, 'error');
@@ -2947,6 +2955,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (isSupabaseConfigured && supabase) {
       const dbUpdates: any = {};
       if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.barcode !== undefined) dbUpdates.barcode = updates.barcode || null;
       if (updates.category !== undefined) dbUpdates.category = updates.category;
       if (updates.subcategory !== undefined) dbUpdates.subcategory = updates.subcategory;
       if (updates.price !== undefined) dbUpdates.price = updates.price;

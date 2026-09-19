@@ -193,3 +193,24 @@ input[type="checkbox"] {
   animation: backdropFade 0.2s ease-out forwards;
 }
 
+/* Barcode Scanner Viewfinder Laser Guide */
+@keyframes scannerLaser {
+  0% {
+    top: 5%;
+    opacity: 0.8;
+  }
+  50% {
+    top: 92%;
+    opacity: 1;
+  }
+  100% {
+    top: 5%;
+    opacity: 0.8;
+  }
+}
+
+.animate-scanner-laser {
+  position: absolute;
+  animation: scannerLaser 2s ease-in-out infinite;
+}
+

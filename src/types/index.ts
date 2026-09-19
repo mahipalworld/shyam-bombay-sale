@@ -8,6 +8,7 @@ export interface ProductDescriptionBlock {
 
 export interface Product {
   id: string;
+  barcode?: string; // Optional physical barcode (EAN-13, UPC, Code 128, etc.)
   name: string;
   category: string;
   subcategory?: string; // Subcategory ID (e.g., 'decor', 'mats', 'lightings')

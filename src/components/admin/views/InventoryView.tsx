@@ -14,10 +14,13 @@ import {
   X,
   Sparkles,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  ScanLine,
+  Barcode
 } from 'lucide-react';
 import { Product } from '@/types';
 import { ResolvedImage } from '@/components/common/ResolvedMedia';
+import { BarcodeScannerModal } from '@/components/common/BarcodeScannerModal';
 
 export const InventoryView: React.FC = () => {
   const { products, updateProduct, inventoryLogs, addInventoryLog, showToast, storeSettings } = useStore();
@@ -25,12 +28,18 @@ export const InventoryView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ALL' | 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   // Filtered products
   const filteredProducts = products.filter((p) => {
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      if (!p.name.toLowerCase().includes(q) && !p.category.toLowerCase().includes(q)) return false;
+      const q = searchQuery.toLowerCase().trim();
+      const matchName = p.name.toLowerCase().includes(q);
+      const matchCat = p.category.toLowerCase().includes(q);
+      const matchSub = p.subcategory && p.subcategory.toLowerCase().includes(q);
+      const matchBarcode = p.barcode && p.barcode.toLowerCase().includes(q);
+      const matchId = p.id.toLowerCase().includes(q);
+      if (!matchName && !matchCat && !matchSub && !matchBarcode && !matchId) return false;
     }
     if (activeTab === 'IN_STOCK' && p.stockCount <= storeSettings.lowStockThreshold) return false;
     if (activeTab === 'LOW_STOCK' && (p.stockCount > storeSettings.lowStockThreshold || p.stockCount === 0)) return false;
@@ -130,15 +139,26 @@ export const InventoryView: React.FC = () => {
       </div>
 
       {/* Search Filter */}
-      <div className="relative">
-        <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-        <input
-          type="text"
-          placeholder="Filter inventory by product name or category..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white border border-gray-200 rounded-2xl pl-9 pr-3 py-2 text-xs outline-none focus:border-[#F95721]"
-        />
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Filter inventory by product name, category, or barcode..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white border border-gray-200 rounded-2xl pl-9 pr-3 py-2 text-xs outline-none focus:border-[#F95721]"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsScannerOpen(true)}
+          className="px-3 py-2 bg-gray-900 hover:bg-black text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all shrink-0 active:scale-95"
+          title="Scan barcode to check stock"
+        >
+          <ScanLine className="w-3.5 h-3.5 text-amber-400" />
+          <span className="hidden sm:inline">Scan Barcode</span>
+        </button>
       </div>
 
       {/* Inventory Product Cards */}
@@ -159,7 +179,14 @@ export const InventoryView: React.FC = () => {
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-xs font-black text-gray-900 truncate">{p.name}</h3>
-                    <p className="text-[10px] text-gray-400 capitalize">{p.category} • ₹{p.price}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="text-[10px] text-gray-400 capitalize">{p.category} • ₹{p.price}</p>
+                      {p.barcode && (
+                        <span className="font-mono text-[9px] bg-gray-100 text-gray-600 px-1 py-0.2 rounded border border-gray-200/50">
+                          {p.barcode}
+                        </span>
+                      )}
+                    </div>
                     <span className={`text-[9px] font-bold px-2 py-0.2 rounded-full inline-block mt-0.5 ${
                       isOut ? 'bg-red-100 text-red-700' : isLow ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
                     }`}>
@@ -262,6 +289,23 @@ export const InventoryView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Barcode Scanner Modal for Inventory Check */}
+      <BarcodeScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        title="Scan Barcode to Check Stock"
+        onScanSuccess={(code) => {
+          setSearchQuery(code);
+          setIsScannerOpen(false);
+          const found = products.find(p => p.id === code || p.barcode === code);
+          if (found) {
+            showToast(`Found: ${found.name} (${found.stockCount} units)`);
+          } else {
+            showToast(`Barcode "${code}" not found in inventory.`);
+          }
+        }}
+      />
     </div>
   );
 };

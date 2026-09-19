@@ -25,13 +25,15 @@ export const SearchModal: React.FC = () => {
   const filteredProducts = useMemo(() => {
     if (!searchTerm.trim()) return [];
     
-    const query = searchTerm.toLowerCase();
+    const query = searchTerm.toLowerCase().trim();
     const matches = products.filter(
       (p) =>
         p.name.toLowerCase().includes(query) ||
         p.category.toLowerCase().includes(query) ||
         (p.subcategory && p.subcategory.toLowerCase().includes(query)) ||
-        p.description.toLowerCase().includes(query)
+        (p.barcode && p.barcode.toLowerCase().includes(query)) ||
+        p.id.toLowerCase().includes(query) ||
+        (p.description && p.description.toLowerCase().includes(query))
     );
 
     switch (sortBy) {
