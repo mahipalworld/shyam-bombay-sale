@@ -1213,6 +1213,32 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         if (settings && settings.length > 0) {
           settings.forEach((s: any) => {
+            if (s.id === 'deleted_catalog_items' && s.data) {
+              const cloudProductIds: string[] = s.data.productIds || [];
+              const cloudCategoryIds: string[] = s.data.categoryIds || [];
+              const cloudCouponCodes: string[] = s.data.couponCodes || [];
+
+              cloudProductIds.forEach((id: string) => addDeletedProductId(id));
+              cloudCategoryIds.forEach((id: string) => addDeletedCategoryId(id));
+              cloudCouponCodes.forEach((code: string) => addDeletedCouponCode(code));
+
+              if (cloudProductIds.length > 0) {
+                const delSet = new Set(cloudProductIds);
+                setProducts((prev) => {
+                  const updated = prev.filter((p) => !delSet.has(p.id));
+                  try { localStorage.setItem('sbs_products', JSON.stringify(updated)); } catch (e) {}
+                  return updated;
+                });
+              }
+              if (cloudCategoryIds.length > 0) {
+                const delSet = new Set(cloudCategoryIds);
+                setCategories((prev) => {
+                  const updated = prev.filter((c) => !delSet.has(c.id));
+                  try { localStorage.setItem('sbs_categories', JSON.stringify(updated)); } catch (e) {}
+                  return updated;
+                });
+              }
+            }
             if (s.id === 'stories' && Array.isArray(s.data)) setStories(s.data);
             if (s.id === 'scratch_config' && s.data) setScratchConfig(s.data);
             if (s.id === 'flash_deal_config' && s.data) setFlashDealConfig(s.data);
@@ -1230,6 +1256,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             if (s.id === 'best_sellers_config' && s.data) setBestSellersConfig(s.data);
             if (s.id === 'store_settings' && s.data) setStoreSettings(sanitizeStoreSettings(s.data));
           });
+
+          // Sync any locally deleted items on this device to cloud if missing
+          const deletedSetting = settings.find((s: any) => s.id === 'deleted_catalog_items');
+          const cloudPIds: string[] = deletedSetting?.data?.productIds || [];
+          const localPIds = Array.from(getDeletedProductIds());
+          const missingInCloud = localPIds.filter(id => !cloudPIds.includes(id));
+          if (missingInCloud.length > 0) {
+            const mergedProductIds = Array.from(new Set([...cloudPIds, ...localPIds]));
+            supabase.from('store_settings').upsert({
+              id: 'deleted_catalog_items',
+              data: {
+                productIds: mergedProductIds,
+                categoryIds: Array.from(new Set([...(deletedSetting?.data?.categoryIds || []), ...Array.from(getDeletedCategoryIds())])),
+                couponCodes: Array.from(new Set([...(deletedSetting?.data?.couponCodes || []), ...Array.from(getDeletedCouponCodes())])),
+              },
+              updated_at: new Date().toISOString()
+            }).then(() => {
+              missingInCloud.forEach(mId => {
+                supabase.from('products').delete().eq('id', mId).then(() => {});
+              });
+            });
+          }
         }
       } catch (err) {
         console.error('Failed to load catalog from Supabase:', err);
@@ -1520,6 +1568,32 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .on('postgres_changes', { event: '*', schema: 'public', table: 'store_settings' }, (payload) => {
         const s = (payload.new || payload.old) as any;
         if (!s || !s.id) return;
+        if (s.id === 'deleted_catalog_items' && s.data) {
+          const cloudProductIds: string[] = s.data.productIds || [];
+          const cloudCategoryIds: string[] = s.data.categoryIds || [];
+          const cloudCouponCodes: string[] = s.data.couponCodes || [];
+
+          cloudProductIds.forEach((id: string) => addDeletedProductId(id));
+          cloudCategoryIds.forEach((id: string) => addDeletedCategoryId(id));
+          cloudCouponCodes.forEach((code: string) => addDeletedCouponCode(code));
+
+          if (cloudProductIds.length > 0) {
+            const delSet = new Set(cloudProductIds);
+            setProducts((prev) => {
+              const updated = prev.filter((p) => !delSet.has(p.id));
+              try { localStorage.setItem('sbs_products', JSON.stringify(updated)); } catch (e) {}
+              return updated;
+            });
+          }
+          if (cloudCategoryIds.length > 0) {
+            const delSet = new Set(cloudCategoryIds);
+            setCategories((prev) => {
+              const updated = prev.filter((c) => !delSet.has(c.id));
+              try { localStorage.setItem('sbs_categories', JSON.stringify(updated)); } catch (e) {}
+              return updated;
+            });
+          }
+        }
         if (s.id === 'stories' && Array.isArray(s.data)) setStories(s.data);
         if (s.id === 'scratch_config' && s.data) setScratchConfig(s.data);
         if (s.id === 'flash_deal_config' && s.data) setFlashDealConfig(s.data);
@@ -3130,11 +3204,33 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     showToast('Product removed', 'info');
 
-    // 4. Delete in Supabase cloud database
+    // 4. Delete in Supabase cloud database & broadcast cross-device
     if (isSupabaseConfigured && supabase) {
       supabase.from('products').delete().eq('id', id).then(({ error }) => {
         if (error) console.error('Supabase delete product error:', error);
       });
+
+      // Update deleted_catalog_items in store_settings for cross-device synchronization
+      supabase
+        .from('store_settings')
+        .select('data')
+        .eq('id', 'deleted_catalog_items')
+        .single()
+        .then(({ data: settingRow }) => {
+          const existingPIds: string[] = settingRow?.data?.productIds || [];
+          const nextPIds = Array.from(new Set([...existingPIds, ...Array.from(getDeletedProductIds()), id]));
+          supabase.from('store_settings').upsert({
+            id: 'deleted_catalog_items',
+            data: {
+              productIds: nextPIds,
+              categoryIds: Array.from(getDeletedCategoryIds()),
+              couponCodes: Array.from(getDeletedCouponCodes()),
+            },
+            updated_at: new Date().toISOString()
+          }).then(({ error }) => {
+            if (error) console.error('Cross-device deletion broadcast error:', error);
+          });
+        });
     }
   };
 
@@ -3142,6 +3238,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       localStorage.removeItem('sbs_deleted_product_ids');
       localStorage.removeItem('sbs_deleted_category_ids');
+      localStorage.removeItem('sbs_deleted_coupon_codes');
     } catch {}
     setProducts(INITIAL_PRODUCTS);
     setCategories(INITIAL_CATEGORIES);
@@ -3150,6 +3247,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       localStorage.setItem('sbs_categories', JSON.stringify(INITIAL_CATEGORIES));
     } catch (e) { }
     showToast('Catalog refreshed with all 36+ products & subcategories! ✨', 'success');
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('store_settings').upsert({
+        id: 'deleted_catalog_items',
+        data: { productIds: [], categoryIds: [], couponCodes: [] },
+        updated_at: new Date().toISOString()
+      });
+    }
   };
 
   // Admin Team & Role Authorization Methods
@@ -3451,6 +3556,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       supabase.from('categories').delete().eq('id', id).then(({ error }) => {
         if (error) console.error('Supabase delete category error:', error);
       });
+
+      supabase
+        .from('store_settings')
+        .select('data')
+        .eq('id', 'deleted_catalog_items')
+        .single()
+        .then(({ data: settingRow }) => {
+          const existingCIds: string[] = settingRow?.data?.categoryIds || [];
+          const nextCIds = Array.from(new Set([...existingCIds, ...Array.from(getDeletedCategoryIds()), id]));
+          supabase.from('store_settings').upsert({
+            id: 'deleted_catalog_items',
+            data: {
+              productIds: settingRow?.data?.productIds || Array.from(getDeletedProductIds()),
+              categoryIds: nextCIds,
+              couponCodes: Array.from(getDeletedCouponCodes()),
+            },
+            updated_at: new Date().toISOString()
+          }).then(({ error }) => {
+            if (error) console.error('Cross-device category deletion error:', error);
+          });
+        });
     }
   };
 
