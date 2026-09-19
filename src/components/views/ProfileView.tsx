@@ -354,6 +354,37 @@ export const ProfileView: React.FC = () => {
           </div>
 
           <div className="bg-white border border-gray-100 rounded-3xl p-3 shadow-subtle divide-y divide-gray-50">
+            {/* Merchant / Admin Dashboard (Featured at top for authorized admins) */}
+            {isAuthorizedAdmin && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('admin')}
+                className="w-full flex items-center justify-between p-3.5 hover:bg-orange-50/80 rounded-2xl cursor-pointer transition-colors bg-gradient-to-r from-orange-50/70 to-amber-50/40 border border-orange-200/80 text-left shadow-2xs group mb-1"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#F95721] to-[#FF7E47] text-white flex items-center justify-center shadow-xs shadow-orange-500/20 group-hover:scale-105 transition-transform">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h4 className="text-xs md:text-sm font-black text-gray-900">
+                        Admin & Store Manager
+                      </h4>
+                      <span className="text-[11px] font-black uppercase px-2 py-0.5 rounded-full bg-[#F95721] text-white">
+                        {activeAdminRole || 'ADMIN'}
+                      </span>
+                      <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-200/60 flex items-center gap-0.5">
+                        <ShieldCheck className="w-2.5 h-2.5" />
+                        Google Auth
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-0.5">Manage catalog, roles, orders & store operations</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#F95721] group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
+
             {/* My Orders */}
             <div
               onClick={() => setOrderListFilter('ALL')}
@@ -477,37 +508,6 @@ export const ProfileView: React.FC = () => {
               </div>
               <ChevronRight className="w-4 h-4 text-[#F95721]" />
             </a>
-
-            {/* Merchant / Admin Dashboard (Only visible for Google-authenticated authorized admins) */}
-            {isAuthorizedAdmin && (
-              <button
-                type="button"
-                onClick={() => setActiveTab('admin')}
-                className="w-full flex items-center justify-between p-3.5 hover:bg-orange-50/80 rounded-2xl cursor-pointer transition-colors bg-gradient-to-r from-orange-50/50 to-amber-50/30 border border-orange-200/70 text-left shadow-2xs group"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#F95721] to-[#FF7E47] text-white flex items-center justify-center shadow-xs shadow-orange-500/20 group-hover:scale-105 transition-transform">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <h4 className="text-xs md:text-sm font-black text-gray-900">
-                        Admin & Store Manager
-                      </h4>
-                      <span className="text-[11px] font-black uppercase px-2 py-0.5 rounded-full bg-[#F95721] text-white">
-                        {activeAdminRole || 'ADMIN'}
-                      </span>
-                      <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-200/60 flex items-center gap-0.5">
-                        <ShieldCheck className="w-2.5 h-2.5" />
-                        Google Auth
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-gray-500 mt-0.5">Manage catalog, roles, orders & store operations</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[#F95721] group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            )}
           </div>
 
           {/* Logout Button (only shown when user is logged in) */}

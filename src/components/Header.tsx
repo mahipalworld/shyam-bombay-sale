@@ -35,14 +35,22 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
     cartTotal,
     storeSettings,
     userNotifications,
-    setIsUserNotificationsModalOpen
+    setIsUserNotificationsModalOpen,
+    isEmailAuthorizedAdmin
   } = useStore();
-  const { authUser, openAuthModal, signOut } = useAuth();
-
+  const { authUser, supabaseUser, isGoogleAuth, openAuthModal, signOut } = useAuth();
 
   const [desktopSearchInput, setDesktopSearchInput] = useState('');
   const totalCartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const unreadNotifCount = userNotifications.filter(n => !n.read).length;
+
+  const currentEmail = authUser?.email || supabaseUser?.email;
+  const isDevOrLocal = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1' || 
+    window.location.hash.includes('admin')
+  );
+  const isAuthorizedAdmin = isDevOrLocal || (isGoogleAuth && isEmailAuthorizedAdmin(currentEmail));
 
   const handleDesktopSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,6 +147,20 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           >
             Store & Contact
           </a>
+          {isAuthorizedAdmin && (
+            <button
+              onClick={() => setActiveTab('admin')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-black text-xs transition-all ${
+                activeTab === 'admin'
+                  ? 'bg-[#F95721] text-white shadow-xs'
+                  : 'bg-orange-50 hover:bg-orange-100 text-[#F95721] border border-orange-200/70'
+              }`}
+              title="Open Admin Dashboard"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>Admin</span>
+            </button>
+          )}
         </nav>
 
         {/* Desktop Search Bar */}
@@ -152,6 +174,18 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
 
         {/* Right Actions */}
         <div className="flex items-center gap-1 sm:gap-2">
+          {/* Admin shortcut on mobile header for authorized admins */}
+          {isAuthorizedAdmin && (
+            <button
+              onClick={() => setActiveTab('admin')}
+              className="md:hidden p-2 text-[#F95721] bg-orange-50 hover:bg-orange-100 rounded-2xl transition-colors flex items-center border border-orange-200/70 tap-active"
+              title="Admin Panel"
+              aria-label="Admin Panel"
+            >
+              <Shield className="w-4 h-4 stroke-[2.4px]" />
+            </button>
+          )}
+
           {/* Search Button (Accessible on both Mobile & Desktop) */}
           <button
             onClick={() => setIsSearchOpen(true)}

@@ -93,9 +93,13 @@ export default function App() {
 
       {/* Main Content Area - Expands comfortably on Desktop and Mobile */}
       <main className={`flex-1 w-full ${activeTab === 'admin' ? 'w-full max-w-none px-0 py-0' : activeTab === 'categories' ? 'max-w-6xl mx-auto px-2 sm:px-4 md:px-6 py-1 sm:py-2' : activeTab === 'home' ? 'max-w-6xl mx-auto px-2 sm:px-4 md:px-8 pt-0.5 sm:pt-1.5 pb-3' : 'max-w-6xl mx-auto px-2 sm:px-4 md:px-8 py-3'}`}>
-        <div key={activeTab} className="animate-page-enter w-full">
-          {renderActiveView()}
-        </div>
+        {activeTab === 'admin' ? (
+          renderActiveView()
+        ) : (
+          <div key={activeTab} className="animate-page-enter w-full">
+            {renderActiveView()}
+          </div>
+        )}
       </main>
 
       {/* Desktop Footer - Shown on home, cart, wishlist, profile */}
