@@ -282,12 +282,91 @@ export const DEFAULT_HOMEPAGE_SECTIONS: HomepageSection[] = [
   { id: 'bestsellers', name: 'Best Sellers', enabled: true }
 ];
 
+// Persistent Deletion Tracking Helpers
+const getDeletedProductIds = (): Set<string> => {
+  try {
+    if (typeof window === 'undefined') return new Set();
+    const saved = localStorage.getItem('sbs_deleted_product_ids');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const addDeletedProductId = (id: string) => {
+  try {
+    if (typeof window === 'undefined') return;
+    const current = getDeletedProductIds();
+    current.add(id);
+    localStorage.setItem('sbs_deleted_product_ids', JSON.stringify(Array.from(current)));
+  } catch {}
+};
+
+const removeDeletedProductId = (id: string) => {
+  try {
+    if (typeof window === 'undefined') return;
+    const current = getDeletedProductIds();
+    current.delete(id);
+    localStorage.setItem('sbs_deleted_product_ids', JSON.stringify(Array.from(current)));
+  } catch {}
+};
+
+const getDeletedCategoryIds = (): Set<string> => {
+  try {
+    if (typeof window === 'undefined') return new Set();
+    const saved = localStorage.getItem('sbs_deleted_category_ids');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const addDeletedCategoryId = (id: string) => {
+  try {
+    if (typeof window === 'undefined') return;
+    const current = getDeletedCategoryIds();
+    current.add(id);
+    localStorage.setItem('sbs_deleted_category_ids', JSON.stringify(Array.from(current)));
+  } catch {}
+};
+
+const getDeletedCouponCodes = (): Set<string> => {
+  try {
+    if (typeof window === 'undefined') return new Set();
+    const saved = localStorage.getItem('sbs_deleted_coupon_codes');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const addDeletedCouponCode = (code: string) => {
+  try {
+    if (typeof window === 'undefined') return;
+    const current = getDeletedCouponCodes();
+    current.add(code.toUpperCase());
+    localStorage.setItem('sbs_deleted_coupon_codes', JSON.stringify(Array.from(current)));
+  } catch {}
+};
+
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [products, setProducts] = useState<Product[]>(() => {
+    if (typeof window !== 'undefined') {
+      const deletedIds = getDeletedProductIds();
+      return INITIAL_PRODUCTS.filter((p) => !deletedIds.has(p.id));
+    }
+    return INITIAL_PRODUCTS;
+  });
+  const [categories, setCategories] = useState<Category[]>(() => {
+    if (typeof window !== 'undefined') {
+      const deletedIds = getDeletedCategoryIds();
+      return INITIAL_CATEGORIES.filter((c) => !deletedIds.has(c.id));
+    }
+    return INITIAL_CATEGORIES;
+  });
 
   // Clean empty initial cart for all visitors
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -744,14 +823,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       }
 
+      const deletedProductIds = getDeletedProductIds();
       const savedProducts = localStorage.getItem('sbs_products');
       if (savedProducts) {
         try {
           const parsedProducts: Product[] = JSON.parse(savedProducts);
-          const existingIds = new Set(parsedProducts.map(p => p.id));
-          const missingInitial = INITIAL_PRODUCTS.filter(p => !existingIds.has(p.id));
-          const updated = parsedProducts.map(p => {
-            const initMatch = INITIAL_PRODUCTS.find(ip => ip.id === p.id);
+          // Filter out any known deleted products from saved cache
+          const activeSaved = parsedProducts.filter((p) => !deletedProductIds.has(p.id));
+          const existingIds = new Set(activeSaved.map((p) => p.id));
+          // Never re-add deleted products as "missingInitial"
+          const missingInitial = INITIAL_PRODUCTS.filter((p) => !existingIds.has(p.id) && !deletedProductIds.has(p.id));
+          const updated = activeSaved.map((p) => {
+            const initMatch = INITIAL_PRODUCTS.find((ip) => ip.id === p.id);
             if (initMatch) {
               return {
                 ...initMatch,
@@ -768,18 +851,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
           setProducts([...updated, ...missingInitial]);
         } catch {
-          setProducts(INITIAL_PRODUCTS);
+          setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id)));
         }
+      } else {
+        setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id)));
       }
 
+      const deletedCategoryIds = getDeletedCategoryIds();
       const savedCategories = localStorage.getItem('sbs_categories');
       if (savedCategories) {
         try {
           const parsedCategories: Category[] = JSON.parse(savedCategories);
-          const existingIds = new Set(parsedCategories.map(c => c.id));
-          const missingInitial = INITIAL_CATEGORIES.filter(c => !existingIds.has(c.id));
-          const updated = parsedCategories.map(c => {
-            const initMatch = INITIAL_CATEGORIES.find(ic => ic.id === c.id);
+          const activeSaved = parsedCategories.filter((c) => !deletedCategoryIds.has(c.id));
+          const existingIds = new Set(activeSaved.map((c) => c.id));
+          const missingInitial = INITIAL_CATEGORIES.filter((c) => !existingIds.has(c.id) && !deletedCategoryIds.has(c.id));
+          const updated = activeSaved.map((c) => {
+            const initMatch = INITIAL_CATEGORIES.find((ic) => ic.id === c.id);
             if (initMatch && (!c.subcategories || c.subcategories.length === 0)) {
               return { ...c, subcategories: initMatch.subcategories };
             }
@@ -787,22 +874,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
           setCategories([...updated, ...missingInitial]);
         } catch {
-          setCategories(INITIAL_CATEGORIES);
+          setCategories(INITIAL_CATEGORIES.filter((c) => !deletedCategoryIds.has(c.id)));
         }
+      } else {
+        setCategories(INITIAL_CATEGORIES.filter((c) => !deletedCategoryIds.has(c.id)));
       }
 
+      const deletedCouponCodes = getDeletedCouponCodes();
       const savedCoupons = localStorage.getItem('sbs_coupons');
       if (savedCoupons) {
         try {
           const parsed = JSON.parse(savedCoupons);
-          const existingCodes = new Set(parsed.map((c: any) => c.code.toUpperCase()));
-          const missingInitial = INITIAL_COUPONS.filter((c) => !existingCodes.has(c.code.toUpperCase()));
-          setCoupons([...parsed, ...missingInitial]);
+          const activeParsed = parsed.filter((c: any) => !deletedCouponCodes.has(c.code.toUpperCase()));
+          const existingCodes = new Set(activeParsed.map((c: any) => c.code.toUpperCase()));
+          const missingInitial = INITIAL_COUPONS.filter((c) => !existingCodes.has(c.code.toUpperCase()) && !deletedCouponCodes.has(c.code.toUpperCase()));
+          setCoupons([...activeParsed, ...missingInitial]);
         } catch {
-          setCoupons(INITIAL_COUPONS);
+          setCoupons(INITIAL_COUPONS.filter((c) => !deletedCouponCodes.has(c.code.toUpperCase())));
         }
       } else {
-        setCoupons(INITIAL_COUPONS);
+        setCoupons(INITIAL_COUPONS.filter((c) => !deletedCouponCodes.has(c.code.toUpperCase())));
       }
 
       const savedRole = localStorage.getItem('sbs_admin_role');
@@ -1033,7 +1124,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
 
         if (prods && prods.length > 0) {
-          const mappedRemote: Product[] = prods.map((p: any) => {
+          const deletedProductIds = getDeletedProductIds();
+          const activeProds = prods.filter((p: any) => !deletedProductIds.has(p.id));
+
+          // If Supabase returned any stale items that were deleted locally, purge them from Supabase in background
+          const staleInDb = prods.filter((p: any) => deletedProductIds.has(p.id));
+          if (staleInDb.length > 0) {
+            staleInDb.forEach((stale: any) => {
+              supabase.from('products').delete().eq('id', stale.id).then(({ error }) => {
+                if (error) console.error('Supabase purge error for deleted product:', error);
+              });
+            });
+          }
+
+          const mappedRemote: Product[] = activeProds.map((p: any) => {
             const initMatch = INITIAL_PRODUCTS.find((ip) => ip.id === p.id);
             return {
               id: p.id,
@@ -1229,6 +1333,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'products' }, (payload) => {
         const old = payload.old as any;
         if (old?.id) {
+          addDeletedProductId(old.id);
           setProducts((prev) => {
             const updated = prev.filter((p) => p.id !== old.id);
             try { localStorage.setItem('sbs_products', JSON.stringify(updated)); } catch (e) {}
@@ -2863,6 +2968,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addProduct = async (prod: Omit<Product, 'id'> & { id?: string }) => {
     const rawId = prod.id?.trim();
     const newId = rawId && rawId.length > 0 ? rawId : `p_${Date.now()}`;
+    
+    // Clear from deleted set if re-added
+    removeDeletedProductId(newId);
+
     const newProduct: Product = {
       ...prod,
       id: newId,
@@ -2993,6 +3102,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteProduct = (id: string) => {
+    // 1. Mark in persistent deleted set so refreshes never resurrect it
+    addDeletedProductId(id);
+
+    // 2. Remove from products state & localStorage
     const p = products.find(prod => prod.id === id);
     setProducts((prev) => {
       const updated = prev.filter((item) => item.id !== id);
@@ -3001,11 +3114,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } catch (e) {}
       return updated;
     });
+
+    // 3. Remove product from related active states
+    setCart((prev) => prev.filter((item) => item.product.id !== id));
+    setWishlist((prev) => prev.filter((item) => item.product.id !== id));
+    setTrendingNowProducts((prev) => prev.filter((pId) => pId !== id));
+    setTodayDeals((prev) => prev.filter((deal) => deal.productId !== id));
+    setRecentlyViewedIds((prev) => prev.filter((pId) => pId !== id));
+    if (selectedProductDetail?.id === id) {
+      setSelectedProductDetail(null);
+    }
+
     if (p) {
       addInventoryLog(id, -p.stockCount, 'remove', 'Product catalog deletion');
     }
-    showToast('Product removed');
+    showToast('Product removed', 'info');
 
+    // 4. Delete in Supabase cloud database
     if (isSupabaseConfigured && supabase) {
       supabase.from('products').delete().eq('id', id).then(({ error }) => {
         if (error) console.error('Supabase delete product error:', error);
@@ -3014,6 +3139,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const resetCatalogToDefault = () => {
+    try {
+      localStorage.removeItem('sbs_deleted_product_ids');
+      localStorage.removeItem('sbs_deleted_category_ids');
+    } catch {}
     setProducts(INITIAL_PRODUCTS);
     setCategories(INITIAL_CATEGORIES);
     try {
@@ -3307,9 +3436,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteCategory = (id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+    addDeletedCategoryId(id);
+    setCategories((prev) => {
+      const updated = prev.filter((c) => c.id !== id);
+      try {
+        localStorage.setItem('sbs_categories', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
     setHomepageCategories((prev) => prev.filter((cId) => cId !== id));
-    showToast('Category removed');
+    showToast('Category removed', 'info');
 
     if (isSupabaseConfigured && supabase) {
       supabase.from('categories').delete().eq('id', id).then(({ error }) => {
@@ -3378,8 +3514,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteCoupon = (id: string) => {
-    setCoupons((prev) => prev.filter((c) => c.id !== id));
-    showToast('Coupon deleted');
+    const target = coupons.find((c) => c.id === id);
+    if (target?.code) {
+      addDeletedCouponCode(target.code);
+    }
+    setCoupons((prev) => {
+      const updated = prev.filter((c) => c.id !== id);
+      try {
+        localStorage.setItem('sbs_coupons', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    showToast('Coupon deleted', 'info');
 
     if (isSupabaseConfigured && supabase) {
       supabase.from('coupons').delete().eq('id', id).then(({ error }) => {
