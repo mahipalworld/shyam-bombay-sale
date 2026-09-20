@@ -900,8 +900,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedStories) {
         try {
           const parsedStories: ProductStory[] = JSON.parse(savedStories);
-          const active = parsedStories.filter((s) => !/^p\d+$/.test(s.productId));
+          const active = parsedStories.filter((s) => !/^p\d+$/.test(s.productId) && !/^s\d+$/.test(s.id));
           setStories(active);
+          try { localStorage.setItem('sbs_stories', JSON.stringify(active)); } catch {}
         } catch {
           setStories(INITIAL_STORIES);
         }
