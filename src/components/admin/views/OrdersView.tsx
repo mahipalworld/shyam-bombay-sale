@@ -75,6 +75,35 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
     }
   };
 
+  const sendWhatsAppUpdate = (ord: Order) => {
+    const rawPhone = ord.shippingAddress?.phone || '';
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+    const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+
+    const itemsSummary = ord.items
+      .map((it, idx) => `${idx + 1}. ${it.name} (Qty: ${it.quantity}) - ₹${it.price * it.quantity}`)
+      .join('\n');
+
+    const msg = 
+`Hello ${ord.shippingAddress?.name || 'Customer'}! 👋
+Thank you for shopping with *SBS Store (Shyam Bombay Sale)*.
+
+Here is an update regarding your Order *#${ord.orderNumber}*:
+📦 Current Status: *${ord.status}*
+${ord.trackingNumber ? `🚚 Tracking Code: *${ord.trackingNumber}*\n` : ''}
+🛒 *Ordered Items:*
+${itemsSummary}
+
+💰 Total Amount: *₹${ord.total}*
+💳 Payment Method: *${ord.paymentMethod}*
+
+If you have any questions, feel free to reply directly to this message.
+— *SBS Store (Subhanpura, Vadodara)*`;
+
+    const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  };
+
   return (
     <div className="space-y-4 pb-28 animate-fadeIn">
       {/* Header */}
@@ -264,20 +293,36 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
                   </div>
                 )}
 
-                {/* Status Quick Updater */}
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
-                  <span className="text-[10px] font-bold text-gray-500">Order Step:</span>
-                  <select
-                    value={ord.status}
-                    onChange={(e) => updateOrderStatus(ord.id, e.target.value as OrderStatus)}
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-1 text-[11px] font-bold text-gray-800 outline-none focus:border-[#F95721]"
+                {/* Status Quick Updater & WhatsApp Share */}
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-gray-500">Step:</span>
+                    <select
+                      value={ord.status}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => updateOrderStatus(ord.id, e.target.value as OrderStatus)}
+                      className="bg-gray-50 border border-gray-200 rounded-xl px-2 py-1 text-[11px] font-bold text-gray-800 outline-none focus:border-[#F95721]"
+                    >
+                      <option value="To Pay">To Pay</option>
+                      <option value="Processing">Processing</option>
+                      <option value="Shipped">Shipped / In Transit</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sendWhatsAppUpdate(ord);
+                    }}
+                    className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-[11px] font-black flex items-center gap-1 shadow-2xs active:scale-95 transition-all"
+                    title="Send WhatsApp update to customer"
                   >
-                    <option value="To Pay">To Pay</option>
-                    <option value="Processing">Processing</option>
-                    <option value="Shipped">Shipped / In Transit</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>WhatsApp</span>
+                  </button>
                 </div>
               </div>
             );

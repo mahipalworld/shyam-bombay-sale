@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '@/context/StoreContext';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -54,11 +54,16 @@ export const ProfileView: React.FC = () => {
   const { isInstalled, showIOSGuide, setShowIOSGuide, triggerInstall } = usePWA();
 
   const [isLoggedOutModal, setIsLoggedOutModal] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Check Google Admin authorization (also enable on localhost for local testing)
   const currentEmail = authUser?.email || supabaseUser?.email;
-  const isDevOrLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hash.includes('admin'));
-  const isAuthorizedAdmin = isDevOrLocal || (isGoogleAuth && isEmailAuthorizedAdmin(currentEmail));
+  const isDevOrLocal = isMounted && (window.location.hostname === 'localhost' || window.location.hash.includes('admin'));
+  const isAuthorizedAdmin = isMounted && (isDevOrLocal || (isGoogleAuth && isEmailAuthorizedAdmin(currentEmail)));
   const activeAdminRole = isAuthorizedAdmin ? (getEffectiveAdminRole(currentEmail) || 'OWNER') : null;
 
   // Display user info: real authUser if logged in, otherwise local profile

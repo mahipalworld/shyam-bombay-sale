@@ -123,7 +123,7 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
     tag: 'Trending',
     media: '',
     type: 'video',
-    productId: products[0]?.id || 'p1',
+    productId: products[0]?.id || '',
     productName: products[0]?.name || '',
     price: products[0]?.price || 499,
     originalPrice: products[0]?.originalPrice || 999,
@@ -201,10 +201,10 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
       tag: '🔥 10s Demo',
       media: '',
       type: 'video',
-      productId: p ? p.id : 'p1',
-      productName: p ? p.name : 'Mini Washing Machine',
-      price: p ? p.price : 499,
-      originalPrice: p ? (p.originalPrice || p.price * 2) : 999,
+      productId: p ? p.id : (products[0]?.id || ''),
+      productName: p ? p.name : (products[0]?.name || ''),
+      price: p ? p.price : (products[0]?.price || 499),
+      originalPrice: p ? (p.originalPrice || p.price * 2) : (products[0]?.originalPrice || 999),
       discount: '50% OFF',
       accentColor: '#F95721',
       bgGradient: 'from-orange-600 via-orange-950 to-black',
@@ -277,12 +277,12 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
     enabled: flashDealConfig?.enabled !== false,
     title: flashDealConfig?.title || 'Deals of the Day',
     badgeText: flashDealConfig?.badgeText || 'LIVE FLASH SALE',
-    discountText: flashDealConfig?.discountText || 'Up to 55% Off',
-    productId: flashDealConfig?.productId || 'p3',
-    productName: flashDealConfig?.productName || 'Portable Food Packet Sealer',
-    dealPrice: flashDealConfig?.dealPrice || 199,
-    originalPrice: flashDealConfig?.originalPrice || 499,
-    productImage: flashDealConfig?.productImage || 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=400&auto=format&fit=crop&q=80',
+    discountText: flashDealConfig?.discountText || 'Special Discount',
+    productId: flashDealConfig?.productId || products[0]?.id || '',
+    productName: flashDealConfig?.productName || products[0]?.name || '',
+    dealPrice: flashDealConfig?.dealPrice || products[0]?.price || 99,
+    originalPrice: flashDealConfig?.originalPrice || products[0]?.originalPrice || 199,
+    productImage: flashDealConfig?.productImage || products[0]?.image || '',
     hoursRemaining: flashDealConfig?.hoursRemaining || 5,
   });
 
@@ -1552,8 +1552,8 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
                       setQuickActionForm({ 
                         ...quickActionForm, 
                         actionType: type,
-                        actionValue: type === 'category' ? (categories[0]?.id || 'cleaning') : 
-                                     type === 'product' ? (products[0]?.id || 'p1') : 
+                        actionValue: type === 'category' ? (categories[0]?.id || '') : 
+                                     type === 'product' ? (products[0]?.id || '') : 
                                      type === 'tab' ? 'offers' : ''
                       });
                     }}

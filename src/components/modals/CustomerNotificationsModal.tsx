@@ -21,6 +21,7 @@ import {
   getNotificationPermissionState, 
   triggerBrowserPushNotification 
 } from '@/utils/pushNotifications';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export const CustomerNotificationsModal: React.FC = () => {
   const { 
@@ -289,8 +290,7 @@ export const CustomerNotificationsModal: React.FC = () => {
                     {/* Optional Image Banner Preview */}
                     {notif.imageUrl && (
                       <div className="mt-2 rounded-2xl overflow-hidden max-h-32 border border-gray-100 shadow-xs">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
+                        <ResolvedImage 
                           src={notif.imageUrl} 
                           alt="Notification banner"
                           className="w-full h-full object-cover" 

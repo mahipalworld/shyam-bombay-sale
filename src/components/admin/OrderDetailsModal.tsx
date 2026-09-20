@@ -15,9 +15,11 @@ import {
   Receipt, 
   Printer, 
   Share2,
-  PackageCheck
+  PackageCheck,
+  MessageCircle
 } from 'lucide-react';
 import { Order, OrderStatus } from '@/types';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 interface OrderDetailsModalProps {
   order: Order | null;
@@ -52,6 +54,36 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
   };
 
   const currentStepIdx = getStepIndex(order.status);
+
+  const handleSendWhatsApp = () => {
+    if (!order) return;
+    const rawPhone = order.shippingAddress?.phone || '';
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+    const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+
+    const itemsSummary = order.items
+      .map((it, idx) => `${idx + 1}. ${it.name} (Qty: ${it.quantity}) - ₹${it.price * it.quantity}`)
+      .join('\n');
+
+    const msg = 
+`Hello ${order.shippingAddress?.name || 'Customer'}! 👋
+Thank you for shopping with *SBS Store (Shyam Bombay Sale)*.
+
+Here is an update regarding your Order *#${order.orderNumber}*:
+📦 Current Status: *${order.status}*
+${order.trackingNumber ? `🚚 Tracking Code: *${order.trackingNumber}*\n` : ''}
+🛒 *Ordered Items:*
+${itemsSummary}
+
+💰 Total Amount: *₹${order.total}*
+💳 Payment Method: *${order.paymentMethod}* (${order.paymentStatus || 'Verified'})
+
+If you have any questions, feel free to reply directly to this message.
+— *SBS Store (Subhanpura, Vadodara)*`;
+
+    const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex flex-col justify-end sm:justify-center p-0 sm:p-4 animate-fadeIn">
@@ -119,23 +151,35 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
             </div>
           </div>
 
-          {/* Quick Status Transition Action */}
-          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 flex items-center justify-between gap-2">
-            <div>
-              <span className="font-bold text-gray-800 block text-xs">Update Live Order Status</span>
-              <span className="text-[10px] text-gray-400">Notifies customer instantly</span>
+          {/* Quick Status Transition Action & WhatsApp Update */}
+          <div className="space-y-2">
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 flex items-center justify-between gap-2">
+              <div>
+                <span className="font-bold text-gray-800 block text-xs">Update Live Order Status</span>
+                <span className="text-[10px] text-gray-400">Notifies customer instantly</span>
+              </div>
+              <select
+                value={order.status}
+                onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)}
+                className="bg-white border-2 border-orange-300 text-[#F95721] font-extrabold text-xs rounded-xl px-3 py-1.5 outline-none cursor-pointer shadow-xs"
+              >
+                <option value="To Pay">To Pay</option>
+                <option value="Processing">Processing / Preparing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Returns">Returns</option>
+              </select>
             </div>
-            <select
-              value={order.status}
-              onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)}
-              className="bg-white border-2 border-orange-300 text-[#F95721] font-extrabold text-xs rounded-xl px-3 py-1.5 outline-none cursor-pointer shadow-xs"
+
+            {/* Direct WhatsApp Order Update Button */}
+            <button
+              type="button"
+              onClick={handleSendWhatsApp}
+              className="w-full py-2.5 px-4 bg-[#25D366] hover:bg-[#20ba59] text-white font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-xs active:scale-98 transition-all"
             >
-              <option value="To Pay">To Pay</option>
-              <option value="Processing">Processing / Preparing</option>
-              <option value="Shipped">Shipped</option>
-              <option value="Delivered">Delivered</option>
-              <option value="Returns">Returns</option>
-            </select>
+              <MessageCircle className="w-4 h-4" />
+              <span>Send WhatsApp Order Update</span>
+            </button>
           </div>
 
           {/* Ordered Items List */}
@@ -149,8 +193,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-12 h-12 rounded-xl bg-gray-50 p-1 flex items-center justify-center flex-shrink-0 border border-gray-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
+                      <ResolvedImage src={item.image} alt={item.name} className="w-full h-full object-contain" />
                     </div>
                     <div className="min-w-0">
                       <p className="font-bold text-gray-900 text-xs line-clamp-1">{item.name}</p>

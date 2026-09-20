@@ -179,6 +179,8 @@ export interface AdminNotification {
   priority: 'high' | 'medium' | 'low';
   read: boolean;
   timestamp: string;
+  link?: string;
+  orderId?: string;
 }
 
 export interface UserBroadcastNotification {

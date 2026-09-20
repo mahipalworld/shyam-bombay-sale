@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useStore } from '@/context/StoreContext';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export interface FlyingItem {
   id: string;
@@ -80,8 +81,7 @@ const FlyingItemElement: React.FC<{
       }}
       className="bg-white rounded-2xl p-1 shadow-[0_10px_35px_rgba(243,92,22,0.45)] border-2 border-[#F95721] flex items-center justify-center pointer-events-none"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <ResolvedImage
         src={item.image}
         alt="Adding to cart"
         className="w-full h-full object-contain rounded-xl"

@@ -81,11 +81,13 @@ export const HomeView: React.FC = () => {
     return () => clearInterval(timer);
   }, [flashDealConfig?.hoursRemaining]);
 
-  // Categories Strictly Filtered by Homepage Settings
+  // Categories Filtered by Homepage Settings (resilient to deleted test category IDs)
   const visibleCategories = React.useMemo(() => {
     if (homepageCategories && homepageCategories.length > 0) {
-      return categories.filter((cat) => homepageCategories.includes(cat.id));
+      const filtered = categories.filter((cat) => homepageCategories.includes(cat.id) && cat.showOnHome !== false);
+      if (filtered.length > 0) return filtered;
     }
+    // Graceful fallback: Show all active categories that have not explicitly disabled home visibility
     return categories.filter((cat) => cat.showOnHome !== false);
   }, [categories, homepageCategories]);
 
@@ -115,11 +117,13 @@ export const HomeView: React.FC = () => {
 
     // Flash Deal slide if flash deals enabled
     if (storeSettings.enableFlashDeals !== false && flashDealConfig?.enabled !== false) {
-      const flashProd = products.find(p => p.id === flashDealConfig?.productId) || null;
-      slides.push({
-        type: 'flash',
-        product: flashProd
-      });
+      const flashProd = (flashDealConfig?.productId ? products.find(p => p.id === flashDealConfig.productId) : null) || products[0] || null;
+      if (flashProd) {
+        slides.push({
+          type: 'flash',
+          product: flashProd
+        });
+      }
     }
 
     // Fallback if no slides exist
@@ -289,7 +293,9 @@ export const HomeView: React.FC = () => {
         .filter((p): p is Product => Boolean(p));
       if (customList.length > 0) return customList;
     }
-    return products.filter((p) => p.isTrending || p.isFeatured).slice(0, 8);
+    const filtered = products.filter((p) => p.isTrending || p.isFeatured);
+    if (filtered.length > 0) return filtered.slice(0, 8);
+    return products.slice(0, 8);
   }, [products, trendingNowProducts]);
 
   // Best Sellers (Database Driven)
@@ -300,7 +306,9 @@ export const HomeView: React.FC = () => {
         .filter((p): p is Product => Boolean(p));
       if (customList.length > 0) return customList;
     }
-    return products.filter((p) => p.isBestSeller || (p.rating >= 4.5 && p.reviewCount >= 5)).slice(0, 8);
+    const filtered = products.filter((p) => p.isBestSeller || (p.rating >= 4.5 && p.reviewCount >= 5));
+    if (filtered.length > 0) return filtered.slice(0, 8);
+    return products.slice(4, 12).length > 0 ? products.slice(4, 12) : products.slice(0, 8);
   }, [products, bestSellersConfig]);
 
   // Active Deals (Deduplicated)
@@ -475,8 +483,8 @@ export const HomeView: React.FC = () => {
               <div className="relative flex items-center justify-center md:justify-end">
                 <div 
                   onClick={() => {
-                    if (currentSlide.product) setSelectedProductDetail(currentSlide.product);
-                    else handleProductClick(flashDealConfig?.productId || 'p3');
+                    const targetProd = currentSlide.product || (flashDealConfig?.productId ? products.find(p => p.id === flashDealConfig.productId) : null) || products[0];
+                    if (targetProd) setSelectedProductDetail(targetProd);
                   }}
                   className="bg-white/95 rounded-2xl p-4 shadow-xl border border-orange-200 max-w-[260px] w-full flex flex-col items-center cursor-pointer group tap-active"
                 >
@@ -485,19 +493,21 @@ export const HomeView: React.FC = () => {
                   </span>
                   <div className="w-28 h-28 my-1 flex items-center justify-center">
                     <ResolvedImage
-                      src={currentSlide.product ? currentSlide.product.image : (flashDealConfig?.productImage || '/icon-192x192.png?v=2')}
-                      alt={currentSlide.product ? currentSlide.product.name : (flashDealConfig?.productName || 'Flash Deal')}
+                      src={currentSlide.product ? currentSlide.product.image : (flashDealConfig?.productImage || products[0]?.image || '/icon-192x192.png?v=2')}
+                      alt={currentSlide.product ? currentSlide.product.name : (flashDealConfig?.productName || products[0]?.name || 'Flash Deal')}
                       className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
                     />
                   </div>
                   <p className="text-xs font-extrabold text-gray-900 text-center line-clamp-1">
-                    {currentSlide.product ? currentSlide.product.name : (flashDealConfig?.productName || 'Portable Food Packet Sealer')}
+                    {currentSlide.product ? currentSlide.product.name : (flashDealConfig?.productName || products[0]?.name || 'Special Deal')}
                   </p>
                   <div className="flex items-baseline gap-1.5 mt-1">
-                    <span className="text-sm font-black text-[#F95721]">₹{flashDealConfig?.dealPrice || 199}</span>
-                    <span className="text-[10px] text-gray-500 font-medium line-through">
-                      ₹{currentSlide.product ? currentSlide.product.originalPrice : (flashDealConfig?.originalPrice || 499)}
-                    </span>
+                    <span className="text-sm font-black text-[#F95721]">₹{flashDealConfig?.dealPrice || currentSlide.product?.price || products[0]?.price || 99}</span>
+                    {(currentSlide.product?.originalPrice || flashDealConfig?.originalPrice || (products[0]?.originalPrice ?? 0)) > (flashDealConfig?.dealPrice || currentSlide.product?.price || products[0]?.price || 99) && (
+                      <span className="text-[10px] text-gray-500 font-medium line-through">
+                        ₹{currentSlide.product ? currentSlide.product.originalPrice : (flashDealConfig?.originalPrice || products[0]?.originalPrice || 199)}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

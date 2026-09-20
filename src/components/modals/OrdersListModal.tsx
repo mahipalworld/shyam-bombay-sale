@@ -4,6 +4,7 @@ import React from 'react';
 import { useStore } from '@/context/StoreContext';
 import { X, ChevronRight, ShoppingBag } from 'lucide-react';
 import { OrderStatus } from '@/types';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export const OrdersListModal: React.FC = () => {
   const { 
@@ -83,9 +84,8 @@ export const OrdersListModal: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div className="flex -space-x-3 overflow-hidden">
                     {order.items.slice(0, 3).map((item, idx) => (
-                      <div key={idx} className="w-11 h-11 rounded-xl bg-gray-50 border-2 border-white p-1 flex items-center justify-center flex-shrink-0 shadow-xs">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" />
+                      <div key={idx} className="w-11 h-11 rounded-xl bg-gray-50 border-2 border-white p-1 flex items-center justify-center flex-shrink-0 shadow-xs overflow-hidden">
+                        <ResolvedImage src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" />
                       </div>
                     ))}
                   </div>

@@ -3,6 +3,7 @@
 import React from 'react';
 import { useStore } from '@/context/StoreContext';
 import { ShoppingBag, ArrowRight, Sparkles, Truck } from 'lucide-react';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export const FloatingQuickCart: React.FC = () => {
   const { cart, activeTab, setActiveTab, cartSubtotal, storeSettings } = useStore();
@@ -51,8 +52,7 @@ export const FloatingQuickCart: React.FC = () => {
                   key={item.productId || idx}
                   className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden bg-white p-0.5 border-2 border-[#18181B] shadow-xs flex-shrink-0"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <ResolvedImage
                     src={item.product?.image || ''}
                     alt={item.product?.name || 'Item'}
                     className="w-full h-full object-contain mix-blend-multiply"

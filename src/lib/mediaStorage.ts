@@ -22,8 +22,56 @@ export function getApiBaseUrl(): string {
   return (process.env.NEXT_PUBLIC_API_URL || PRODUCTION_BACKEND_URL).replace(/\/+$/, '');
 }
 
-// In-memory cache for resolved delivery URLs (key -> { url, expiresAt })
+// Persistent LocalStorage + In-Memory cache for resolved delivery URLs (key -> { url, expiresAt })
+const LOCAL_STORAGE_CACHE_KEY = 'sbs_s3_media_cache';
 const deliveryUrlCache = new Map<string, { url: string; expiresAt: number }>();
+
+// Hydrate cache from localStorage on client
+if (typeof window !== 'undefined') {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_CACHE_KEY);
+    if (raw) {
+      const parsed: Record<string, { url: string; expiresAt: number }> = JSON.parse(raw);
+      const now = Date.now();
+      for (const [k, v] of Object.entries(parsed)) {
+        if (v && v.url && v.expiresAt > now) {
+          deliveryUrlCache.set(k, v);
+        }
+      }
+    }
+  } catch {}
+
+  // Background non-blocking prewarm ping for Render backend (wakes server if asleep)
+  try {
+    const prewarmTimer = setTimeout(() => {
+      fetch(`${getApiBaseUrl()}/api/health`).catch(() => {});
+    }, 100);
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(() => {
+        clearTimeout(prewarmTimer);
+        fetch(`${getApiBaseUrl()}/api/health`).catch(() => {});
+      });
+    }
+  } catch {}
+}
+
+let saveCacheTimer: any = null;
+function persistCacheToLocalStorage() {
+  if (typeof window === 'undefined') return;
+  if (saveCacheTimer) clearTimeout(saveCacheTimer);
+  saveCacheTimer = setTimeout(() => {
+    try {
+      const now = Date.now();
+      const obj: Record<string, { url: string; expiresAt: number }> = {};
+      deliveryUrlCache.forEach((val, key) => {
+        if (val.expiresAt > now) {
+          obj[key] = val;
+        }
+      });
+      localStorage.setItem(LOCAL_STORAGE_CACHE_KEY, JSON.stringify(obj));
+    } catch {}
+  }, 1000);
+}
 
 /**
  * Helper to get authorization headers (Supabase Admin JWT if available and X-SBS-Admin-Role)
@@ -87,9 +135,40 @@ export async function checkStorageStatus(): Promise<StorageStatus> {
   }
 }
 
+// Queue for batching concurrent resolveMediaUrl calls in a single microtask
+type BatchQueueItem = {
+  key: string;
+  resolve: (url: string) => void;
+  reject: (err: any) => void;
+};
+let pendingBatchQueue: BatchQueueItem[] = [];
+let batchDispatchTimer: any = null;
+
+function processBatchQueue() {
+  const currentBatch = pendingBatchQueue;
+  pendingBatchQueue = [];
+  batchDispatchTimer = null;
+
+  if (currentBatch.length === 0) return;
+
+  const uniqueKeys = Array.from(new Set(currentBatch.map(item => item.key)));
+  batchResolveMediaUrls(uniqueKeys)
+    .then((results) => {
+      currentBatch.forEach(item => {
+        item.resolve(results[item.key] || '');
+      });
+    })
+    .catch((err) => {
+      console.warn('Batch resolution failed, falling back:', err);
+      currentBatch.forEach(item => {
+        item.resolve('');
+      });
+    });
+}
+
 /**
  * Resolves an S3 canonical key or direct URL into a secure delivery URL.
- * Transparently caches signed URLs for 55 minutes.
+ * Transparently caches signed URLs for 55 minutes across page reloads.
  */
 export async function resolveMediaUrl(keyOrUrl?: string): Promise<string> {
   if (!keyOrUrl) return '';
@@ -110,29 +189,25 @@ export async function resolveMediaUrl(keyOrUrl?: string): Promise<string> {
     return keyOrUrl;
   }
 
-  // Check in-memory cache
+  // Direct CloudFront / S3 Public domain optimization (bypasses backend entirely if set)
+  const cfDomain = process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN;
+  if (cfDomain) {
+    return `https://${cfDomain}/${cleanKey}`;
+  }
+
+  // Check persistent + in-memory cache (0ms instant response)
   const cached = deliveryUrlCache.get(cleanKey);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.url;
   }
 
-  try {
-    const res = await fetch(`${getApiBaseUrl()}/api/storage/delivery-url?key=${encodeURIComponent(cleanKey)}`);
-    if (!res.ok) {
-      return ''; // do not return raw S3 key as it causes 404 in <img> tags
+  // Enqueue for batched request
+  return new Promise<string>((resolve, reject) => {
+    pendingBatchQueue.push({ key: cleanKey, resolve, reject });
+    if (!batchDispatchTimer) {
+      batchDispatchTimer = setTimeout(processBatchQueue, 25);
     }
-    const data = await res.json();
-    if (data.url) {
-      // Cache for 55 minutes (token expires in 60 minutes)
-      const expiresAt = Date.now() + (data.expiresIn ? (data.expiresIn - 300) * 1000 : 55 * 60 * 1000);
-      deliveryUrlCache.set(cleanKey, { url: data.url, expiresAt });
-      return data.url;
-    }
-    return '';
-  } catch (err) {
-    console.warn('Failed to resolve delivery URL for key:', cleanKey);
-    return '';
-  }
+  });
 }
 
 /**
@@ -141,6 +216,8 @@ export async function resolveMediaUrl(keyOrUrl?: string): Promise<string> {
 export async function batchResolveMediaUrls(keys: string[]): Promise<Record<string, string>> {
   const result: Record<string, string> = {};
   const keysToFetch: string[] = [];
+
+  const cfDomain = process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN;
 
   for (const key of keys) {
     if (!key) continue;
@@ -151,6 +228,11 @@ export async function batchResolveMediaUrls(keys: string[]): Promise<Record<stri
       key.startsWith('data:')
     ) {
       result[key] = key;
+      continue;
+    }
+
+    if (cfDomain) {
+      result[key] = `https://${cfDomain}/${key}`;
       continue;
     }
 
@@ -181,6 +263,7 @@ export async function batchResolveMediaUrls(keys: string[]): Promise<Record<stri
         result[k] = u;
         deliveryUrlCache.set(k, { url: u, expiresAt: Date.now() + 55 * 60 * 1000 });
       }
+      persistCacheToLocalStorage();
     }
   } catch (err) {
     console.error('Batch delivery URLs failed:', err);
@@ -188,7 +271,7 @@ export async function batchResolveMediaUrls(keys: string[]): Promise<Record<stri
 
   // Ensure every key has at least a fallback
   for (const key of keysToFetch) {
-    if (!result[key]) result[key] = key;
+    if (!result[key]) result[key] = '';
   }
 
   return result;

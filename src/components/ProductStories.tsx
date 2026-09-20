@@ -20,11 +20,6 @@ export const ProductStories: React.FC = () => {
   }, [activeStoryIndex]);
 
   const activeStories = stories.filter((s) => s.enabled);
-
-  if (storeSettings.enableStories === false || activeStories.length === 0) {
-    return null;
-  }
-
   const activeStory = activeStoryIndex !== null ? activeStories[activeStoryIndex] : null;
   const activeProduct = activeStory ? products.find((p) => p.id === activeStory.productId) : null;
 
@@ -106,6 +101,10 @@ export const ProductStories: React.FC = () => {
       setSelectedProductDetail(activeProduct);
     }
   };
+
+  if (storeSettings.enableStories === false || activeStories.length === 0) {
+    return null;
+  }
 
   return (
     <>

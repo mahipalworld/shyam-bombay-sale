@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '@/context/StoreContext';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -41,16 +41,22 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
   const { authUser, supabaseUser, isGoogleAuth, openAuthModal, signOut } = useAuth();
 
   const [desktopSearchInput, setDesktopSearchInput] = useState('');
-  const totalCartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-  const unreadNotifCount = userNotifications.filter(n => !n.read).length;
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const totalCartCount = isMounted ? cart.reduce((acc, item) => acc + item.quantity, 0) : 0;
+  const unreadNotifCount = isMounted ? userNotifications.filter(n => !n.read).length : 0;
 
   const currentEmail = authUser?.email || supabaseUser?.email;
-  const isDevOrLocal = typeof window !== 'undefined' && (
+  const isDevOrLocal = isMounted && (
     window.location.hostname === 'localhost' || 
     window.location.hostname === '127.0.0.1' || 
     window.location.hash.includes('admin')
   );
-  const isAuthorizedAdmin = isDevOrLocal || (isGoogleAuth && isEmailAuthorizedAdmin(currentEmail));
+  const isAuthorizedAdmin = isMounted && (isDevOrLocal || (isGoogleAuth && isEmailAuthorizedAdmin(currentEmail)));
 
   const handleDesktopSearch = (e: React.FormEvent) => {
     e.preventDefault();

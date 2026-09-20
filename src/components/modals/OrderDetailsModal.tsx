@@ -16,6 +16,7 @@ import {
   Smartphone,
   Check
 } from 'lucide-react';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export const OrderDetailsModal: React.FC = () => {
   const { selectedOrderForModal, setSelectedOrderForModal } = useStore();
@@ -188,9 +189,8 @@ export const OrderDetailsModal: React.FC = () => {
             <div className="divide-y divide-gray-100">
               {order.items.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-3 py-2">
-                  <div className="w-12 h-12 rounded-xl bg-gray-50 p-1 flex items-center justify-center flex-shrink-0 border border-gray-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" />
+                  <div className="w-12 h-12 rounded-xl bg-gray-50 p-1 flex items-center justify-center flex-shrink-0 border border-gray-100 overflow-hidden">
+                    <ResolvedImage src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-900 line-clamp-1">{item.name}</p>

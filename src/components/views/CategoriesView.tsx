@@ -13,6 +13,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Subcategory, Category } from '@/types';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export const CategoriesView: React.FC = () => {
   const { 
@@ -193,12 +194,10 @@ export const CategoriesView: React.FC = () => {
                       : 'border-gray-200/80 group-hover:scale-105'
                   }`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <ResolvedImage
                     src={cat.image}
                     alt={cat.name}
                     className="w-full h-full object-cover rounded-lg"
-                    loading="lazy"
                   />
                 </div>
 
@@ -273,12 +272,10 @@ export const CategoriesView: React.FC = () => {
                   className="bg-gradient-to-b from-orange-50/60 via-white to-white rounded-2xl border border-orange-100/80 p-2.5 sm:p-3 text-center flex flex-col items-center justify-between shadow-2xs hover:shadow-subtle hover:border-orange-300 transition-all duration-200 tap-active group overflow-hidden relative"
                 >
                   <div className="w-full h-24 sm:h-28 rounded-xl bg-white p-2 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform duration-300">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <ResolvedImage
                       src={cat.image}
                       alt={`All ${cat.name}`}
                       className="w-full h-full object-contain mix-blend-multiply"
-                      loading="lazy"
                     />
                   </div>
 
@@ -306,12 +303,10 @@ export const CategoriesView: React.FC = () => {
                       className="bg-white hover:bg-orange-50/20 rounded-2xl border border-gray-100 hover:border-orange-300 p-2.5 sm:p-3 text-center flex flex-col items-center justify-between shadow-2xs hover:shadow-subtle transition-all duration-200 tap-active group overflow-hidden relative"
                     >
                       <div className="w-full h-24 sm:h-28 rounded-xl bg-gray-50/80 group-hover:bg-white p-2 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-all duration-300">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <ResolvedImage
                           src={sub.image || cat.image}
                           alt={sub.name}
                           className="w-full h-full object-contain mix-blend-multiply"
-                          loading="lazy"
                         />
                       </div>
 

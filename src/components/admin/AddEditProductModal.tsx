@@ -1619,20 +1619,15 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                 </div>
 
                 {/* Display Feature Icons Strip */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                  {(formData.featureIcons.length > 0 ? formData.featureIcons : [
-                    { icon: '⚡', label: 'High Speed' },
-                    { icon: '🛡️', label: 'Verified Safe' },
-                    { icon: '🔋', label: 'Long Life' },
-                    { icon: '✨', label: 'Premium Build' },
-                  ]).map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white border border-orange-200 rounded-xl p-2 text-center flex flex-col items-center gap-0.5 relative group shadow-2xs"
-                    >
-                      <span className="text-lg">{item.icon}</span>
-                      <span className="text-[11px] font-bold text-gray-800 truncate w-full">{item.label}</span>
-                      {formData.featureIcons.length > 0 && (
+                {formData.featureIcons.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                    {formData.featureIcons.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white border border-orange-200 rounded-xl p-2 text-center flex flex-col items-center gap-0.5 relative group shadow-2xs"
+                      >
+                        <span className="text-lg">{item.icon}</span>
+                        <span className="text-[11px] font-bold text-gray-800 truncate w-full">{item.label}</span>
                         <button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, featureIcons: prev.featureIcons.filter((_, i) => i !== idx) }))}
@@ -1641,10 +1636,14 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                         >
                           <X className="w-3 h-3" />
                         </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 border border-dashed border-gray-200 rounded-xl p-3 text-center text-[11px] text-gray-500">
+                    No feature icons added yet. (Optional — highlight key specs like ⚡ Fast Boil, 🛡️ Safe, 💧 Waterproof)
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2849,20 +2848,17 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
                 </ul>
               </div>
 
-              {/* Feature Icons Strip */}
-              <div className="grid grid-cols-4 gap-1.5">
-                {(formData.featureIcons.length > 0 ? formData.featureIcons : [
-                  { icon: '⚡', label: 'Speed' },
-                  { icon: '🛡️', label: 'Safe' },
-                  { icon: '🔋', label: 'Battery' },
-                  { icon: '✨', label: 'Premium' },
-                ]).map((f, i) => (
-                  <div key={i} className="bg-orange-50/50 border border-orange-100 rounded-xl p-1.5 text-center flex flex-col items-center">
-                    <span className="text-sm">{f.icon}</span>
-                    <span className="text-[9px] font-bold text-gray-700 truncate w-full">{f.label}</span>
-                  </div>
-                ))}
-              </div>
+              {/* Feature Icons Strip (Only rendered if configured) */}
+              {formData.featureIcons.length > 0 && (
+                <div className={`grid gap-1.5 ${formData.featureIcons.length === 1 ? 'grid-cols-1' : formData.featureIcons.length === 2 ? 'grid-cols-2' : formData.featureIcons.length === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+                  {formData.featureIcons.map((f, i) => (
+                    <div key={i} className="bg-orange-50/50 border border-orange-100 rounded-xl p-1.5 text-center flex flex-col items-center">
+                      <span className="text-sm">{f.icon}</span>
+                      <span className="text-[9px] font-bold text-gray-700 truncate w-full">{f.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Specifications */}
               {formData.specifications.length > 0 && (

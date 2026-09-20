@@ -388,13 +388,8 @@ export const ProductDetailModal: React.FC = () => {
     'Compatible with Indian standards & genuine warranty',
   ];
 
-  // Feature icon strip
-  const featureIcons = p.featureIcons && p.featureIcons.length > 0 ? p.featureIcons : [
-    { icon: '⚡', label: 'High Speed' },
-    { icon: '🛡️', label: 'Verified Safe' },
-    { icon: '🔋', label: 'Long Life' },
-    { icon: '✨', label: 'Premium Build' },
-  ];
+  // Feature icon strip (optional - only shown if specified on product)
+  const featureIcons = p.featureIcons && p.featureIcons.length > 0 ? p.featureIcons : [];
 
   return (
     <>
@@ -811,16 +806,18 @@ export const ProductDetailModal: React.FC = () => {
             </div>
 
             {/* ======================================================== */}
-            {/* 10. 4-ITEM FEATURE ICON STRIP                            */}
+            {/* 10. OPTIONAL FEATURE ICON STRIP (SHOWN ONLY IF SET)      */}
             {/* ======================================================== */}
-            <div className="grid grid-cols-4 gap-2">
-              {featureIcons.map((f, i) => (
-                <div key={i} className="bg-orange-50/50 border border-orange-100 rounded-2xl p-2.5 text-center flex flex-col items-center gap-1 shadow-2xs">
-                  <span className="text-xl">{f.icon}</span>
-                  <span className="text-[11px] font-bold text-gray-800 leading-tight line-clamp-1">{f.label}</span>
-                </div>
-              ))}
-            </div>
+            {featureIcons.length > 0 && (
+              <div className={`grid gap-2 ${featureIcons.length === 1 ? 'grid-cols-1' : featureIcons.length === 2 ? 'grid-cols-2' : featureIcons.length === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+                {featureIcons.map((f, i) => (
+                  <div key={i} className="bg-orange-50/50 border border-orange-100 rounded-2xl p-2.5 text-center flex flex-col items-center gap-1 shadow-2xs">
+                    <span className="text-xl">{f.icon}</span>
+                    <span className="text-[11px] font-bold text-gray-800 leading-tight line-clamp-1">{f.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* ======================================================== */}
             {/* 11. DETAILED DESCRIPTION (WITH READ MORE)                */}

@@ -20,7 +20,9 @@ export const ResolvedImage: React.FC<ResolvedImageProps> = ({ src, alt = '', cla
       src.includes('products/images/') || 
       src.includes('products/videos/') || 
       src.includes('products/thumbnails/') ||
-      src.startsWith('products/')
+      src.startsWith('products/') ||
+      src.startsWith('categories/') ||
+      src.startsWith('banners/')
     )
   );
 

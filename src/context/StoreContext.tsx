@@ -356,13 +356,30 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [products, setProducts] = useState<Product[]>(() => {
     if (typeof window !== 'undefined') {
       const deletedIds = getDeletedProductIds();
-      return INITIAL_PRODUCTS.filter((p) => !deletedIds.has(p.id));
+      const saved = localStorage.getItem('sbs_products');
+      if (saved) {
+        try {
+          const parsed: Product[] = JSON.parse(saved);
+          const active = parsed.filter((p) => !deletedIds.has(p.id) && !/^p\d+$/.test(p.id));
+          if (active.length > 0) return active;
+        } catch {}
+      }
+      return INITIAL_PRODUCTS.filter((p) => !deletedIds.has(p.id) && !/^p\d+$/.test(p.id));
     }
     return INITIAL_PRODUCTS;
   });
   const [categories, setCategories] = useState<Category[]>(() => {
     if (typeof window !== 'undefined') {
       const deletedIds = getDeletedCategoryIds();
+      const saved = localStorage.getItem('sbs_categories');
+      if (saved) {
+        try {
+          const parsed: Category[] = JSON.parse(saved);
+          const legacyTestCatIds = new Set(['home', 'kitchen', 'personal-care', 'storage', 'bathroom', 'cleaning', 'stationery', 'electronics']);
+          const active = parsed.filter((c) => !deletedIds.has(c.id) && !legacyTestCatIds.has(c.id));
+          if (active.length > 0) return active;
+        } catch {}
+      }
       return INITIAL_CATEGORIES.filter((c) => !deletedIds.has(c.id));
     }
     return INITIAL_CATEGORIES;
@@ -380,6 +397,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
   const [adminOrders, setAdminOrders] = useState<Order[]>([]);
   const currentUserIdRef = useRef<string | null>(null);
+  const notifiedEventsRef = useRef<Set<string>>(new Set());
   const [coupons, setCoupons] = useState<Coupon[]>(INITIAL_COUPONS);
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
 
@@ -659,41 +677,39 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [quickActions, setQuickActions] = useState<QuickActionItem[]>(INITIAL_QUICK_ACTIONS);
 
-  const [homepageCategories, setHomepageCategories] = useState<string[]>([
-    'cleaning', 'kitchen', 'personal-care', 'home-storage'
-  ]);
-
-  const [homepageSubcategories, setHomepageSubcategories] = useState<{ categoryId: string; subcategoryId: string }[]>([
-    { categoryId: 'home', subcategoryId: 'decor' },
-    { categoryId: 'home', subcategoryId: 'mats' },
-    { categoryId: 'home', subcategoryId: 'lightings' },
-    { categoryId: 'kitchen', subcategoryId: 'tools' },
-    { categoryId: 'cleaning', subcategoryId: 'mops' },
-    { categoryId: 'personal-care', subcategoryId: 'grooming' },
-    { categoryId: 'home-storage', subcategoryId: 'boxes' },
-    { categoryId: 'travel-outdoors', subcategoryId: 'bottles' },
-  ]);
-
-  const [trendingNowProducts, setTrendingNowProducts] = useState<string[]>([
-    'p1', 'p2', 'p3', 'p8'
-  ]);
-
-  const [todayDeals, setTodayDeals] = useState<TodayDealItem[]>([
-    {
-      id: 'td1',
-      productId: 'p1',
-      discount: 40,
-      title: 'Deals of the Day',
-      bannerImage: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=600&auto=format&fit=crop&q=80',
-      startDate: '2026-08-30',
-      endDate: '2026-09-05',
-      enabled: true
+  const [homepageCategories, setHomepageCategories] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('sbs_home_categories');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
     }
-  ]);
+    return ['cleaning-products--chemicals', 'bathroom--laundry', 'bucket-and-plastics', 'cleaning-tools'];
+  });
+
+  const [homepageSubcategories, setHomepageSubcategories] = useState<{ categoryId: string; subcategoryId: string }[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('sbs_home_subcategories');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+    }
+    return [];
+  });
+
+  const [trendingNowProducts, setTrendingNowProducts] = useState<string[]>([]);
+
+  const [todayDeals, setTodayDeals] = useState<TodayDealItem[]>([]);
 
   const [bestSellersConfig, setBestSellersConfig] = useState<BestSellersConfig>({
     mode: 'auto',
-    manualProductIds: ['p4', 'p5', 'p6']
+    manualProductIds: []
   });
 
   const sanitizeStoreSettings = (s: any): StoreSettings => {
@@ -828,33 +844,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedProducts) {
         try {
           const parsedProducts: Product[] = JSON.parse(savedProducts);
-          // Filter out any known deleted products from saved cache
-          const activeSaved = parsedProducts.filter((p) => !deletedProductIds.has(p.id));
-          const existingIds = new Set(activeSaved.map((p) => p.id));
-          // Never re-add deleted products as "missingInitial"
-          const missingInitial = INITIAL_PRODUCTS.filter((p) => !existingIds.has(p.id) && !deletedProductIds.has(p.id));
-          const updated = activeSaved.map((p) => {
-            const initMatch = INITIAL_PRODUCTS.find((ip) => ip.id === p.id);
-            if (initMatch) {
-              return {
-                ...initMatch,
-                ...p,
-                subcategory: p.subcategory || initMatch.subcategory,
-                images: (p.images && p.images.length > 1) ? p.images : (initMatch.images || p.images),
-                descriptionBlocks: (p.descriptionBlocks && p.descriptionBlocks.length > 0)
-                  ? p.descriptionBlocks
-                  : initMatch.descriptionBlocks,
-                features: (p.features && p.features.length > 0) ? p.features : initMatch.features,
-              };
-            }
-            return p;
-          });
-          setProducts([...updated, ...missingInitial]);
+          // Filter out deleted and legacy test products
+          const activeSaved = parsedProducts.filter((p) => !deletedProductIds.has(p.id) && !/^p\d+$/.test(p.id));
+          if (activeSaved.length > 0) {
+            setProducts(activeSaved);
+          } else {
+            setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id) && !/^p\d+$/.test(p.id)));
+          }
         } catch {
-          setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id)));
+          setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id) && !/^p\d+$/.test(p.id)));
         }
       } else {
-        setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id)));
+        setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id) && !/^p\d+$/.test(p.id)));
       }
 
       const deletedCategoryIds = getDeletedCategoryIds();
@@ -862,17 +863,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedCategories) {
         try {
           const parsedCategories: Category[] = JSON.parse(savedCategories);
-          const activeSaved = parsedCategories.filter((c) => !deletedCategoryIds.has(c.id));
-          const existingIds = new Set(activeSaved.map((c) => c.id));
-          const missingInitial = INITIAL_CATEGORIES.filter((c) => !existingIds.has(c.id) && !deletedCategoryIds.has(c.id));
-          const updated = activeSaved.map((c) => {
-            const initMatch = INITIAL_CATEGORIES.find((ic) => ic.id === c.id);
-            if (initMatch && (!c.subcategories || c.subcategories.length === 0)) {
-              return { ...c, subcategories: initMatch.subcategories };
-            }
-            return c;
-          });
-          setCategories([...updated, ...missingInitial]);
+          const legacyTestCatIds = new Set(['home', 'kitchen', 'personal-care', 'storage', 'bathroom', 'cleaning', 'stationery', 'electronics']);
+          const activeSaved = parsedCategories.filter((c) => !deletedCategoryIds.has(c.id) && !legacyTestCatIds.has(c.id));
+          if (activeSaved.length > 0) {
+            setCategories(activeSaved);
+          } else {
+            setCategories(INITIAL_CATEGORIES.filter((c) => !deletedCategoryIds.has(c.id)));
+          }
         } catch {
           setCategories(INITIAL_CATEGORIES.filter((c) => !deletedCategoryIds.has(c.id)));
         }
@@ -902,7 +899,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const savedStories = localStorage.getItem('sbs_stories');
       if (savedStories) {
         try {
-          setStories(JSON.parse(savedStories));
+          const parsedStories: ProductStory[] = JSON.parse(savedStories);
+          const active = parsedStories.filter((s) => !/^p\d+$/.test(s.productId));
+          setStories(active);
         } catch {
           setStories(INITIAL_STORIES);
         }
@@ -1239,21 +1238,54 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 });
               }
             }
-            if (s.id === 'stories' && Array.isArray(s.data)) setStories(s.data);
+            if (s.id === 'stories' && Array.isArray(s.data)) {
+              const valid = s.data.filter((st: any) => !/^p\d+$/.test(st.productId) && !/^s\d+$/.test(st.id));
+              setStories(valid);
+              try { localStorage.setItem('sbs_stories', JSON.stringify(valid)); } catch {}
+            }
             if (s.id === 'scratch_config' && s.data) setScratchConfig(s.data);
-            if (s.id === 'flash_deal_config' && s.data) setFlashDealConfig(s.data);
+            if (s.id === 'flash_deal_config' && s.data) {
+              const fd = { ...s.data };
+              if (fd.productId && /^p\d+$/.test(fd.productId)) {
+                fd.productId = '';
+                fd.productName = '';
+              }
+              setFlashDealConfig(fd);
+            }
             if (s.id === 'hero_banners' && Array.isArray(s.data)) setHeroBanners(s.data);
             if (s.id === 'homepage_sections' && Array.isArray(s.data)) {
               const existingIds = new Set(s.data.map((x: any) => x.id));
               const missing = DEFAULT_HOMEPAGE_SECTIONS.filter(x => !existingIds.has(x.id));
               setHomepageSections([...s.data, ...missing]);
             }
-            if (s.id === 'homepage_categories' && Array.isArray(s.data)) setHomepageCategories(s.data);
-            if (s.id === 'homepage_subcategories' && Array.isArray(s.data)) setHomepageSubcategories(s.data);
+            if (s.id === 'homepage_categories' && Array.isArray(s.data)) {
+              const legacyTestCatIds = new Set(['home', 'kitchen', 'personal-care', 'storage', 'bathroom', 'cleaning', 'stationery', 'electronics']);
+              const valid = s.data.filter((cId: string) => !legacyTestCatIds.has(cId));
+              setHomepageCategories(valid.length > 0 ? valid : ['cleaning-products--chemicals', 'bathroom--laundry', 'bucket-and-plastics', 'cleaning-tools']);
+              try { localStorage.setItem('sbs_home_categories', JSON.stringify(valid)); } catch {}
+            }
+            if (s.id === 'homepage_subcategories' && Array.isArray(s.data)) {
+              const legacyTestCatIds = new Set(['home', 'kitchen', 'personal-care', 'storage', 'bathroom', 'cleaning', 'stationery', 'electronics']);
+              const valid = s.data.filter((sub: any) => !legacyTestCatIds.has(sub.categoryId));
+              setHomepageSubcategories(valid);
+              try { localStorage.setItem('sbs_home_subcategories', JSON.stringify(valid)); } catch {}
+            }
             if (s.id === 'quick_actions' && Array.isArray(s.data)) setQuickActions(s.data);
-            if (s.id === 'today_deals' && Array.isArray(s.data)) setTodayDeals(s.data);
-            if (s.id === 'trending_products' && Array.isArray(s.data)) setTrendingNowProducts(s.data);
-            if (s.id === 'best_sellers_config' && s.data) setBestSellersConfig(s.data);
+            if (s.id === 'today_deals' && Array.isArray(s.data)) {
+              const valid = s.data.filter((td: any) => !/^p\d+$/.test(td.productId));
+              setTodayDeals(valid);
+            }
+            if (s.id === 'trending_products' && Array.isArray(s.data)) {
+              const valid = s.data.filter((pId: string) => !/^p\d+$/.test(pId));
+              setTrendingNowProducts(valid);
+            }
+            if (s.id === 'best_sellers_config' && s.data) {
+              const bsc = { ...s.data };
+              if (Array.isArray(bsc.manualProductIds)) {
+                bsc.manualProductIds = bsc.manualProductIds.filter((pId: string) => !/^p\d+$/.test(pId));
+              }
+              setBestSellersConfig(bsc);
+            }
             if (s.id === 'store_settings' && s.data) setStoreSettings(sanitizeStoreSettings(s.data));
           });
 
@@ -1464,6 +1496,36 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (currentUserIdRef.current && newOrd.userId === currentUserIdRef.current) {
           setOrders((prev) => (prev.some((x) => x.id === newOrd.id) ? prev : [newOrd, ...prev]));
         }
+
+        // Notify Admin if this client is logged in as Admin
+        const adminKey = `admin_order_${newOrd.id}`;
+        if (!notifiedEventsRef.current.has(adminKey)) {
+          notifiedEventsRef.current.add(adminKey);
+          const isAdminUser = typeof window !== 'undefined' && Boolean(
+            localStorage.getItem('sbs_admin_role') ||
+            localStorage.getItem('sbs_admin_auth') ||
+            window.location.search.includes('tab=admin') ||
+            window.location.hash.includes('admin')
+          );
+          if (isAdminUser) {
+            const custName = newOrd.shippingAddress?.name || 'Customer';
+            const orderNum = newOrd.orderNumber || newOrd.id;
+            addNotification({
+              title: 'New Order Received! 🛒',
+              message: `Order #${orderNum} placed by ${custName} (₹${newOrd.total})`,
+              type: 'order',
+              priority: 'high',
+              link: 'orders'
+            });
+            playNotificationChime();
+            triggerBrowserPushNotification({
+              title: 'New Order Received! 🛒',
+              body: `Order #${orderNum} for ₹${newOrd.total} from ${custName}`,
+              data: { url: '/?tab=admin' }
+            });
+            showToast(`🛒 New Order #${orderNum} received! (₹${newOrd.total})`, 'info');
+          }
+        }
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
         const o = payload.new as any;
@@ -1482,6 +1544,38 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           syncPaymentRecordsFromOrders(updated);
           return updated;
         });
+
+        // Notify customer if this update is for their order
+        if (o.status) {
+          const custKey = `cust_status_${o.id}_${o.status}`;
+          if (!notifiedEventsRef.current.has(custKey)) {
+            const isCustomerOrder = (currentUserIdRef.current && o.user_id && currentUserIdRef.current === o.user_id) ||
+                                    orders.some((ord) => ord.id === o.id);
+            if (isCustomerOrder) {
+              notifiedEventsRef.current.add(custKey);
+              const numDisplay = o.order_number || o.id;
+              let statusMsg = `Your SBS order #${numDisplay} status is now ${o.status}.`;
+              if (o.status === 'Processing') statusMsg = `Your SBS order #${numDisplay} is being prepared.`;
+              else if (o.status === 'Shipped') statusMsg = `Your SBS order #${numDisplay} is on the way! 🚚 ${o.tracking_number ? `Tracking: ${o.tracking_number}` : ''}`;
+              else if (o.status === 'Delivered') statusMsg = `Your SBS order #${numDisplay} has been delivered! ✓`;
+              else if (o.status === 'Cancelled') statusMsg = `Your SBS order #${numDisplay} has been cancelled.`;
+
+              addCustomerNotification({
+                title: `Order ${o.status}`,
+                message: statusMsg,
+                type: 'order',
+                orderId: o.id
+              });
+              playNotificationChime();
+              triggerBrowserPushNotification({
+                title: `Order ${o.status} 📦`,
+                body: statusMsg,
+                data: { url: '/orders' }
+              });
+              showToast(`📦 ${statusMsg}`, 'info');
+            }
+          }
+        }
       })
       // Direct Cross-Device Broadcast Sync for Instant Screen Updates
       .on('broadcast', { event: 'cross_device_order_placed' }, (payload) => {
@@ -1500,6 +1594,79 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           status: o.paymentStatus === 'PAYMENT_VERIFIED' ? 'Verified' : o.paymentStatus === 'CUSTOMER_CONFIRMED' ? 'Customer Confirmed' : 'Pending',
           timestamp: o.createdAt || new Date().toISOString()
         }, ...prev]));
+
+        // Trigger real-time Admin notification & audio chime on admin device
+        const adminKey = `admin_order_${o.id}`;
+        if (!notifiedEventsRef.current.has(adminKey)) {
+          notifiedEventsRef.current.add(adminKey);
+          const isAdminUser = typeof window !== 'undefined' && Boolean(
+            localStorage.getItem('sbs_admin_role') ||
+            localStorage.getItem('sbs_admin_auth') ||
+            window.location.search.includes('tab=admin') ||
+            window.location.hash.includes('admin')
+          );
+          if (isAdminUser) {
+            const custName = o.shippingAddress?.name || 'Customer';
+            const orderNum = o.orderNumber || o.id;
+            addNotification({
+              title: 'New Order Received! 🛒',
+              message: `Order #${orderNum} placed by ${custName} (₹${o.total})`,
+              type: 'order',
+              priority: 'high',
+              link: 'orders'
+            });
+            playNotificationChime();
+            triggerBrowserPushNotification({
+              title: 'New Order Received! 🛒',
+              body: `Order #${orderNum} for ₹${o.total} from ${custName}`,
+              data: { url: '/?tab=admin' }
+            });
+            showToast(`🛒 New Order #${orderNum} received! (₹${o.total})`, 'info');
+          }
+        }
+      })
+      .on('broadcast', { event: 'cross_device_order_status_updated' }, (payload) => {
+        const d = payload.payload as any;
+        if (!d || !d.orderId) return;
+        const statusUpdateFn = (ord: Order) => (ord.id === d.orderId ? {
+          ...ord,
+          status: d.status || ord.status,
+          trackingNumber: d.trackingNumber || ord.trackingNumber
+        } : ord);
+        setOrders((prev) => prev.map(statusUpdateFn));
+        setAdminOrders((prev) => prev.map(statusUpdateFn));
+
+        // Notify customer on their device
+        if (d.status) {
+          const custKey = `cust_status_${d.orderId}_${d.status}`;
+          if (!notifiedEventsRef.current.has(custKey)) {
+            const isCustomerOrder = (currentUserIdRef.current && d.userId && currentUserIdRef.current === d.userId) ||
+                                    orders.some((ord) => ord.id === d.orderId);
+            if (isCustomerOrder) {
+              notifiedEventsRef.current.add(custKey);
+              const numDisplay = d.orderNumber || d.orderId;
+              let statusMsg = `Your SBS order #${numDisplay} status is now ${d.status}.`;
+              if (d.status === 'Processing') statusMsg = `Your SBS order #${numDisplay} is being prepared.`;
+              else if (d.status === 'Shipped') statusMsg = `Your SBS order #${numDisplay} is on the way! 🚚 ${d.trackingNumber ? `Tracking: ${d.trackingNumber}` : ''}`;
+              else if (d.status === 'Delivered') statusMsg = `Your SBS order #${numDisplay} has been delivered! ✓`;
+              else if (d.status === 'Cancelled') statusMsg = `Your SBS order #${numDisplay} has been cancelled.`;
+
+              addCustomerNotification({
+                title: `Order ${d.status}`,
+                message: statusMsg,
+                type: 'order',
+                orderId: d.orderId
+              });
+              playNotificationChime();
+              triggerBrowserPushNotification({
+                title: `Order ${d.status} 📦`,
+                body: statusMsg,
+                data: { url: '/orders' }
+              });
+              showToast(`📦 ${statusMsg}`, 'info');
+            }
+          }
+        }
       })
       .on('broadcast', { event: 'cross_device_payment_updated' }, (payload) => {
         const { orderId, paymentStatus, paymentConfirmedAt, whatsappConfirmedAt } = payload.payload;
@@ -1594,21 +1761,52 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             });
           }
         }
-        if (s.id === 'stories' && Array.isArray(s.data)) setStories(s.data);
+        if (s.id === 'stories' && Array.isArray(s.data)) {
+          const valid = s.data.filter((st: any) => !/^p\d+$/.test(st.productId) && !/^s\d+$/.test(st.id));
+          setStories(valid);
+          try { localStorage.setItem('sbs_stories', JSON.stringify(valid)); } catch {}
+        }
         if (s.id === 'scratch_config' && s.data) setScratchConfig(s.data);
-        if (s.id === 'flash_deal_config' && s.data) setFlashDealConfig(s.data);
+        if (s.id === 'flash_deal_config' && s.data) {
+          const fd = { ...s.data };
+          if (fd.productId && /^p\d+$/.test(fd.productId)) {
+            fd.productId = '';
+            fd.productName = '';
+          }
+          setFlashDealConfig(fd);
+        }
         if (s.id === 'hero_banners' && Array.isArray(s.data)) setHeroBanners(s.data);
         if (s.id === 'homepage_sections' && Array.isArray(s.data)) {
           const existingIds = new Set(s.data.map((x: any) => x.id));
           const missing = DEFAULT_HOMEPAGE_SECTIONS.filter(x => !existingIds.has(x.id));
           setHomepageSections([...s.data, ...missing]);
         }
-        if (s.id === 'homepage_categories' && Array.isArray(s.data)) setHomepageCategories(s.data);
-        if (s.id === 'homepage_subcategories' && Array.isArray(s.data)) setHomepageSubcategories(s.data);
+        if (s.id === 'homepage_categories' && Array.isArray(s.data)) {
+          const legacyTestCatIds = new Set(['home', 'kitchen', 'personal-care', 'storage', 'bathroom', 'cleaning', 'stationery', 'electronics']);
+          const valid = s.data.filter((cId: string) => !legacyTestCatIds.has(cId));
+          setHomepageCategories(valid.length > 0 ? valid : ['cleaning-products--chemicals', 'bathroom--laundry', 'bucket-and-plastics', 'cleaning-tools']);
+        }
+        if (s.id === 'homepage_subcategories' && Array.isArray(s.data)) {
+          const legacyTestCatIds = new Set(['home', 'kitchen', 'personal-care', 'storage', 'bathroom', 'cleaning', 'stationery', 'electronics']);
+          const valid = s.data.filter((sub: any) => !legacyTestCatIds.has(sub.categoryId));
+          setHomepageSubcategories(valid);
+        }
         if (s.id === 'quick_actions' && Array.isArray(s.data)) setQuickActions(s.data);
-        if (s.id === 'today_deals' && Array.isArray(s.data)) setTodayDeals(s.data);
-        if (s.id === 'trending_products' && Array.isArray(s.data)) setTrendingNowProducts(s.data);
-        if (s.id === 'best_sellers_config' && s.data) setBestSellersConfig(s.data);
+        if (s.id === 'today_deals' && Array.isArray(s.data)) {
+          const valid = s.data.filter((td: any) => !/^p\d+$/.test(td.productId));
+          setTodayDeals(valid);
+        }
+        if (s.id === 'trending_products' && Array.isArray(s.data)) {
+          const valid = s.data.filter((pId: string) => !/^p\d+$/.test(pId));
+          setTrendingNowProducts(valid);
+        }
+        if (s.id === 'best_sellers_config' && s.data) {
+          const bsc = { ...s.data };
+          if (Array.isArray(bsc.manualProductIds)) {
+            bsc.manualProductIds = bsc.manualProductIds.filter((pId: string) => !/^p\d+$/.test(pId));
+          }
+          setBestSellersConfig(bsc);
+        }
         if (s.id === 'store_settings' && s.data) setStoreSettings(sanitizeStoreSettings(s.data));
       })
       .subscribe();
@@ -2718,37 +2916,40 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return updated;
     });
 
-    // Only create notification if status actually changed (avoid duplicates on repeated saves)
+    // Create notification if this is the customer's device or broadcast across devices
     if (oldStatus && oldStatus !== status) {
       const numDisplay = orderNum || orderId;
-      if (status === 'Processing') {
-        addCustomerNotification({
-          title: 'Order Processing',
-          message: `Your SBS order #${numDisplay} is being prepared.`,
-          type: 'order',
-          orderId
-        });
-      } else if (status === 'Shipped') {
-        addCustomerNotification({
-          title: 'Order Shipped / Out for Delivery 🚚',
-          message: `Your SBS order #${numDisplay} is on the way! ${trackingNum ? `Tracking: ${trackingNum}` : ''}`,
-          type: 'order',
-          orderId
-        });
-      } else if (status === 'Delivered') {
-        addCustomerNotification({
-          title: 'Order Delivered ✓',
-          message: `Your SBS order #${numDisplay} has been delivered ✓`,
-          type: 'order',
-          orderId
-        });
-      } else if (status === 'Cancelled') {
-        addCustomerNotification({
-          title: 'Order Cancelled',
-          message: `Your SBS order #${numDisplay} has been cancelled.`,
-          type: 'alert',
-          orderId
-        });
+      const isCurrentCustomer = orders.some(o => o.id === orderId);
+      if (isCurrentCustomer) {
+        if (status === 'Processing') {
+          addCustomerNotification({
+            title: 'Order Processing',
+            message: `Your SBS order #${numDisplay} is being prepared.`,
+            type: 'order',
+            orderId
+          });
+        } else if (status === 'Shipped') {
+          addCustomerNotification({
+            title: 'Order Shipped / Out for Delivery 🚚',
+            message: `Your SBS order #${numDisplay} is on the way! ${trackingNum ? `Tracking: ${trackingNum}` : ''}`,
+            type: 'order',
+            orderId
+          });
+        } else if (status === 'Delivered') {
+          addCustomerNotification({
+            title: 'Order Delivered ✓',
+            message: `Your SBS order #${numDisplay} has been delivered ✓`,
+            type: 'order',
+            orderId
+          });
+        } else if (status === 'Cancelled') {
+          addCustomerNotification({
+            title: 'Order Cancelled',
+            message: `Your SBS order #${numDisplay} has been cancelled.`,
+            type: 'alert',
+            orderId
+          });
+        }
       }
     }
 
@@ -2775,6 +2976,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
         return;
       }
+
+      // Broadcast order status change to customer devices in real time
+      try {
+        const broadcastCh = supabase.channel('sbs_catalog_realtime');
+        broadcastCh.send({
+          type: 'broadcast',
+          event: 'cross_device_order_status_updated',
+          payload: {
+            orderId,
+            orderNumber: orderNum || existingOrd?.orderNumber || orderId,
+            status,
+            userId: existingOrd?.userId,
+            trackingNumber: trackingNum || existingOrd?.trackingNumber,
+          },
+        });
+      } catch (e) {}
     }
 
     showToast(`Order status updated to ${status}`);
