@@ -3,6 +3,7 @@
 import React from 'react';
 import { useStore } from '@/context/StoreContext';
 import { Home, LayoutGrid, ShoppingCart, Heart, User, ArrowRight, Sparkles } from 'lucide-react';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export const BottomNav: React.FC = () => {
   const { activeTab, setActiveTab, cart, wishlist, cartSubtotal, storeSettings, isSearchOpen } = useStore();
@@ -58,8 +59,7 @@ export const BottomNav: React.FC = () => {
                       key={item.productId || idx}
                       className="w-6 h-6 rounded-md overflow-hidden bg-white p-0.5 border border-[#18181B] shadow-2xs flex-shrink-0"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <ResolvedImage
                         src={item.product?.image || ''}
                         alt={item.product?.name || 'Item'}
                         className="w-full h-full object-contain mix-blend-multiply"

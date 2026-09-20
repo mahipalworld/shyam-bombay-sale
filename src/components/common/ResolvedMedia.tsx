@@ -16,7 +16,11 @@ export const ResolvedImage: React.FC<ResolvedImageProps> = ({ src, alt = '', cla
   }, [src, url]);
 
   const isS3Key = Boolean(
-    src && (
+    src &&
+    !src.startsWith('/') &&
+    !src.startsWith('http://') &&
+    !src.startsWith('https://') &&
+    !src.startsWith('data:') && (
       src.includes('products/images/') || 
       src.includes('products/videos/') || 
       src.includes('products/thumbnails/') ||
@@ -31,16 +35,14 @@ export const ResolvedImage: React.FC<ResolvedImageProps> = ({ src, alt = '', cla
   if (hasError || !targetSrc) {
     return (
       <div 
-        className={`w-full h-full min-h-[90px] flex flex-col items-center justify-center bg-orange-50/60 rounded-xl p-2 text-center select-none ${className || ''}`}
+        className={`w-full h-full flex flex-col items-center justify-center bg-orange-50/60 rounded-lg p-1 text-center select-none overflow-hidden ${className || ''}`}
         style={{ mixBlendMode: 'normal' }}
       >
-        <div className="w-8 h-8 rounded-lg bg-white shadow-2xs flex items-center justify-center text-[#F95721] mb-1">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="w-4 h-4 sm:w-6 sm:h-6 rounded bg-white shadow-2xs flex items-center justify-center text-[#F95721] flex-shrink-0">
+          <svg className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
           </svg>
         </div>
-        <span className="text-[10px] font-black text-gray-700 leading-tight">SBS Store</span>
-        <span className="text-[8px] font-bold text-[#F95721] uppercase tracking-wider">Quality Assured</span>
       </div>
     );
   }

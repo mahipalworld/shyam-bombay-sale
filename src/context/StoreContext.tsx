@@ -653,6 +653,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     'bathroom--laundry',
     'bucket-and-plastics',
     'cleaning-tools',
+    'kitchen-utility',
+    'personal-care--grooming',
+    'small-appliances--gadgets',
+    'hardware--utility',
   ]);
 
   const [homepageSubcategories, setHomepageSubcategories] = useState<{ categoryId: string; subcategoryId: string }[]>([]);
@@ -818,7 +822,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         try {
           const parsedCategories: Category[] = JSON.parse(savedCategories);
           const legacyTestCatIds = new Set(['home', 'kitchen', 'personal-care', 'storage', 'bathroom', 'cleaning', 'stationery', 'electronics']);
-          const activeSaved = parsedCategories.filter((c) => !deletedCategoryIds.has(c.id) && !legacyTestCatIds.has(c.id));
+          const activeSaved = parsedCategories
+            .filter((c) => !deletedCategoryIds.has(c.id) && !legacyTestCatIds.has(c.id))
+            .map((c) => {
+              const initMatch = INITIAL_CATEGORIES.find((ic) => ic.id === c.id);
+              return {
+                ...c,
+                image: (!c.image || c.image.startsWith('data:')) ? (initMatch?.image || c.image || '') : c.image,
+                bgColor: c.bgColor || initMatch?.bgColor || '#FFF0E6',
+                accentColor: c.accentColor || initMatch?.accentColor || '#F95721',
+              };
+            });
           if (activeSaved.length > 0) {
             setCategories(activeSaved);
           } else {
@@ -1066,7 +1080,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               id: c.id,
               name: c.name,
               subtitle: c.subtitle,
-              image: c.image,
+              image: c.image || initMatch?.image || '',
               bgColor: c.bg_color || initMatch?.bgColor || '#FFF0E6',
               accentColor: c.accent_color || initMatch?.accentColor || '#F95721',
               itemCount: c.item_count || initMatch?.itemCount || 0,
@@ -1075,6 +1089,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             };
           });
           setCategories(mappedCats);
+          try {
+            localStorage.setItem('sbs_categories', JSON.stringify(mappedCats));
+          } catch (e) {}
         }
 
         if (prods && prods.length > 0) {
@@ -1216,7 +1233,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             if (s.id === 'homepage_categories' && Array.isArray(s.data)) {
               const legacyTestCatIds = new Set(['home', 'kitchen', 'personal-care', 'storage', 'bathroom', 'cleaning', 'stationery', 'electronics']);
               const valid = s.data.filter((cId: string) => !legacyTestCatIds.has(cId));
-              setHomepageCategories(valid.length > 0 ? valid : ['cleaning-products--chemicals', 'bathroom--laundry', 'bucket-and-plastics', 'cleaning-tools']);
+              setHomepageCategories(valid.length > 0 ? valid : [
+                'cleaning-products--chemicals',
+                'bathroom--laundry',
+                'bucket-and-plastics',
+                'cleaning-tools',
+                'kitchen-utility',
+                'personal-care--grooming',
+                'small-appliances--gadgets',
+                'hardware--utility',
+              ]);
               try { localStorage.setItem('sbs_home_categories', JSON.stringify(valid)); } catch {}
             }
             if (s.id === 'homepage_subcategories' && Array.isArray(s.data)) {
