@@ -102,7 +102,783 @@ export const INITIAL_CATEGORIES: Category[] = [
   }
 ];
 
-export const INITIAL_PRODUCTS: Product[] = [];
+export const INITIAL_PRODUCTS: Product[] = [
+  {
+    "id": "p_1789888588352",
+    "name": "Kleen clean glass cleaner ",
+    "category": "cleaning-products--chemicals",
+    "price": 60,
+    "originalPrice": 75,
+    "discountPercentage": 20,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789888566670-103294.png",
+    "images": [
+      "products/images/1789888566670-103294.png",
+      "products/images/1789888569053-103295.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 9,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "STREAK FREE SHINE",
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      }
+    ]
+  },
+  {
+    "id": "p_1789888719431",
+    "name": "Kleen fresh  floor cleaner lemon 1000ml",
+    "category": "cleaning-products--chemicals",
+    "price": 120,
+    "originalPrice": 179,
+    "discountPercentage": 33,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789888674538-103296.png",
+    "images": [
+      "products/images/1789888674538-103296.png",
+      "products/images/1789888676847-103297.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "1000ml",
+      "Capacity: 1000ml"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "Long lasting fregrunce ",
+    "featureIcons": [
+      {
+        "icon": "🌿",
+        "label": "Lemon 🍋"
+      }
+    ],
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      },
+      {
+        "label": "Country of Origin",
+        "value": "India"
+      }
+    ]
+  },
+  {
+    "id": "p_1789889604412",
+    "name": "Kleen fresh bathroom cleaner ",
+    "category": "cleaning-products--chemicals",
+    "price": 70,
+    "originalPrice": 95,
+    "discountPercentage": 26,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789889134846-103302.png",
+    "images": [
+      "products/images/1789889134846-103302.png",
+      "products/images/1789889137696-103303.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "Removes hard water stains ",
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      }
+    ]
+  },
+  {
+    "id": "p_1789888261467",
+    "name": "Kleen fresh liquid soap ( ayu mix )",
+    "category": "cleaning-products--chemicals",
+    "subcategory": "liquid-soap",
+    "price": 99,
+    "originalPrice": 150,
+    "discountPercentage": 34,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789888251001-103290.png",
+    "images": [
+      "products/images/1789888251001-103290.png",
+      "products/images/1789888253453-103291.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "Clean and gentle ",
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      }
+    ]
+  },
+  {
+    "id": "p_1789888149765",
+    "name": "Kleen fresh liquid soap ( lemon )",
+    "category": "cleaning-products--chemicals",
+    "price": 99,
+    "originalPrice": 150,
+    "discountPercentage": 34,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789888128526-103274.png",
+    "images": [
+      "products/images/1789888128526-103274.png",
+      "products/images/1789888130834-103275.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "Clean and gentle ",
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      }
+    ]
+  },
+  {
+    "id": "p_1789888200156",
+    "name": "Kleen fresh liquid soap ( rose )",
+    "category": "cleaning-products--chemicals",
+    "price": 99,
+    "originalPrice": 150,
+    "discountPercentage": 34,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789888189327-103288.png",
+    "images": [
+      "products/images/1789888189327-103288.png",
+      "products/images/1789888191632-103289.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "Clean and gentle ",
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      }
+    ]
+  },
+  {
+    "id": "p_1789888078167",
+    "name": "Kleen fresh liquid soap ( sandal )",
+    "category": "cleaning-products--chemicals",
+    "price": 99,
+    "originalPrice": 150,
+    "discountPercentage": 34,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789888020237-103251.png",
+    "images": [
+      "products/images/1789888020237-103251.png",
+      "products/images/1789888031028-103264.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "Clean and gentle ",
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      }
+    ]
+  },
+  {
+    "id": "7574877711992",
+    "barcode": "7574877711992",
+    "name": "Kleen FRESH tiles cleaner ",
+    "category": "cleaning-products--chemicals",
+    "price": 30,
+    "originalPrice": 60,
+    "discountPercentage": 50,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789886596331-103203.png",
+    "images": [
+      "products/images/1789886596331-103203.png",
+      "products/images/1789886612971-103204.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "Does the hard work for you ",
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      },
+      {
+        "label": "Capacity / Volume",
+        "value": "900ml"
+      }
+    ]
+  },
+  {
+    "id": "p_1789889804391",
+    "name": "Mitisha chemical floor cleaner ",
+    "category": "cleaning-products--chemicals",
+    "price": 100,
+    "originalPrice": 120,
+    "discountPercentage": 17,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789889750197-103304.png",
+    "images": [
+      "products/images/1789889750197-103304.png",
+      "products/images/1789889753145-103305.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      }
+    ]
+  },
+  {
+    "id": "p_1789886381928",
+    "name": "Mr. Safai toilet cleaner ",
+    "category": "cleaning-products--chemicals",
+    "price": 60,
+    "originalPrice": 85,
+    "discountPercentage": 29,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789886351725-103163.png",
+    "images": [
+      "products/images/1789886351725-103163.png",
+      "products/images/1789886416811-103174.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Capacity: 500ml",
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "Extra Thicker /Extra Shine",
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      },
+      {
+        "label": "Capacity / Volume",
+        "value": "500ml"
+      }
+    ]
+  },
+  {
+    "id": "p_1789888465482",
+    "name": "Pramukh home care dishwash neem ",
+    "category": "cleaning-products--chemicals",
+    "price": 50,
+    "originalPrice": 100,
+    "discountPercentage": 50,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789888416927-103292.png",
+    "images": [
+      "products/images/1789888416927-103292.png",
+      "products/images/1789888419720-103293.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      }
+    ]
+  },
+  {
+    "id": "p_1789889022728",
+    "name": "QAX multipurpose kitchen cleaner ",
+    "category": "cleaning-products--chemicals",
+    "price": 160,
+    "originalPrice": 260,
+    "discountPercentage": 38,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789888974617-103301.png",
+    "images": [
+      "products/images/1789888974617-103301.png",
+      "products/images/1789888977015-103300.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "Easy to use",
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      }
+    ]
+  },
+  {
+    "id": "p_1789888883432",
+    "name": "Star toilet cleaner ",
+    "category": "cleaning-products--chemicals",
+    "price": 20,
+    "originalPrice": 85,
+    "discountPercentage": 76,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789888863357-103298.png",
+    "images": [
+      "products/images/1789888863357-103298.png",
+      "products/images/1789888866507-103299.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "Clear strong ",
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      }
+    ]
+  },
+  {
+    "id": "123456789012345",
+    "barcode": "123456789012345",
+    "name": "Supar toilet cleaner ",
+    "category": "cleaning-products--chemicals",
+    "price": 90,
+    "originalPrice": 160,
+    "discountPercentage": 44,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789887349389-103205.png",
+    "images": [
+      "products/images/1789887349389-103205.png",
+      "products/images/1789887526409-103003.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "Remove bad odour ",
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      }
+    ]
+  },
+  {
+    "id": "RFB1000",
+    "barcode": "RFB1000",
+    "name": "Swachh cleaning bleach ",
+    "category": "cleaning-products--chemicals",
+    "price": 30,
+    "originalPrice": 30,
+    "discountPercentage": 0,
+    "rating": 4.8,
+    "reviewCount": 1,
+    "image": "products/images/1789886118658-103090.png",
+    "images": [
+      "products/images/1789886118658-103090.png"
+    ],
+    "videos": [],
+    "inStock": true,
+    "stockCount": 10,
+    "description": "Everyday home essential from SBS Store.",
+    "descriptionBlocks": [],
+    "features": [
+      "Capacity: 500ml",
+      "Material: Virgin Plastic / Stainless Steel",
+      "Color: Pastel Slate",
+      "Warranty: 6 Months Replacement"
+    ],
+    "isTrending": false,
+    "isBestSeller": false,
+    "isDealOfDay": false,
+    "isFeatured": false,
+    "isSuperDeal": false,
+    "isTopRated": false,
+    "subtitle": "FOR WHITE COTTONS AND TERRY COTES CLOTHS",
+    "specifications": [
+      {
+        "label": "Brand",
+        "value": "SBS Certified"
+      },
+      {
+        "label": "Category",
+        "value": "bathroom--laundry"
+      },
+      {
+        "label": "Subcategory",
+        "value": "General"
+      },
+      {
+        "label": "Condition",
+        "value": "Brand New (100% Sealed)"
+      },
+      {
+        "label": "Capacity / Volume",
+        "value": "500ml"
+      }
+    ]
+  }
+];
+
 
 export const INITIAL_USER: UserProfile = {
   id: '',

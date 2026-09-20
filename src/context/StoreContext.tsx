@@ -353,37 +353,8 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [products, setProducts] = useState<Product[]>(() => {
-    if (typeof window !== 'undefined') {
-      const deletedIds = getDeletedProductIds();
-      const saved = localStorage.getItem('sbs_products');
-      if (saved) {
-        try {
-          const parsed: Product[] = JSON.parse(saved);
-          const active = parsed.filter((p) => !deletedIds.has(p.id) && !/^p\d+$/.test(p.id));
-          if (active.length > 0) return active;
-        } catch {}
-      }
-      return INITIAL_PRODUCTS.filter((p) => !deletedIds.has(p.id) && !/^p\d+$/.test(p.id));
-    }
-    return INITIAL_PRODUCTS;
-  });
-  const [categories, setCategories] = useState<Category[]>(() => {
-    if (typeof window !== 'undefined') {
-      const deletedIds = getDeletedCategoryIds();
-      const saved = localStorage.getItem('sbs_categories');
-      if (saved) {
-        try {
-          const parsed: Category[] = JSON.parse(saved);
-          const legacyTestCatIds = new Set(['home', 'kitchen', 'personal-care', 'storage', 'bathroom', 'cleaning', 'stationery', 'electronics']);
-          const active = parsed.filter((c) => !deletedIds.has(c.id) && !legacyTestCatIds.has(c.id));
-          if (active.length > 0) return active;
-        } catch {}
-      }
-      return INITIAL_CATEGORIES.filter((c) => !deletedIds.has(c.id));
-    }
-    return INITIAL_CATEGORIES;
-  });
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
 
   // Clean empty initial cart for all visitors
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -677,31 +648,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [quickActions, setQuickActions] = useState<QuickActionItem[]>(INITIAL_QUICK_ACTIONS);
 
-  const [homepageCategories, setHomepageCategories] = useState<string[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('sbs_home_categories');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {}
-    }
-    return ['cleaning-products--chemicals', 'bathroom--laundry', 'bucket-and-plastics', 'cleaning-tools'];
-  });
+  const [homepageCategories, setHomepageCategories] = useState<string[]>([
+    'cleaning-products--chemicals',
+    'bathroom--laundry',
+    'bucket-and-plastics',
+    'cleaning-tools',
+  ]);
 
-  const [homepageSubcategories, setHomepageSubcategories] = useState<{ categoryId: string; subcategoryId: string }[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('sbs_home_subcategories');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {}
-    }
-    return [];
-  });
+  const [homepageSubcategories, setHomepageSubcategories] = useState<{ categoryId: string; subcategoryId: string }[]>([]);
 
   const [trendingNowProducts, setTrendingNowProducts] = useState<string[]>([]);
 
