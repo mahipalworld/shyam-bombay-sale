@@ -249,6 +249,7 @@ app.post('/api/storage/presigned-url', async (req, res) => {
       Bucket: s3Bucket,
       Key: safeKey,
       ContentType: fileType,
+      CacheControl: 'public, max-age=31536000, immutable'
     });
 
     // Short-lived presigned URL (5 minutes)
@@ -267,7 +268,7 @@ app.post('/api/storage/presigned-url', async (req, res) => {
   }
 });
 
-// 3. Resolve Media Delivery URL (Byte-range compatible for video streaming)
+// 3. Resolve Media Delivery URL (Direct high-speed delivery with HTTP caching)
 app.get('/api/storage/delivery-url', async (req, res) => {
   const { key } = req.query;
 
@@ -280,6 +281,8 @@ app.get('/api/storage/delivery-url', async (req, res) => {
     return res.status(400).json({ error: 'Invalid media key.' });
   }
 
+  res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+
   // If CloudFront is configured, return CDN URL immediately
   if (cloudfrontDomain) {
     return res.json({
@@ -289,37 +292,28 @@ app.get('/api/storage/delivery-url', async (req, res) => {
     });
   }
 
-  if (!isS3Configured || !s3Client) {
-    return res.status(503).json({ error: 'Storage backend not configured.' });
-  }
-
-  try {
-    const getCommand = new GetObjectCommand({
-      Bucket: s3Bucket,
-      Key: key,
-    });
-
-    // 1-hour signed URL supporting byte-range streaming for videos
-    const signedUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
-
-    res.json({
-      url: signedUrl,
-      key,
-      expiresIn: 3600,
-      type: 'signed-s3'
-    });
-  } catch (err) {
-    console.error('Delivery URL error:', err.message);
-    res.status(500).json({ error: 'Could not generate media delivery URL.' });
-  }
+  // Direct public S3 URL in ap-south-1
+  const cleanKey = key.startsWith('/') ? key.slice(1) : key;
+  const directUrl = `https://${s3Bucket}.s3.${s3Region}.amazonaws.com/${cleanKey}`;
+  return res.json({
+    url: directUrl,
+    key,
+    type: 'direct-s3'
+  });
 });
 
-// 4. Batch Delivery URLs Resolver (For grid rendering)
+// 4. Batch Delivery URLs Resolver (Instant parallel resolution with HTTP caching)
 app.post('/api/storage/delivery-urls', async (req, res) => {
   const { keys } = req.body;
   if (!Array.isArray(keys)) {
     return res.status(400).json({ error: 'Keys must be an array.' });
   }
+
+  res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+
+  const base = cloudfrontDomain
+    ? `https://${cloudfrontDomain}`
+    : `https://${s3Bucket}.s3.${s3Region}.amazonaws.com`;
 
   const results = {};
   for (const key of keys.slice(0, 100)) {
@@ -331,23 +325,8 @@ app.post('/api/storage/delivery-urls', async (req, res) => {
 
     if (key.includes('..')) continue;
 
-    if (cloudfrontDomain) {
-      results[key] = `https://${cloudfrontDomain}/${key}`;
-      continue;
-    }
-
-    if (isS3Configured && s3Client) {
-      try {
-        const getCommand = new GetObjectCommand({
-          Bucket: s3Bucket,
-          Key: key,
-        });
-        const signedUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
-        results[key] = signedUrl;
-      } catch (e) {
-        // Fallback
-      }
-    }
+    const cleanKey = key.startsWith('/') ? key.slice(1) : key;
+    results[key] = `${base}/${cleanKey}`;
   }
 
   res.json({ urls: results });

@@ -9,8 +9,9 @@ import {
   X,
   Flame,
   ArrowUpDown,
+  Sparkles,
   ShoppingBag,
-  Sparkles
+  Package
 } from 'lucide-react';
 import { Subcategory, Category } from '@/types';
 import { ResolvedImage } from '@/components/common/ResolvedMedia';
@@ -26,7 +27,7 @@ export const CategoriesView: React.FC = () => {
   } = useStore();
 
   const [activeCategoryId, setActiveCategoryId] = useState<string>(
-    selectedCategoryFilter || categories[0]?.id || 'cleaning'
+    selectedCategoryFilter || categories[0]?.id || 'cleaning-products--chemicals'
   );
 
   // Search & Filter inside subcategory modal
@@ -36,76 +37,117 @@ export const CategoriesView: React.FC = () => {
 
   // References for scroll tracking and programmatic smooth scrolling
   const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({});
+  const railButtonsRef = useRef<{ [key: string]: HTMLElement | null }>({});
   const leftRailRef = useRef<HTMLElement | null>(null);
   const rightPaneRef = useRef<HTMLElement | null>(null);
   const isProgrammaticScrollRef = useRef(false);
+  const activeCategoryRef = useRef(activeCategoryId);
+  activeCategoryRef.current = activeCategoryId;
 
   const formatItemCount = (count: number) => `${count} ${count === 1 ? 'item' : 'items'}`;
 
-  // Find currently active category using IntersectionObserverxternally (e.g. from banner or search), scroll to it
+  // Keep active category button visible inside the left rail
+  const scrollLeftRailToActive = (catId: string) => {
+    const rail = leftRailRef.current;
+    const btn = railButtonsRef.current[catId];
+    if (rail && btn) {
+      const railRect = rail.getBoundingClientRect();
+      const btnRect = btn.getBoundingClientRect();
+      if (btnRect.top < railRect.top + 20 || btnRect.bottom > railRect.bottom - 20) {
+        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  };
+
+  // External trigger (e.g. from banner or quick actions), scroll right pane to it
   useEffect(() => {
     if (selectedCategoryFilter && sectionRefs.current[selectedCategoryFilter]) {
       setActiveCategoryId(selectedCategoryFilter);
+      activeCategoryRef.current = selectedCategoryFilter;
+      scrollLeftRailToActive(selectedCategoryFilter);
+
       const el = sectionRefs.current[selectedCategoryFilter];
       const container = rightPaneRef.current;
       if (el && container) {
         isProgrammaticScrollRef.current = true;
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const targetTop = Math.max(0, el.offsetTop - container.offsetTop);
+        container.scrollTo({ top: targetTop, behavior: 'smooth' });
         setTimeout(() => {
           isProgrammaticScrollRef.current = false;
-        }, 800);
+        }, 600);
       }
     }
   }, [selectedCategoryFilter]);
 
-  // Scroll-Spy: Track which category section is currently visible as user scrolls down the right pane
+  // Robust Scroll-Spy: Accurately sync left sidebar as user scrolls down the right pane
   useEffect(() => {
     const container = rightPaneRef.current;
     if (!container) return;
 
+    let ticking = false;
+
     const handleScroll = () => {
       if (isProgrammaticScrollRef.current) return;
 
-      const categoryKeys = categories.map(c => c.id);
-      const containerRect = container.getBoundingClientRect();
-      const viewportOffset = containerRect.top + 80;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const containerRect = container.getBoundingClientRect();
+          // Anchor offset 70px below top of scrolling container
+          const targetY = containerRect.top + 70;
 
-      let currentVisibleCategory = categoryKeys[0];
+          const categoryKeys = categories.map(c => c.id);
+          let currentCatId = categoryKeys[0];
 
-      for (const catId of categoryKeys) {
-        const el = sectionRefs.current[catId];
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          if (rect.top <= viewportOffset) {
-            currentVisibleCategory = catId;
+          for (const catId of categoryKeys) {
+            const el = sectionRefs.current[catId];
+            if (el) {
+              const rect = el.getBoundingClientRect();
+              if (rect.top <= targetY) {
+                currentCatId = catId;
+              }
+            }
           }
-        }
-      }
 
-      if (currentVisibleCategory && currentVisibleCategory !== activeCategoryId) {
-        setActiveCategoryId(currentVisibleCategory);
+          // If scrolled to the bottom of the container, activate the last category
+          const isAtBottom = container.scrollHeight - (container.scrollTop + container.clientHeight) < 40;
+          if (isAtBottom && categoryKeys.length > 0) {
+            currentCatId = categoryKeys[categoryKeys.length - 1];
+          }
+
+          if (currentCatId && currentCatId !== activeCategoryRef.current) {
+            activeCategoryRef.current = currentCatId;
+            setActiveCategoryId(currentCatId);
+            scrollLeftRailToActive(currentCatId);
+          }
+
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [categories, activeCategoryId]);
+  }, [categories]);
 
   // Smooth scroll to category section when left rail item is clicked
   const handleLeftRailClick = (catId: string) => {
     setActiveCategoryId(catId);
+    activeCategoryRef.current = catId;
     setSelectedCategoryFilter(catId);
+    scrollLeftRailToActive(catId);
 
     const el = sectionRefs.current[catId];
     const container = rightPaneRef.current;
 
     if (el && container) {
       isProgrammaticScrollRef.current = true;
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const targetTop = Math.max(0, el.offsetTop - container.offsetTop);
+      container.scrollTo({ top: targetTop, behavior: 'smooth' });
 
       setTimeout(() => {
         isProgrammaticScrollRef.current = false;
-      }, 700);
+      }, 600);
     }
   };
 
@@ -158,13 +200,13 @@ export const CategoriesView: React.FC = () => {
   }, [activeSubcategoryModal, products, modalInStockOnly, modalSearchQuery, modalSortBy]);
 
   return (
-    <div className="flex gap-2 sm:gap-3 md:gap-5 h-[calc(100dvh-120px)] sm:h-[calc(100vh-125px)] md:h-[calc(100vh-140px)] overflow-hidden animate-fadeIn select-none">
+    <div className="flex gap-2 sm:gap-3 md:gap-5 h-[calc(100dvh-120px)] sm:h-[calc(100vh-125px)] md:h-[calc(100vh-135px)] overflow-hidden animate-fadeIn select-none">
       {/* ==================================================== */}
       {/* LEFT COLUMN: BOUNDED MOBILE CATEGORY RAIL */}
       {/* ==================================================== */}
       <aside 
         ref={leftRailRef}
-        className="w-[74px] sm:w-24 md:w-32 flex-shrink-0 bg-[#F4F5F7] rounded-2xl md:rounded-3xl border border-gray-200/70 overflow-y-auto no-scrollbar flex flex-col py-1.5 shadow-2xs h-full"
+        className="w-[76px] sm:w-24 md:w-32 flex-shrink-0 bg-[#F4F5F7] rounded-2xl md:rounded-3xl border border-gray-200/70 overflow-y-auto no-scrollbar flex flex-col py-1.5 shadow-2xs h-full"
       >
         <div className="space-y-1 pb-4">
           {categories.map((cat) => {
@@ -174,16 +216,17 @@ export const CategoriesView: React.FC = () => {
             return (
               <button
                 key={cat.id}
+                ref={(el) => { railButtonsRef.current[cat.id] = el; }}
                 onClick={() => handleLeftRailClick(cat.id)}
                 className={`w-full py-2.5 px-1 flex flex-col items-center justify-center text-center transition-all duration-200 relative tap-active group ${
                   isActive 
-                    ? 'bg-white text-gray-900 font-extrabold shadow-2xs' 
+                    ? 'bg-white text-gray-900 font-black shadow-2xs' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-200/50 font-medium'
                 }`}
               >
-                {/* Active Left Indicator Bar (Amazon-style) */}
+                {/* Active Left Indicator Bar */}
                 {isActive && (
-                  <span className="absolute left-0 top-0 bottom-0 w-1 sm:w-1.5 bg-[#F95721] rounded-r-full" />
+                  <span className="absolute left-0 top-1 bottom-1 w-1 sm:w-1.5 bg-[#F95721] rounded-r-full" />
                 )}
 
                 {/* Category Icon / Thumbnail */}
@@ -203,7 +246,7 @@ export const CategoriesView: React.FC = () => {
 
                 {/* Category Title */}
                 <span className={`text-[11px] sm:text-xs leading-tight mt-1.5 line-clamp-2 px-0.5 tracking-tight ${
-                  isActive ? 'text-gray-900 font-extrabold' : 'text-gray-600 font-semibold'
+                  isActive ? 'text-gray-900 font-black' : 'text-gray-600 font-semibold'
                 }`}>
                   {cat.name}
                 </span>
@@ -225,14 +268,14 @@ export const CategoriesView: React.FC = () => {
       {/* ==================================================== */}
       <main 
         ref={rightPaneRef}
-        className="flex-1 min-w-0 h-full overflow-y-auto no-scrollbar space-y-6 sm:space-y-8 pr-0.5 pb-12"
+        className="flex-1 min-w-0 h-full overflow-y-auto no-scrollbar space-y-6 sm:space-y-8 pr-0.5 pb-16"
       >
         {categories.map((cat, index) => {
-          const categoryProductCount = products.filter(p => {
+          const categoryProducts = products.filter(p => {
             if (cat.id === 'offers') return p.discountPercentage >= 38;
             return p.category === cat.id;
-          }).length;
-
+          });
+          const categoryProductCount = categoryProducts.length;
           const subcategories = cat.subcategories || [];
 
           return (
@@ -244,94 +287,124 @@ export const CategoriesView: React.FC = () => {
               }}
               className="scroll-mt-2 space-y-3"
             >
-              {/* Category Header: Clean, modern, never truncated */}
-              <div className="flex items-center justify-between gap-2 px-0.5 pt-1">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <h2 className="text-sm sm:text-base md:text-lg font-black text-gray-900 tracking-tight whitespace-nowrap">
-                    {cat.name}
-                  </h2>
-                  <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full flex-shrink-0">
-                    {formatItemCount(categoryProductCount)}
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => handleSubcategoryClick(cat, null)}
-                  className="text-[11px] sm:text-xs font-extrabold text-[#F95721] hover:text-[#d44808] flex items-center gap-0.5 flex-shrink-0 tap-active"
-                >
-                  <span>Explore All</span>
-                  <ChevronRight className="w-3.5 h-3.5 stroke-[2.5px]" />
-                </button>
-              </div>
-
-              {/* EXACTLY TWO SUBCATEGORIES PER ROW (2-COLUMN GRID) */}
-              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                {/* "All [Category]" Card */}
-                <button
-                  onClick={() => handleSubcategoryClick(cat, null)}
-                  className="bg-gradient-to-b from-orange-50/60 via-white to-white rounded-2xl border border-orange-100/80 p-2.5 sm:p-3 text-center flex flex-col items-center justify-between shadow-2xs hover:shadow-subtle hover:border-orange-300 transition-all duration-200 tap-active group overflow-hidden relative"
-                >
-                  <div className="w-full h-24 sm:h-28 rounded-xl bg-white p-2 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform duration-300">
-                    <ResolvedImage
-                      src={cat.image}
-                      alt={`All ${cat.name}`}
-                      className="w-full h-full object-contain mix-blend-multiply"
-                    />
-                  </div>
-
-                  <div className="w-full text-center mt-2 space-y-1">
-                    <h3 className="text-xs font-black text-gray-900 group-hover:text-[#F95721] line-clamp-2 leading-tight min-h-[28px] flex items-center justify-center text-center px-0.5">
-                      All {cat.name}
-                    </h3>
-                    <span className="inline-block text-[11px] text-[#F95721] font-extrabold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200/60">
-                      {categoryProductCount} Products →
+              {/* Category Header: Balanced, responsive typography with NO overlapping */}
+              <div className="flex items-start justify-between gap-2 px-1 pt-1 pb-1 border-b border-gray-100">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm sm:text-base md:text-lg font-black text-gray-900 tracking-tight leading-snug">
+                      {cat.name}
+                    </h2>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full shrink-0">
+                      {categoryProductCount > 0 ? formatItemCount(categoryProductCount) : '0 items'}
                     </span>
                   </div>
-                </button>
+                  {cat.subtitle && (
+                    <p className="text-[11px] text-gray-400 font-medium truncate mt-0.5">
+                      {cat.subtitle}
+                    </p>
+                  )}
+                </div>
 
-                {/* Individual Subcategories (2 per row) */}
-                {subcategories.map((sub) => {
-                  const subProductCount = products.filter(p => {
-                    if (cat.id === 'offers') return p.discountPercentage >= 38 && p.subcategory === sub.id;
-                    return p.category === cat.id && p.subcategory === sub.id;
-                  }).length || sub.itemCount || 0;
+                {categoryProductCount > 0 && (
+                  <button
+                    onClick={() => handleSubcategoryClick(cat, null)}
+                    className="text-[11px] sm:text-xs font-bold text-[#F95721] hover:text-[#d44808] flex items-center gap-0.5 shrink-0 pt-0.5 tap-active"
+                  >
+                    <span>Explore All</span>
+                    <ChevronRight className="w-3.5 h-3.5 stroke-[2.5px]" />
+                  </button>
+                )}
+              </div>
 
-                  return (
+              {/* CASE 1: Category HAS Subcategories Configured */}
+              {subcategories.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                  {/* "All [Category]" Card if multiple subcategories exist */}
+                  {subcategories.length > 1 && (
                     <button
-                      key={sub.id}
-                      onClick={() => handleSubcategoryClick(cat, sub)}
-                      className="bg-white hover:bg-orange-50/20 rounded-2xl border border-gray-100 hover:border-orange-300 p-2.5 sm:p-3 text-center flex flex-col items-center justify-between shadow-2xs hover:shadow-subtle transition-all duration-200 tap-active group overflow-hidden relative"
+                      onClick={() => handleSubcategoryClick(cat, null)}
+                      className="bg-gradient-to-b from-orange-50/50 to-white rounded-2xl border border-orange-100/80 p-2.5 sm:p-3 text-center flex flex-col items-center justify-between shadow-2xs hover:shadow-subtle hover:border-orange-300 transition-all duration-200 tap-active group overflow-hidden relative"
                     >
-                      <div className="w-full h-24 sm:h-28 rounded-xl bg-gray-50/80 group-hover:bg-white p-2 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-all duration-300">
+                      <div className="w-full h-24 sm:h-28 rounded-xl bg-white p-2 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform duration-300">
                         <ResolvedImage
-                          src={sub.image || cat.image}
-                          alt={sub.name}
+                          src={cat.image}
+                          alt={`All ${cat.name}`}
                           className="w-full h-full object-contain mix-blend-multiply"
                         />
                       </div>
 
                       <div className="w-full text-center mt-2 space-y-1">
-                        <h3 className="text-xs font-bold text-gray-900 group-hover:text-[#F95721] line-clamp-2 leading-tight min-h-[28px] flex items-center justify-center text-center px-0.5">
-                          {sub.name}
+                        <h3 className="text-xs font-black text-gray-900 group-hover:text-[#F95721] line-clamp-1 leading-tight">
+                          All {cat.name}
                         </h3>
-                        <span className="inline-block text-[11px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-full">
-                          {subProductCount > 0 ? formatItemCount(subProductCount) : 'Explore'}
+                        <span className="inline-block text-[10px] text-[#F95721] font-extrabold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200/60">
+                          {categoryProductCount} Products →
                         </span>
                       </div>
                     </button>
-                  );
-                })}
-              </div>
+                  )}
+
+                  {/* Individual Subcategory Cards with custom images */}
+                  {subcategories.map((sub) => {
+                    const subProductCount = categoryProducts.filter(p => p.subcategory === sub.id).length;
+
+                    return (
+                      <button
+                        key={sub.id}
+                        onClick={() => handleSubcategoryClick(cat, sub)}
+                        className="bg-white hover:bg-orange-50/20 rounded-2xl border border-gray-100 hover:border-orange-300 p-2.5 sm:p-3 text-center flex flex-col items-center justify-between shadow-2xs hover:shadow-subtle transition-all duration-200 tap-active group overflow-hidden relative"
+                      >
+                        <div className="w-full h-24 sm:h-28 rounded-xl bg-gray-50/80 group-hover:bg-white p-2 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-all duration-300">
+                          <ResolvedImage
+                            src={sub.image || cat.image}
+                            alt={sub.name}
+                            className="w-full h-full object-contain mix-blend-multiply"
+                          />
+                        </div>
+
+                        <div className="w-full text-center mt-2 space-y-1">
+                          <h3 className="text-xs font-bold text-gray-900 group-hover:text-[#F95721] line-clamp-1 leading-tight">
+                            {sub.name}
+                          </h3>
+                          <span className="inline-block text-[10px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-full">
+                            {subProductCount > 0 ? formatItemCount(subProductCount) : sub.subtitle || 'Explore'}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : categoryProductCount > 0 ? (
+                /* CASE 2: No subcategories configured, but category HAS products -> Show ProductCards directly! */
+                <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                  {categoryProducts.map((prod) => (
+                    <ProductCard key={prod.id} product={prod} />
+                  ))}
+                </div>
+              ) : (
+                /* CASE 3: No products & no subcategories -> Friendly arriving soon banner */
+                <div className="bg-gradient-to-r from-gray-50 to-orange-50/30 rounded-2xl border border-gray-100 p-3.5 flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white p-1.5 shadow-2xs shrink-0 flex items-center justify-center border border-gray-100">
+                    <ResolvedImage src={cat.image} alt={cat.name} className="w-full h-full object-contain mix-blend-multiply" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-gray-800">Fresh stock arriving soon</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+                      Our team is curating smart essentials for {cat.name}.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Subtle divider between sections if not last */}
               {index < categories.length - 1 && (
-                <div className="pt-2 border-b border-gray-200/60" />
+                <div className="pt-2 border-b border-gray-100" />
               )}
             </section>
           );
         })}
 
-        {/* Clean End of Categories Indicator (No dark space or overscroll!) */}
+        {/* Clean End of Categories Indicator */}
         <div className="pt-4 pb-8 text-center">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gray-400 bg-gray-100/80 px-3 py-1.5 rounded-full border border-gray-200/50">
             <Sparkles className="w-3 h-3 text-[#F95721]" /> You&apos;ve viewed all categories

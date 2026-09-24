@@ -9,9 +9,10 @@ import { ResolvedImage } from './common/ResolvedMedia';
 interface ProductCardProps {
   product: Product;
   onSelect?: () => void;
+  priority?: boolean;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, priority = false }) => {
   const { 
     cart,
     addToCart, 
@@ -151,6 +152,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
               <ResolvedImage
                 src={img}
                 alt={product.name}
+                priority={priority && i === 0}
+                fetchPriority={i > 0 ? 'low' : (priority ? 'high' : undefined)}
                 className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300 pointer-events-none"
               />
             </div>

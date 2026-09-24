@@ -20,9 +20,12 @@ import {
   Search,
   CheckCircle2,
   Package,
-  Palette
+  Palette,
+  Loader2
 } from 'lucide-react';
-import { Category } from '@/types';
+import { Category, Subcategory } from '@/types';
+import { uploadMediaToS3 } from '@/lib/mediaStorage';
+import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 const SAMPLE_CATEGORY_IMAGES = [
   { label: 'Cleaning', url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80' },
@@ -69,9 +72,11 @@ export const CategoriesView: React.FC = () => {
   const [formBgColor, setFormBgColor] = useState('#EAF4FC');
   const [formAccentColor, setFormAccentColor] = useState('#0284C7');
   const [formShowOnHome, setFormShowOnHome] = useState(true);
-  const [formSubcategories, setFormSubcategories] = useState<{ id: string; name: string; subtitle?: string; itemCount?: number }[]>([]);
+  const [formSubcategories, setFormSubcategories] = useState<Subcategory[]>([]);
   const [newSubName, setNewSubName] = useState('');
   const [newSubSubtitle, setNewSubSubtitle] = useState('');
+  const [newSubImage, setNewSubImage] = useState('');
+  const [isUploadingSubImage, setIsUploadingSubImage] = useState(false);
 
   // Counts
   const totalCategories = categories.length;
@@ -100,6 +105,7 @@ export const CategoriesView: React.FC = () => {
     setFormSubcategories([]);
     setNewSubName('');
     setNewSubSubtitle('');
+    setNewSubImage('');
     setIsModalOpen(true);
   };
 
@@ -114,20 +120,48 @@ export const CategoriesView: React.FC = () => {
     setFormSubcategories(c.subcategories ? [...c.subcategories] : []);
     setNewSubName('');
     setNewSubSubtitle('');
+    setNewSubImage('');
     setIsModalOpen(true);
+  };
+
+  const handleSubcategoryFileUpload = async (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file', 'error');
+      return;
+    }
+    setIsUploadingSubImage(true);
+    try {
+      const result = await uploadMediaToS3(file, 'images');
+      setNewSubImage(result.key);
+      showToast(`Uploaded ${file.name} for subcategory! 📸`, 'success');
+    } catch (err: any) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          setNewSubImage(e.target.result as string);
+          showToast('Saved subcategory photo! 📸');
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingSubImage(false);
+    }
   };
 
   const handleAddSubcategory = () => {
     if (!newSubName.trim()) return;
     const slug = newSubName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const newSub = {
+    const newSub: Subcategory = {
       id: slug || `sub-${Date.now()}`,
       name: newSubName.trim(),
       subtitle: newSubSubtitle.trim() || undefined,
+      image: newSubImage.trim() || undefined,
     };
     setFormSubcategories([...formSubcategories, newSub]);
     setNewSubName('');
     setNewSubSubtitle('');
+    setNewSubImage('');
   };
 
   const handleRemoveSubcategory = (index: number) => {
@@ -635,24 +669,31 @@ export const CategoriesView: React.FC = () => {
 
                 {/* Existing Subcategories List */}
                 {formSubcategories.length > 0 && (
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     {formSubcategories.map((sub, idx) => (
                       <div
                         key={sub.id || idx}
-                        className="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-3 py-1.5 shadow-2xs"
+                        className="flex items-center justify-between bg-white border border-gray-200 rounded-xl p-2 shadow-2xs"
                       >
-                        <div className="min-w-0 pr-2">
-                          <span className="font-bold text-xs text-gray-900">{sub.name}</span>
-                          {sub.subtitle && (
-                            <span className="text-[10px] text-gray-400 ml-1.5 truncate">
-                              ({sub.subtitle})
+                        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                          <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                            {sub.image ? (
+                              <ResolvedImage src={sub.image} alt={sub.name} className="w-full h-full object-contain p-0.5" />
+                            ) : (
+                              <Layers className="w-4 h-4 text-gray-400" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="font-bold text-xs text-gray-900 block truncate">{sub.name}</span>
+                            <span className="text-[10px] text-gray-400 block truncate">
+                              {sub.subtitle ? sub.subtitle : sub.image ? 'Custom image set' : 'No image (uses category image)'}
                             </span>
-                          )}
+                          </div>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleRemoveSubcategory(idx)}
-                          className="text-gray-400 hover:text-red-500 p-1 transition-colors"
+                          className="text-gray-400 hover:text-red-500 p-1.5 transition-colors shrink-0"
                           title="Remove subcategory"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -663,30 +704,84 @@ export const CategoriesView: React.FC = () => {
                 )}
 
                 {/* Add New Subcategory Mini Form */}
-                <div className="pt-2 border-t border-gray-200/60 space-y-2">
+                <div className="pt-2 border-t border-gray-200/60 space-y-2.5">
+                  <span className="text-[11px] font-bold text-gray-700 block">Add New Sub-Category:</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <input
                       type="text"
-                      placeholder="Subcategory Name (e.g. Decor)"
+                      placeholder="Subcategory Name (e.g. Toilet Cleaners)"
                       value={newSubName}
                       onChange={(e) => setNewSubName(e.target.value)}
                       className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-[#F95721]"
                     />
                     <input
                       type="text"
-                      placeholder="Subtitle (e.g. Vases, accents)"
+                      placeholder="Subtitle (e.g. Disinfectant & Shine)"
                       value={newSubSubtitle}
                       onChange={(e) => setNewSubSubtitle(e.target.value)}
                       className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-[#F95721]"
                     />
                   </div>
+
+                  {/* Subcategory Image Upload & URL */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-2.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-gray-600">Subcategory Photo:</span>
+                      {newSubImage && (
+                        <button
+                          type="button"
+                          onClick={() => setNewSubImage('')}
+                          className="text-[10px] font-bold text-red-500 hover:text-red-700"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="w-11 h-11 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+                        {newSubImage ? (
+                          <ResolvedImage src={newSubImage} alt="Preview" className="w-full h-full object-contain p-0.5" />
+                        ) : (
+                          <ImageIcon className="w-5 h-5 text-gray-300" />
+                        )}
+                      </div>
+
+                      <label className="flex-1 cursor-pointer bg-orange-50 hover:bg-orange-100 text-[#F95721] border border-orange-200 rounded-xl py-2 px-3 flex items-center justify-center gap-1.5 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={isUploadingSubImage}
+                          onChange={(e) => handleSubcategoryFileUpload(e.target.files?.[0] || null)}
+                        />
+                        {isUploadingSubImage ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="w-3.5 h-3.5" />
+                        )}
+                        <span className="text-[11px] font-bold">
+                          {isUploadingSubImage ? 'Uploading...' : 'Upload Photo'}
+                        </span>
+                      </label>
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder="Or paste image URL / S3 key..."
+                      value={newSubImage.startsWith('data:') ? '' : newSubImage}
+                      onChange={(e) => setNewSubImage(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-2.5 py-1 text-[11px] bg-gray-50/50 focus:bg-white focus:outline-none focus:border-[#F95721]"
+                    />
+                  </div>
+
                   <button
                     type="button"
                     onClick={handleAddSubcategory}
                     disabled={!newSubName.trim()}
-                    className="w-full py-1.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1"
+                    className="w-full py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5 shadow-2xs"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-4 h-4" />
                     <span>Add Sub-Category</span>
                   </button>
                 </div>

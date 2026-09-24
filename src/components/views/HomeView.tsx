@@ -495,6 +495,7 @@ export const HomeView: React.FC = () => {
                     <ResolvedImage
                       src={currentSlide.product ? currentSlide.product.image : (flashDealConfig?.productImage || products[0]?.image || '/icon-192x192.png?v=2')}
                       alt={currentSlide.product ? currentSlide.product.name : (flashDealConfig?.productName || products[0]?.name || 'Flash Deal')}
+                      priority={true}
                       className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
                     />
                   </div>
@@ -568,6 +569,7 @@ export const HomeView: React.FC = () => {
                     <ResolvedImage
                       src={currentSlide.product ? currentSlide.product.image : (currentSlide.banner?.image || '/icon-512x512.png?v=2')}
                       alt={currentSlide.banner?.heading || 'Featured Banner'}
+                      priority={true}
                       className="w-full h-full object-contain mix-blend-multiply"
                     />
                     {currentSlide.product && (
@@ -953,8 +955,8 @@ export const HomeView: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 md:gap-5">
-          {trendingProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {trendingProducts.map((product, idx) => (
+            <ProductCard key={product.id} product={product} priority={idx < 4} />
           ))}
         </div>
       </section>

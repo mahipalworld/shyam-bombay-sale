@@ -5,14 +5,25 @@ import { useMediaUrl } from '@/hooks/useMediaUrl';
 
 interface ResolvedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
+  priority?: boolean;
 }
 
-export const ResolvedImage: React.FC<ResolvedImageProps> = ({ src, alt = '', className, ...props }) => {
+export const ResolvedImage: React.FC<ResolvedImageProps> = ({ 
+  src, 
+  alt = '', 
+  className, 
+  priority = false,
+  loading,
+  fetchPriority,
+  ...props 
+}) => {
   const { url, isLoading } = useMediaUrl(src);
   const [hasError, setHasError] = React.useState(false);
+  const [fallbackSrc, setFallbackSrc] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setHasError(false);
+    setFallbackSrc(null);
   }, [src, url]);
 
   const isS3Key = Boolean(
@@ -30,9 +41,9 @@ export const ResolvedImage: React.FC<ResolvedImageProps> = ({ src, alt = '', cla
     )
   );
 
-  const targetSrc = url || (!isS3Key ? src : '');
+  const activeSrc = fallbackSrc || url || (!isS3Key ? src : '');
 
-  if (hasError || !targetSrc) {
+  if (hasError || !activeSrc) {
     return (
       <div 
         className={`w-full h-full flex flex-col items-center justify-center bg-orange-50/60 rounded-lg p-1 text-center select-none overflow-hidden ${className || ''}`}
@@ -47,16 +58,25 @@ export const ResolvedImage: React.FC<ResolvedImageProps> = ({ src, alt = '', cla
     );
   }
 
+  const computedLoading = loading ?? (priority ? 'eager' : 'lazy');
+  const computedFetchPriority = fetchPriority ?? (priority ? 'high' : undefined);
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={targetSrc}
+      src={activeSrc}
       alt={alt}
       onError={() => {
-        setHasError(true);
+        if (!fallbackSrc && activeSrc.endsWith('.webp')) {
+          setFallbackSrc(activeSrc.replace(/\.webp$/, '.png'));
+        } else {
+          setHasError(true);
+        }
       }}
       className={`${className || ''} ${isLoading ? 'opacity-70 blur-2xs' : 'opacity-100 transition-opacity duration-200'}`}
-      loading="lazy"
+      loading={computedLoading}
+      fetchPriority={computedFetchPriority}
+      decoding="async"
       {...props}
     />
   );

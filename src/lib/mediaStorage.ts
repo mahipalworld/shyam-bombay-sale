@@ -1,8 +1,14 @@
 import { S3MediaItem, StorageStatus } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { compressImageToWebP } from '@/lib/imageCompression';
 
 // Secure Render production backend
 const PRODUCTION_BACKEND_URL = 'https://sbs-backend-8ryi.onrender.com';
+
+// Direct high-speed AWS S3 public bucket delivery in Mumbai (ap-south-1)
+export const AWS_S3_MEDIA_BUCKET = 'sbs-store-media-748439418595';
+export const AWS_S3_MEDIA_REGION = 'ap-south-1';
+export const S3_DIRECT_MEDIA_BASE_URL = `https://${AWS_S3_MEDIA_BUCKET}.s3.${AWS_S3_MEDIA_REGION}.amazonaws.com`;
 
 /**
  * Returns the backend API URL dynamically based on current environment and hostname.
@@ -38,19 +44,6 @@ if (typeof window !== 'undefined') {
           deliveryUrlCache.set(k, v);
         }
       }
-    }
-  } catch {}
-
-  // Background non-blocking prewarm ping for Render backend (wakes server if asleep)
-  try {
-    const prewarmTimer = setTimeout(() => {
-      fetch(`${getApiBaseUrl()}/api/health`).catch(() => {});
-    }, 100);
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(() => {
-        clearTimeout(prewarmTimer);
-        fetch(`${getApiBaseUrl()}/api/health`).catch(() => {});
-      });
     }
   } catch {}
 }
@@ -119,8 +112,8 @@ export async function checkStorageStatus(): Promise<StorageStatus> {
     return {
       configured: Boolean(data.configured),
       status: data.status || 'not_configured',
-      bucket: data.bucket || '',
-      region: data.region || 'ap-south-1',
+      bucket: data.bucket || AWS_S3_MEDIA_BUCKET,
+      region: data.region || AWS_S3_MEDIA_REGION,
       cloudfrontEnabled: Boolean(data.cloudfrontEnabled),
       message: data.message || '',
     };
@@ -128,47 +121,16 @@ export async function checkStorageStatus(): Promise<StorageStatus> {
     return {
       configured: false,
       status: 'error',
-      bucket: 'sbs-store-media-748439418595',
-      region: 'ap-south-1',
+      bucket: AWS_S3_MEDIA_BUCKET,
+      region: AWS_S3_MEDIA_REGION,
       message: err.message || 'Cannot reach storage backend',
     };
   }
 }
 
-// Queue for batching concurrent resolveMediaUrl calls in a single microtask
-type BatchQueueItem = {
-  key: string;
-  resolve: (url: string) => void;
-  reject: (err: any) => void;
-};
-let pendingBatchQueue: BatchQueueItem[] = [];
-let batchDispatchTimer: any = null;
-
-function processBatchQueue() {
-  const currentBatch = pendingBatchQueue;
-  pendingBatchQueue = [];
-  batchDispatchTimer = null;
-
-  if (currentBatch.length === 0) return;
-
-  const uniqueKeys = Array.from(new Set(currentBatch.map(item => item.key)));
-  batchResolveMediaUrls(uniqueKeys)
-    .then((results) => {
-      currentBatch.forEach(item => {
-        item.resolve(results[item.key] || '');
-      });
-    })
-    .catch((err) => {
-      console.warn('Batch resolution failed, falling back:', err);
-      currentBatch.forEach(item => {
-        item.resolve('');
-      });
-    });
-}
-
 /**
- * Resolves an S3 canonical key or direct URL into a secure delivery URL.
- * Transparently caches signed URLs for 55 minutes across page reloads.
+ * Resolves an S3 canonical key or direct URL into a high-speed delivery URL.
+ * Bypasses backend delays by serving directly from S3/CloudFront with immutable browser caching.
  */
 export async function resolveMediaUrl(keyOrUrl?: string): Promise<string> {
   if (!keyOrUrl) return '';
@@ -177,7 +139,9 @@ export async function resolveMediaUrl(keyOrUrl?: string): Promise<string> {
   const isS3 = cleanKey.startsWith('products/images/') ||
                cleanKey.startsWith('products/videos/') ||
                cleanKey.startsWith('products/thumbnails/') ||
-               cleanKey.startsWith('products/');
+               cleanKey.startsWith('products/') ||
+               cleanKey.startsWith('categories/') ||
+               cleanKey.startsWith('banners/');
 
   // If it's already an absolute or relative static URL (Unsplash, local asset, base64) and not an S3 key
   if (!isS3 && (
@@ -189,35 +153,23 @@ export async function resolveMediaUrl(keyOrUrl?: string): Promise<string> {
     return keyOrUrl;
   }
 
-  // Direct CloudFront / S3 Public domain optimization (bypasses backend entirely if set)
+  // CloudFront CDN domain if set
   const cfDomain = process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN;
   if (cfDomain) {
     return `https://${cfDomain}/${cleanKey}`;
   }
 
-  // Check persistent + in-memory cache (0ms instant response)
-  const cached = deliveryUrlCache.get(cleanKey);
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.url;
-  }
-
-  // Enqueue for batched request
-  return new Promise<string>((resolve, reject) => {
-    pendingBatchQueue.push({ key: cleanKey, resolve, reject });
-    if (!batchDispatchTimer) {
-      batchDispatchTimer = setTimeout(processBatchQueue, 25);
-    }
-  });
+  // Direct AWS S3 Mumbai edge delivery (instant 0ms resolution, avoids Render backend cold starts)
+  return `${S3_DIRECT_MEDIA_BASE_URL}/${cleanKey}`;
 }
 
 /**
- * Batch resolves multiple media keys in a single network request
+ * Batch resolves multiple media keys in a single instant mapping
  */
 export async function batchResolveMediaUrls(keys: string[]): Promise<Record<string, string>> {
   const result: Record<string, string> = {};
-  const keysToFetch: string[] = [];
-
   const cfDomain = process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN;
+  const base = cfDomain ? `https://${cfDomain}` : S3_DIRECT_MEDIA_BASE_URL;
 
   for (const key of keys) {
     if (!key) continue;
@@ -231,47 +183,8 @@ export async function batchResolveMediaUrls(keys: string[]): Promise<Record<stri
       continue;
     }
 
-    if (cfDomain) {
-      result[key] = `https://${cfDomain}/${key}`;
-      continue;
-    }
-
-    const cached = deliveryUrlCache.get(key);
-    if (cached && cached.expiresAt > Date.now()) {
-      result[key] = cached.url;
-    } else {
-      keysToFetch.push(key);
-    }
-  }
-
-  if (keysToFetch.length === 0) {
-    return result;
-  }
-
-  try {
-    const res = await fetch(`${getApiBaseUrl()}/api/storage/delivery-urls`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keys: keysToFetch }),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const resolved = data.urls || {};
-      for (const [k, url] of Object.entries(resolved)) {
-        const u = url as string;
-        result[k] = u;
-        deliveryUrlCache.set(k, { url: u, expiresAt: Date.now() + 55 * 60 * 1000 });
-      }
-      persistCacheToLocalStorage();
-    }
-  } catch (err) {
-    console.error('Batch delivery URLs failed:', err);
-  }
-
-  // Ensure every key has at least a fallback
-  for (const key of keysToFetch) {
-    if (!result[key]) result[key] = '';
+    const cleanKey = key.startsWith('/') ? key.slice(1) : key;
+    result[key] = `${base}/${cleanKey}`;
   }
 
   return result;
@@ -285,7 +198,9 @@ export async function uploadMediaToS3(
   category: 'images' | 'videos' | 'thumbnails' = 'images',
   onProgress?: (percent: number) => void
 ): Promise<{ key: string; url: string }> {
-  // 1. Validate file size & MIME
+  let uploadFile = file;
+
+  // 1. Auto-compress and convert images to WebP
   const isImage = file.type.startsWith('image/');
   const isVideo = file.type.startsWith('video/');
 
@@ -293,11 +208,20 @@ export async function uploadMediaToS3(
     throw new Error('Unsupported file format. Please upload JPEG, PNG, WebP, AVIF, MP4, WebM, or MOV.');
   }
 
-  if (isImage && file.size > 15 * 1024 * 1024) {
+  if (isImage) {
+    try {
+      uploadFile = await compressImageToWebP(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.82 });
+    } catch (err) {
+      console.warn('Image auto-compression failed, using original file:', err);
+      uploadFile = file;
+    }
+  }
+
+  if (isImage && uploadFile.size > 15 * 1024 * 1024) {
     throw new Error('Image exceeds 15MB limit. Please compress or choose a smaller file.');
   }
 
-  if (isVideo && file.size > 250 * 1024 * 1024) {
+  if (isVideo && uploadFile.size > 250 * 1024 * 1024) {
     throw new Error('Video exceeds 250MB limit.');
   }
 
@@ -307,9 +231,9 @@ export async function uploadMediaToS3(
     method: 'POST',
     headers,
     body: JSON.stringify({
-      filename: file.name,
-      fileType: file.type,
-      fileSize: file.size,
+      filename: uploadFile.name,
+      fileType: uploadFile.type,
+      fileSize: uploadFile.size,
       category,
     }),
   });
@@ -325,7 +249,7 @@ export async function uploadMediaToS3(
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', uploadUrl, true);
-    xhr.setRequestHeader('Content-Type', file.type);
+    xhr.setRequestHeader('Content-Type', uploadFile.type);
 
     if (xhr.upload && onProgress) {
       xhr.upload.onprogress = (e) => {
@@ -347,7 +271,7 @@ export async function uploadMediaToS3(
     xhr.onerror = () => reject(new Error('Network error during direct S3 upload.'));
     xhr.onabort = () => reject(new Error('Upload aborted.'));
 
-    xhr.send(file);
+    xhr.send(uploadFile);
   });
 
   // 4. Resolve delivery URL and cache

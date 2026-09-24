@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { resolveMediaUrl } from '@/lib/mediaStorage';
+import { S3_DIRECT_MEDIA_BASE_URL } from '@/lib/mediaStorage';
 
 function isS3Key(str?: string): boolean {
   if (!str) return false;
@@ -9,49 +9,38 @@ function isS3Key(str?: string): boolean {
   return clean.startsWith('products/images/') || 
          clean.startsWith('products/videos/') || 
          clean.startsWith('products/thumbnails/') ||
-         clean.startsWith('products/');
+         clean.startsWith('products/') ||
+         clean.startsWith('categories/') ||
+         clean.startsWith('banners/');
+}
+
+export function computeDirectMediaUrl(keyOrUrl?: string): string {
+  if (!keyOrUrl) return '';
+  if (
+    keyOrUrl.startsWith('http://') ||
+    keyOrUrl.startsWith('https://') ||
+    keyOrUrl.startsWith('/') ||
+    keyOrUrl.startsWith('data:')
+  ) {
+    return keyOrUrl;
+  }
+
+  const cleanKey = keyOrUrl.startsWith('/') ? keyOrUrl.slice(1) : keyOrUrl;
+  const cfDomain = process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN;
+  if (cfDomain) {
+    return `https://${cfDomain}/${cleanKey}`;
+  }
+
+  return `${S3_DIRECT_MEDIA_BASE_URL}/${cleanKey}`;
 }
 
 export function useMediaUrl(keyOrUrl?: string): { url: string; isLoading: boolean } {
-  const isS3 = isS3Key(keyOrUrl);
-  const isDirect = !keyOrUrl || (!isS3 && (
-    keyOrUrl.startsWith('http://') || 
-    keyOrUrl.startsWith('https://') || 
-    keyOrUrl.startsWith('/') || 
-    keyOrUrl.startsWith('data:')
-  ));
-
-  const [url, setUrl] = useState<string>(isDirect ? (keyOrUrl || '') : '');
-  const [isLoading, setIsLoading] = useState<boolean>(!isDirect);
+  const [url, setUrl] = useState<string>(() => computeDirectMediaUrl(keyOrUrl));
 
   useEffect(() => {
-    if (!keyOrUrl) {
-      setUrl('');
-      setIsLoading(false);
-      return;
-    }
+    setUrl(computeDirectMediaUrl(keyOrUrl));
+  }, [keyOrUrl]);
 
-    if (isDirect) {
-      setUrl(keyOrUrl);
-      setIsLoading(false);
-      return;
-    }
-
-    let isMounted = true;
-    setIsLoading(true);
-
-    const cleanKey = keyOrUrl.startsWith('/') ? keyOrUrl.slice(1) : keyOrUrl;
-    resolveMediaUrl(cleanKey).then((resolved) => {
-      if (isMounted) {
-        setUrl(resolved);
-        setIsLoading(false);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [keyOrUrl, isDirect]);
-
-  return { url, isLoading };
+  return { url, isLoading: false };
 }
+
