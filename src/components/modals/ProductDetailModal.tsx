@@ -23,13 +23,10 @@ import {
   ChevronLeft,
   Copy, 
   Tag, 
-  Package, 
-  Clock, 
   CheckCircle2, 
   HelpCircle, 
   Play, 
   Award,
-  Phone,
   MessageCircle,
   FileText,
   Edit3,
@@ -63,6 +60,8 @@ export const ProductDetailModal: React.FC = () => {
   const { 
     selectedProductDetail, 
     setSelectedProductDetail, 
+    productDetailStack,
+    popProductDetail,
     addToCart, 
     toggleWishlist, 
     isInWishlist, 
@@ -86,6 +85,8 @@ export const ProductDetailModal: React.FC = () => {
   const [openAccordion, setOpenAccordion] = useState<string | null>(null); // 'shipping' | 'return' | 'faq'
   const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isScrolledPastImage, setIsScrolledPastImage] = useState(false);
+  const [detailJustAdded, setDetailJustAdded] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Specifications Inline Editor State
@@ -107,6 +108,8 @@ export const ProductDetailModal: React.FC = () => {
       setOpenAccordion(null);
       setCopiedCoupon(null);
       setIsScrolled(false);
+      setIsScrolledPastImage(false);
+      setDetailJustAdded(false);
 
       if (typeof window !== 'undefined') {
         const url = new URL(window.location.href);
@@ -251,7 +254,7 @@ export const ProductDetailModal: React.FC = () => {
         showToast('Product link copied to clipboard! 📋');
       }
     } catch {
-      // User cancelled share or share dismissed safely
+      // User cancelled share or dismissed safely
     }
   };
 
@@ -272,8 +275,10 @@ export const ProductDetailModal: React.FC = () => {
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     addToCart(p, quantity, e.currentTarget);
-    if ('vibrate' in navigator) navigator.vibrate(10);
+    setDetailJustAdded(true);
+    if ('vibrate' in navigator) navigator.vibrate(12);
     showToast(`Added ${quantity} item(s) to Cart! 🛒`, 'success');
+    setTimeout(() => setDetailJustAdded(false), 1200);
   };
 
   const handleBuyNow = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -283,13 +288,30 @@ export const ProductDetailModal: React.FC = () => {
     setSelectedProductDetail(null);
   };
 
+  // Back button navigation: pops previous product from history stack if available, or closes modal to home
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      window.history.back();
+    } else if (productDetailStack.length > 0) {
+      popProductDetail();
+    } else {
+      setSelectedProductDetail(null);
+    }
+  };
+
+  const handleCloseAll = () => {
+    setSelectedProductDetail(null);
+  };
+
   const toggleAccordion = (key: string) => {
     setOpenAccordion((prev) => (prev === key ? null : key));
   };
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
-      setIsScrolled(scrollContainerRef.current.scrollTop > 80);
+      const top = scrollContainerRef.current.scrollTop;
+      setIsScrolled(top > 80);
+      setIsScrolledPastImage(top > 250);
     }
   };
 
@@ -300,11 +322,52 @@ export const ProductDetailModal: React.FC = () => {
     .filter((item) => item.id !== p.id && (item.category === p.category || item.isTrending))
     .slice(0, 4);
 
-  // Default specifications if none provided on product object
-  const specs = p.specifications && p.specifications.length > 0 ? p.specifications : [
+  // Filter highlights: only keep genuine custom bullet points entered by the merchant
+  // Filter out any legacy boilerplate defaults or auto-injected specification attributes
+  const isDummyOrInjectedHighlight = (text: string) => {
+    const lower = text.toLowerCase().trim();
+    if (
+      lower.includes('virgin plastic') ||
+      lower.includes('pastel slate') ||
+      lower.includes('6 months replacement') ||
+      lower.includes('premium ergonomic design') ||
+      lower.includes('certified durability tested') ||
+      lower.includes('zero maintenance') ||
+      lower.includes('compatible with indian standards') ||
+      lower.includes('matte pastel slate') ||
+      lower.includes('food grade stainless steel & bpa-free') ||
+      lower.startsWith('material:') ||
+      lower.startsWith('color:') ||
+      lower.startsWith('warranty:') ||
+      lower.startsWith('capacity:') ||
+      lower.startsWith('dimensions:') ||
+      lower.startsWith('weight:') ||
+      lower.startsWith('dispatch origin:') ||
+      lower.startsWith('country of origin:') ||
+      lower.startsWith('brand:') ||
+      lower.startsWith('condition:') ||
+      lower.startsWith('in the box:')
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const highlights = (p.features || [])
+    .map((h) => (typeof h === 'string' ? h.trim() : ''))
+    .filter((h) => h.length > 0 && !isDummyOrInjectedHighlight(h));
+
+  // Filter description: only show if user actually added a real description (hide boilerplate default)
+  const cleanDescription = (p.description || '').trim();
+  const isPlaceholderDescription = cleanDescription === 'Everyday home essential from SBS Store.' || cleanDescription.toLowerCase() === 'everyday home essential from sbs store.';
+  const hasDescriptionBlocks = Boolean(p.descriptionBlocks && p.descriptionBlocks.length > 0);
+  const hasValidDescription = (cleanDescription.length > 0 && !isPlaceholderDescription) || hasDescriptionBlocks;
+
+  // Specifications
+  const specs = (p.specifications && p.specifications.length > 0) ? p.specifications : [
     { label: 'Brand', value: 'SBS Certified' },
-    { label: 'Category', value: p.category },
-    { label: 'Subcategory', value: p.subcategory || 'General' },
+    { label: 'Category', value: p.category.replace(/--/g, ' & ').replace(/-/g, ' ') },
+    { label: 'Subcategory', value: (p.subcategory || 'General').replace(/--/g, ' & ').replace(/-/g, ' ') },
     { label: 'Condition', value: 'Brand New (100% Sealed)' },
     { label: 'Warranty', value: '6 Months Manufacturer Support' },
     { label: 'In The Box', value: '1x Main Unit, User Guide & Accessories' },
@@ -380,40 +443,37 @@ export const ProductDetailModal: React.FC = () => {
     }
   };
 
-  // Highlights fallback
-  const highlights = p.features && p.features.length > 0 ? p.features : [
-    'Premium ergonomic design for effortless daily use',
-    'Certified durability tested for high performance',
-    'Zero maintenance & easy cleaning structure',
-    'Compatible with Indian standards & genuine warranty',
-  ];
-
   // Feature icon strip (optional - only shown if specified on product)
   const featureIcons = p.featureIcons && p.featureIcons.length > 0 ? p.featureIcons : [];
 
   return (
     <>
+      {/* 
+        Full-Page Mobile Experience & Centered Dialogue on Desktop:
+        On mobile: fills 100% of height and width (h-full h-dvh), rounded-none, flush with top.
+        NO upside blank space showing home page behind it!
+      */}
       <div 
-        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center animate-backdrop-in overflow-x-hidden"
-        onClick={() => setSelectedProductDetail(null)}
+        className="fixed inset-0 z-[100] bg-white sm:bg-black/60 sm:backdrop-blur-xs flex sm:items-center justify-center overflow-x-hidden animate-fadeIn"
+        onClick={handleCloseAll}
       >
         <div 
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto overflow-x-hidden shadow-2xl flex flex-col relative no-scrollbar animate-sheet-up"
+          className="bg-white w-full h-full h-dvh sm:h-auto sm:max-h-[92vh] sm:max-w-lg rounded-none sm:rounded-3xl shadow-2xl flex flex-col relative overflow-y-auto overflow-x-hidden no-scrollbar"
           onClick={(e) => e.stopPropagation()}
         >
           {/* ======================================================== */}
           {/* 1. STICKY TOP APP BAR                                   */}
           {/* ======================================================== */}
           <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 py-3 border-b border-gray-100 flex items-center justify-between transition-all sticky-gpu">
-            <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
+            <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
               <button
-                onClick={() => setSelectedProductDetail(null)}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                aria-label="Close modal"
+                onClick={handleBack}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-800 transition-colors cursor-pointer active:scale-95"
+                aria-label="Go back"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-5 h-5 stroke-[2.5px]" />
               </button>
               {isScrolled && (
                 <div className="min-w-0 flex-1 animate-fadeIn">
@@ -426,26 +486,29 @@ export const ProductDetailModal: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleShare}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer active:scale-95"
                 title="Share Product"
+                aria-label="Share"
               >
                 <Share2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => toggleWishlist(p)}
-                className={`w-9 h-9 flex items-center justify-center rounded-full transition-all ${
+                className={`w-9 h-9 flex items-center justify-center rounded-full transition-all cursor-pointer active:scale-95 ${
                   wishlisted 
                     ? 'bg-rose-50 text-rose-600' 
                     : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
                 title="Wishlist"
+                aria-label="Wishlist"
               >
                 <Heart className={`w-4 h-4 ${wishlisted ? 'fill-rose-500 text-rose-500' : ''}`} />
               </button>
+              {/* Desktop Close Button */}
               <button
-                onClick={() => setSelectedProductDetail(null)}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                aria-label="Close"
+                onClick={handleCloseAll}
+                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer active:scale-95"
+                aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -454,11 +517,13 @@ export const ProductDetailModal: React.FC = () => {
 
           <div className="p-4 space-y-5 pb-28">
             {/* ======================================================== */}
-            {/* 2. PRODUCT GALLERY (4:3 Full-Bleed with swipe)          */}
+            {/* 2. PRODUCT GALLERY (Seamless Pure White Canvas)         */}
+            {/* Pure white background with mix-blend-multiply eliminates */}
+            {/* any 'box inside a box' white border artifact!          */}
             {/* ======================================================== */}
             <div className="space-y-3">
               <div 
-                className="relative aspect-[4/3] w-full bg-gradient-to-b from-gray-50 to-gray-100 rounded-2xl overflow-hidden border border-gray-200/70 select-none shadow-xs group cursor-grab active:cursor-grabbing touch-pan-y"
+                className="relative aspect-square w-full bg-white rounded-2xl overflow-hidden select-none group cursor-grab active:cursor-grabbing touch-pan-y"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
@@ -470,7 +535,7 @@ export const ProductDetailModal: React.FC = () => {
               >
                 {/* Horizontal Sliding Carousel Track */}
                 <div 
-                  className="w-full h-full flex"
+                  className="w-full h-full flex bg-white"
                   style={{
                     transform: `translateX(calc(-${activeMediaIndex * 100}% + ${dragOffset}px))`,
                     transition: isDragging ? 'none' : 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
@@ -480,7 +545,7 @@ export const ProductDetailModal: React.FC = () => {
                   {mediaList.map((item, idx) => (
                     <div 
                       key={item.id || idx}
-                      className="w-full h-full flex-shrink-0 flex items-center justify-center relative overflow-hidden"
+                      className="w-full h-full flex-shrink-0 flex items-center justify-center relative overflow-hidden bg-white"
                     >
                       {item.type === 'video' ? (
                         <div className="w-full h-full flex items-center justify-center bg-black">
@@ -496,7 +561,7 @@ export const ProductDetailModal: React.FC = () => {
                         </div>
                       ) : (
                         <div 
-                          className="w-full h-full flex items-center justify-center cursor-zoom-in p-2"
+                          className="w-full h-full flex items-center justify-center cursor-zoom-in p-4 bg-white"
                           onClick={() => {
                             if (Math.abs(dragOffset) > 5) return;
                             setLightboxImage(item.url);
@@ -505,7 +570,7 @@ export const ProductDetailModal: React.FC = () => {
                           <ResolvedImage
                             src={item.url}
                             alt={`${p.name} view ${idx + 1}`}
-                            className="w-full h-full object-contain pointer-events-none select-none"
+                            className="w-full h-full object-contain mix-blend-multiply pointer-events-none select-none transition-transform duration-300"
                           />
                         </div>
                       )}
@@ -516,13 +581,18 @@ export const ProductDetailModal: React.FC = () => {
                 {/* Badges Top-Left */}
                 <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
                   {p.isBestSeller && (
-                    <span className="px-2.5 py-1 bg-amber-500 text-white text-[11px] font-black rounded-lg uppercase tracking-wider shadow-sm flex items-center gap-1">
+                    <span className="px-2.5 py-1 bg-amber-500 text-white text-[10px] font-black rounded-lg uppercase tracking-wider shadow-sm flex items-center gap-1">
                       <Sparkles className="w-3 h-3" /> BESTSELLER
                     </span>
                   )}
                   {p.isDealOfDay && (
-                    <span className="px-2.5 py-1 bg-[#F95721] text-white text-[11px] font-black rounded-lg uppercase tracking-wider shadow-sm flex items-center gap-1">
+                    <span className="px-2.5 py-1 bg-[#F95721] text-white text-[10px] font-black rounded-lg uppercase tracking-wider shadow-sm flex items-center gap-1">
                       <Zap className="w-3 h-3" /> DEAL OF DAY
+                    </span>
+                  )}
+                  {p.discountPercentage > 20 && !p.isDealOfDay && (
+                    <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-black rounded-md uppercase tracking-wider shadow-xs">
+                      {p.discountPercentage}% OFF
                     </span>
                   )}
                 </div>
@@ -538,7 +608,7 @@ export const ProductDetailModal: React.FC = () => {
                 {currentMedia.type === 'image' && (
                   <button
                     onClick={() => setLightboxImage(currentMedia.url)}
-                    className="absolute bottom-3 right-3 z-10 w-8 h-8 rounded-full bg-white/85 backdrop-blur-md text-gray-700 flex items-center justify-center shadow-xs hover:bg-white active:scale-95 transition-all"
+                    className="absolute bottom-3 right-3 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md text-gray-700 flex items-center justify-center shadow-md hover:bg-white active:scale-95 transition-all cursor-pointer"
                     title="Zoom Image"
                   >
                     <Maximize2 className="w-4 h-4" />
@@ -569,7 +639,7 @@ export const ProductDetailModal: React.FC = () => {
                         e.stopPropagation();
                         handlePrevMedia();
                       }}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/85 backdrop-blur-md text-gray-800 flex items-center justify-center shadow-md hover:bg-white active:scale-95 transition-all opacity-80 hover:opacity-100"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/85 backdrop-blur-md text-gray-800 flex items-center justify-center shadow-md hover:bg-white active:scale-95 transition-all opacity-80 hover:opacity-100 cursor-pointer"
                       aria-label="Previous image"
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -579,7 +649,7 @@ export const ProductDetailModal: React.FC = () => {
                         e.stopPropagation();
                         handleNextMedia();
                       }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/85 backdrop-blur-md text-gray-800 flex items-center justify-center shadow-md hover:bg-white active:scale-95 transition-all opacity-80 hover:opacity-100"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/85 backdrop-blur-md text-gray-800 flex items-center justify-center shadow-md hover:bg-white active:scale-95 transition-all opacity-80 hover:opacity-100 cursor-pointer"
                       aria-label="Next image"
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -588,32 +658,38 @@ export const ProductDetailModal: React.FC = () => {
                 )}
               </div>
 
-              {/* Thumbnails row */}
+              {/* Thumbnails row (seamless white cards with right gradient fade) */}
               {mediaList.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
-                  {mediaList.map((item, idx) => (
-                    <button
-                      key={item.id || idx}
-                      onClick={() => setActiveMediaIndex(idx)}
-                      className={`relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all ${
-                        activeMediaIndex === idx
-                          ? 'border-[#F95721] ring-2 ring-orange-200 shadow-xs'
-                          : 'border-gray-200 opacity-70 hover:opacity-100'
-                      }`}
-                    >
-                      {item.type === 'video' ? (
-                        <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-                          <Play className="w-4 h-4 text-white fill-white" />
-                        </div>
-                      ) : (
-                        <ResolvedImage
-                          src={item.url}
-                          alt={`Thumbnail ${idx + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                    </button>
-                  ))}
+                <div className="relative">
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar py-1 px-0.5 pr-8">
+                    {mediaList.map((item, idx) => (
+                      <button
+                        key={item.id || idx}
+                        onClick={() => setActiveMediaIndex(idx)}
+                        className={`relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border-2 bg-white transition-all cursor-pointer ${
+                          activeMediaIndex === idx
+                            ? 'border-[#F95721] ring-2 ring-orange-200 shadow-xs'
+                            : 'border-gray-200/80 opacity-70 hover:opacity-100 hover:border-gray-300'
+                        }`}
+                      >
+                        {item.type === 'video' ? (
+                          <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                            <Play className="w-4 h-4 text-white fill-white" />
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-white p-1">
+                            <ResolvedImage
+                              src={item.url}
+                              alt={`Thumbnail ${idx + 1}`}
+                              className="w-full h-full object-contain mix-blend-multiply"
+                            />
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Subtle right gradient fade indicating more thumbnails */}
+                  <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent" />
                 </div>
               )}
             </div>
@@ -621,37 +697,34 @@ export const ProductDetailModal: React.FC = () => {
             {/* ======================================================== */}
             {/* 3. PRODUCT TITLE, SUBTITLE & RATINGS                     */}
             {/* ======================================================== */}
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                <span>{p.category}</span>
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                <span className="text-[#F95721]">{p.category.replace(/--/g, ' & ').replace(/-/g, ' ')}</span>
                 {p.subcategory && (
                   <>
                     <span>•</span>
-                    <span>{p.subcategory}</span>
+                    <span>{p.subcategory.replace(/--/g, ' & ').replace(/-/g, ' ')}</span>
                   </>
                 )}
               </div>
 
-              <h1 className="text-base sm:text-lg font-black text-gray-900 leading-snug">
+              <h1 className="text-lg sm:text-xl font-black text-gray-900 leading-snug tracking-tight">
                 {p.name}
               </h1>
 
-              {p.subtitle ? (
-                <p className="text-xs text-gray-600 leading-relaxed">{p.subtitle}</p>
-              ) : (
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Authentic certified product backed by 100% SBS Quality Inspection and fast delivery.
-                </p>
+              {/* Only show custom subtitle if provided by seller */}
+              {p.subtitle && p.subtitle.trim() && (
+                <p className="text-xs text-gray-600 leading-relaxed">{p.subtitle.trim()}</p>
               )}
 
               {/* Verified Product Badge */}
-              <div className="flex items-center gap-2 flex-wrap pt-1">
-                <span className="inline-flex items-center gap-1.5 text-xs font-black text-[#00A859] bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 shadow-2xs">
+              <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                <span className="inline-flex items-center gap-1.5 text-xs font-black text-[#00A859] bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/80 shadow-2xs">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#00A859]" />
-                  <span>Verified</span>
+                  <span>Verified Genuine</span>
                 </span>
-                <span className="text-xs font-semibold text-gray-500">
-                  100% Genuine & Quality Checked
+                <span className="text-xs font-medium text-gray-500">
+                  100% Quality Checked by SBS Store
                 </span>
               </div>
             </div>
@@ -659,9 +732,9 @@ export const ProductDetailModal: React.FC = () => {
             {/* ======================================================== */}
             {/* 4. PRICE STACK & OFFERS BADGE                            */}
             {/* ======================================================== */}
-            <div className="p-3.5 bg-gradient-to-r from-orange-50/70 via-amber-50/50 to-orange-50/30 border border-orange-200/70 rounded-2xl space-y-2">
+            <div className="p-4 bg-gradient-to-r from-orange-50/70 via-amber-50/40 to-orange-50/20 border border-orange-200/70 rounded-2xl space-y-2.5">
               <div className="flex items-baseline gap-2.5 flex-wrap">
-                <span className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+                <span className="text-3xl font-black text-gray-900 tracking-tight">
                   ₹{p.price.toLocaleString('en-IN')}
                 </span>
                 {p.originalPrice > p.price && (
@@ -676,11 +749,11 @@ export const ProductDetailModal: React.FC = () => {
                 )}
               </div>
 
-              <div className="flex items-center justify-between text-xs text-gray-600 font-medium">
+              <div className="flex items-center justify-between text-xs text-gray-600 font-medium pt-0.5">
                 <span>Inclusive of all taxes</span>
-                <div className="flex items-center gap-1 text-[#00A859] font-bold">
+                <div className="flex items-center gap-1.5 text-[#00A859] font-bold">
                   <Truck className="w-3.5 h-3.5" />
-                  <span>Free Express Delivery</span>
+                  <span>Free Express Delivery Available</span>
                 </div>
               </div>
             </div>
@@ -688,25 +761,25 @@ export const ProductDetailModal: React.FC = () => {
             {/* ======================================================== */}
             {/* 5. 3 TRUST PILLARS                                       */}
             {/* ======================================================== */}
-            <div className="grid grid-cols-3 gap-2 py-1">
-              <div className="bg-gray-50 border border-gray-100 rounded-xl p-2.5 text-center flex flex-col items-center justify-center gap-1">
+            <div className="grid grid-cols-3 gap-2.5 py-0.5">
+              <div className="bg-gray-50/80 border border-gray-200/70 rounded-xl p-3 text-center flex flex-col items-center justify-center gap-1.5">
                 <RotateCcw className="w-4 h-4 text-[#F95721]" />
                 <span className="text-[11px] font-bold text-gray-800 leading-tight">7 Days Return</span>
               </div>
-              <div className="bg-gray-50 border border-gray-100 rounded-xl p-2.5 text-center flex flex-col items-center justify-center gap-1">
+              <div className="bg-gray-50/80 border border-gray-200/70 rounded-xl p-3 text-center flex flex-col items-center justify-center gap-1.5">
                 <Truck className="w-4 h-4 text-[#00A859]" />
                 <span className="text-[11px] font-bold text-gray-800 leading-tight">Cash on Delivery</span>
               </div>
-              <div className="bg-gray-50 border border-gray-100 rounded-xl p-2.5 text-center flex flex-col items-center justify-center gap-1">
+              <div className="bg-gray-50/80 border border-gray-200/70 rounded-xl p-3 text-center flex flex-col items-center justify-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-blue-600" />
-                <span className="text-[11px] font-bold text-gray-800 leading-tight">Secure Payments</span>
+                <span className="text-[11px] font-bold text-gray-800 leading-tight">SBS Certified</span>
               </div>
             </div>
 
             {/* ======================================================== */}
             {/* 6. QUANTITY STEPPER                                      */}
             {/* ======================================================== */}
-            <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200/80 rounded-2xl">
+            <div className="flex items-center justify-between p-3.5 bg-gray-50 border border-gray-200/80 rounded-2xl">
               <div>
                 <span className="text-xs font-bold text-gray-900 block">Quantity</span>
                 <span className="text-[11px] text-gray-500 font-medium">
@@ -719,7 +792,7 @@ export const ProductDetailModal: React.FC = () => {
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   disabled={quantity <= 1}
-                  className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-40 text-gray-700 flex items-center justify-center transition-all active:scale-95"
+                  className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-40 text-gray-700 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
                   aria-label="Decrease quantity"
                 >
                   <Minus className="w-4 h-4" />
@@ -729,12 +802,46 @@ export const ProductDetailModal: React.FC = () => {
                   type="button"
                   onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
                   disabled={quantity >= maxQty}
-                  className="w-9 h-9 rounded-lg bg-orange-50 hover:bg-orange-100 disabled:opacity-40 text-[#F95721] flex items-center justify-center transition-all active:scale-95"
+                  className="w-9 h-9 rounded-lg bg-orange-50 hover:bg-orange-100 disabled:opacity-40 text-[#F95721] flex items-center justify-center transition-all active:scale-95 cursor-pointer"
                   aria-label="Increase quantity"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
+            </div>
+
+            {/* In-Page Action Buttons (Always accessible right below product options) */}
+            <div className="flex items-center gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                className={`flex-1 py-3 px-3 font-black text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-xs cursor-pointer ${
+                  detailJustAdded
+                    ? 'bg-[#00A859] text-white border-2 border-[#00A859] scale-[1.02] shadow-emerald-200'
+                    : 'bg-white hover:bg-orange-50 text-[#F95721] border-2 border-[#F95721]'
+                }`}
+              >
+                {detailJustAdded ? (
+                  <>
+                    <Check className="w-4 h-4 stroke-[3px]" />
+                    <span>✓ Added!</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4" />
+                    <span>Add to Cart</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleBuyNow}
+                className="flex-1 py-3 px-3 bg-gradient-to-r from-[#F95721] to-[#E44813] hover:from-[#E44813] hover:to-[#D43D0A] text-white font-black text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-1.5 shadow-md shadow-orange-200 active:scale-95 transition-all cursor-pointer"
+              >
+                <Zap className="w-4 h-4 fill-white" />
+                <span>Buy Now</span>
+              </button>
             </div>
 
             {/* ======================================================== */}
@@ -750,34 +857,38 @@ export const ProductDetailModal: React.FC = () => {
                   <span className="text-[11px] text-gray-400">Tap code to copy</span>
                 </div>
 
-                <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
-                  {coupons.map((coupon) => (
-                    <div
-                      key={coupon.id}
-                      onClick={() => handleCopyCoupon(coupon.code)}
-                      className="bg-emerald-50/80 border border-emerald-200/90 rounded-xl p-2.5 min-w-[210px] flex-shrink-0 cursor-pointer hover:bg-emerald-50 transition-all shadow-2xs"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black uppercase text-emerald-800 tracking-wider">
-                          {coupon.code}
-                        </span>
-                        <span className="text-[11px] font-extrabold text-[#00A859] flex items-center gap-1">
-                          {copiedCoupon === coupon.code ? (
-                            <>
-                              <Check className="w-3 h-3" /> Copied
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3 h-3" /> Copy
-                            </>
-                          )}
-                        </span>
+                <div className="relative">
+                  <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 pr-8">
+                    {coupons.map((coupon) => (
+                      <div
+                        key={coupon.id}
+                        onClick={() => handleCopyCoupon(coupon.code)}
+                        className="bg-emerald-50/80 border border-emerald-200/90 rounded-xl p-2.5 min-w-[210px] flex-shrink-0 cursor-pointer hover:bg-emerald-50 transition-all shadow-2xs"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black uppercase text-emerald-800 tracking-wider">
+                            {coupon.code}
+                          </span>
+                          <span className="text-[11px] font-extrabold text-[#00A859] flex items-center gap-1">
+                            {copiedCoupon === coupon.code ? (
+                              <>
+                                <Check className="w-3 h-3" /> Copied
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" /> Copy
+                              </>
+                            )}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-700 font-medium mt-1 truncate">
+                          {coupon.description || (coupon.discountType === 'PERCENT' ? `Get ${coupon.value}% OFF` : `Flat ₹${coupon.value} OFF`)}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-700 font-medium mt-1 truncate">
-                        {coupon.description || (coupon.discountType === 'PERCENT' ? `Get ${coupon.value}% OFF` : `Flat ₹${coupon.value} OFF`)}
-                      </p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  {/* Subtle right gradient fade indicating more coupons */}
+                  <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-white to-transparent" />
                 </div>
               </div>
             )}
@@ -788,22 +899,24 @@ export const ProductDetailModal: React.FC = () => {
             <PincodeChecker />
 
             {/* ======================================================== */}
-            {/* 9. PRODUCT HIGHLIGHTS                                    */}
+            {/* 9. PRODUCT HIGHLIGHTS (ONLY SHOWN IF ADDED BY SELLER)    */}
             {/* ======================================================== */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-3.5 space-y-2.5 shadow-subtle">
-              <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-[#F95721]" />
-                Product Highlights
-              </h3>
-              <ul className="space-y-2">
-                {highlights.map((h, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-700 leading-snug">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#00A859] shrink-0 mt-0.5" />
-                    <span>{h}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {highlights.length > 0 && (
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-3 shadow-subtle">
+                <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#F95721]" />
+                  Product Highlights
+                </h3>
+                <ul className="space-y-2.5">
+                  {highlights.map((h, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                      <CheckCircle2 className="w-4 h-4 text-[#00A859] shrink-0 mt-0.5" />
+                      <span>{h}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* ======================================================== */}
             {/* 10. OPTIONAL FEATURE ICON STRIP (SHOWN ONLY IF SET)      */}
@@ -820,48 +933,54 @@ export const ProductDetailModal: React.FC = () => {
             )}
 
             {/* ======================================================== */}
-            {/* 11. DETAILED DESCRIPTION (WITH READ MORE)                */}
+            {/* 11. DETAILED DESCRIPTION (ONLY SHOWN IF ADDED BY SELLER) */}
             {/* ======================================================== */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-3.5 space-y-2 shadow-subtle">
-              <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-[#F95721]" />
-                Product Description
-              </h3>
-              <div className={`text-xs text-gray-600 leading-relaxed space-y-2 ${!isDescExpanded ? 'line-clamp-4' : ''}`}>
-                <p>{p.description}</p>
-                {p.descriptionBlocks && p.descriptionBlocks.length > 0 && (
-                  <div className="space-y-3 pt-2">
-                    {p.descriptionBlocks.map((block, idx) => (
-                      <div key={idx} className="bg-gray-50 p-2.5 rounded-xl space-y-1">
-                        {block.title && <h4 className="font-bold text-gray-900 text-xs">{block.title}</h4>}
-                        <p className="text-xs text-gray-600">{block.text}</p>
-                        {block.image && (
-                          <div className="aspect-video w-full rounded-lg overflow-hidden mt-1">
-                            <ResolvedImage src={block.image} alt={block.title || 'Feature'} className="w-full h-full object-cover" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+            {hasValidDescription && (
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-2.5 shadow-subtle">
+                <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[#F95721]" />
+                  Product Description
+                </h3>
+                <div className={`text-xs text-gray-600 leading-relaxed space-y-2.5 ${!isDescExpanded ? 'line-clamp-4' : ''}`}>
+                  {cleanDescription && !isPlaceholderDescription && (
+                    <p className="whitespace-pre-line">{cleanDescription}</p>
+                  )}
+                  {hasDescriptionBlocks && (
+                    <div className="space-y-3 pt-1">
+                      {p.descriptionBlocks!.map((block, idx) => (
+                        <div key={idx} className="bg-gray-50/80 border border-gray-100 p-3 rounded-xl space-y-1.5">
+                          {block.title && <h4 className="font-bold text-gray-900 text-xs">{block.title}</h4>}
+                          {block.text && <p className="text-xs text-gray-600">{block.text}</p>}
+                          {block.image && (
+                            <div className="aspect-video w-full rounded-lg overflow-hidden mt-1.5 bg-white">
+                              <ResolvedImage src={block.image} alt={block.title || 'Feature'} className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {(cleanDescription.length > 180 || hasDescriptionBlocks) && (
+                  <button
+                    type="button"
+                    onClick={() => setIsDescExpanded(!isDescExpanded)}
+                    className="text-xs font-extrabold text-[#F95721] hover:underline flex items-center gap-1 pt-1 cursor-pointer"
+                  >
+                    <span>{isDescExpanded ? 'Read Less' : 'Read More'}</span>
+                    {isDescExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => setIsDescExpanded(!isDescExpanded)}
-                className="text-xs font-extrabold text-[#F95721] hover:underline flex items-center gap-1 pt-1"
-              >
-                <span>{isDescExpanded ? 'Read Less' : 'Read More'}</span>
-                {isDescExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              </button>
-            </div>
+            )}
 
             {/* ======================================================== */}
             {/* 12. SPECIFICATIONS TABLE & INLINE EDITOR                 */}
             {/* ======================================================== */}
             {!isEditingSpecs ? (
-              <div className="bg-white border border-gray-100 rounded-2xl p-3.5 space-y-2.5 shadow-subtle">
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-3 shadow-subtle">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider flex items-center gap-2">
                     <Award className="w-4 h-4 text-[#F95721]" />
                     Product Specifications
                   </h3>
@@ -877,7 +996,7 @@ export const ProductDetailModal: React.FC = () => {
                 </div>
                 <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden text-xs">
                   {specs.map((spec, i) => (
-                    <div key={i} className={`flex py-2 px-3 ${i % 2 === 0 ? 'bg-gray-50/70' : 'bg-white'}`}>
+                    <div key={i} className={`flex py-2.5 px-3 ${i % 2 === 0 ? 'bg-gray-50/70' : 'bg-white'}`}>
                       <span className="w-2/5 font-bold text-gray-600">{spec.label}</span>
                       <span className="w-3/5 font-semibold text-gray-900">{spec.value}</span>
                     </div>
@@ -1020,7 +1139,7 @@ export const ProductDetailModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => toggleAccordion('shipping')}
-                  className="w-full p-3.5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                  className="w-full p-3.5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     <Truck className="w-4 h-4 text-[#00A859]" />
@@ -1032,7 +1151,7 @@ export const ProductDetailModal: React.FC = () => {
                   <div className="p-3.5 pt-0 text-xs text-gray-600 border-t border-gray-100 space-y-1.5 animate-fadeIn">
                     <p>• Orders are dispatched within <strong>24 business hours</strong> from our central hub.</p>
                     <p>• Fast delivery typically takes <strong>3 to 5 business days</strong> across major Indian pin codes.</p>
-                    <p>• Real-time SMS and WhatsApp tracking links are sent as soon as the courier picks up the order.</p>
+                    <p>• Real-time SMS and WhatsApp tracking links are sent as soon as courier picks up the parcel.</p>
                   </div>
                 )}
               </div>
@@ -1042,7 +1161,7 @@ export const ProductDetailModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => toggleAccordion('return')}
-                  className="w-full p-3.5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                  className="w-full p-3.5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     <RotateCcw className="w-4 h-4 text-[#F95721]" />
@@ -1064,7 +1183,7 @@ export const ProductDetailModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => toggleAccordion('faq')}
-                  className="w-full p-3.5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                  className="w-full p-3.5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     <HelpCircle className="w-4 h-4 text-blue-600" />
@@ -1155,7 +1274,7 @@ export const ProductDetailModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleWhatsAppShare}
-                className="px-3 py-1.5 bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-bold rounded-xl active:scale-95 transition-all shadow-xs"
+                className="px-3 py-1.5 bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-bold rounded-xl active:scale-95 transition-all shadow-xs cursor-pointer"
               >
                 Share
               </button>
@@ -1163,11 +1282,13 @@ export const ProductDetailModal: React.FC = () => {
 
             {/* ======================================================== */}
             {/* 16. YOU MAY ALSO LIKE (Related Products Grid)            */}
+            {/* Seamless white product cards without grey box border     */}
             {/* ======================================================== */}
             {relatedProducts.length > 0 && (
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider">
+                  <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-[#F95721]" />
                     You May Also Like
                   </h3>
                   <span className="text-[11px] font-bold text-[#F95721]">Similar Items</span>
@@ -1183,14 +1304,14 @@ export const ProductDetailModal: React.FC = () => {
                       }}
                       className="bg-white border border-gray-200/80 rounded-2xl p-2.5 cursor-pointer hover:shadow-md transition-all group"
                     >
-                      <div className="aspect-square w-full rounded-xl bg-gray-50 overflow-hidden mb-2 relative">
+                      <div className="aspect-square w-full rounded-xl bg-white border border-gray-100 overflow-hidden mb-2 relative flex items-center justify-center p-2">
                         <ResolvedImage
                           src={item.image}
                           alt={item.name}
-                          className="w-full h-full object-contain p-1 group-hover:scale-105 transition-transform"
+                          className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
                         />
                         {item.discountPercentage > 0 && (
-                          <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-[#F95721] text-white text-[10px] font-black rounded-md">
+                          <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-[#F95721] text-white text-[10px] font-black rounded-md shadow-xs">
                             {item.discountPercentage}% OFF
                           </span>
                         )}
@@ -1217,13 +1338,18 @@ export const ProductDetailModal: React.FC = () => {
 
           {/* ======================================================== */}
           {/* 17. STICKY BOTTOM ACTION BAR (Price Stack + 2 CTAs)      */}
+          {/* Appears once user scrolls past main product image        */}
           {/* ======================================================== */}
-          <div className="sticky bottom-0 z-30 bg-white/95 backdrop-blur-md px-4 py-3 border-t border-gray-200 flex items-center justify-between gap-3 shadow-lg sticky-gpu safe-bottom">
+          <div className={`sticky bottom-0 z-30 bg-white/95 backdrop-blur-md px-4 py-3 border-t border-gray-100 flex items-center justify-between gap-3 shadow-lg sticky-gpu safe-bottom transition-all duration-300 ${
+            isScrolledPastImage 
+              ? 'translate-y-0 opacity-100 pointer-events-auto' 
+              : 'translate-y-full opacity-0 pointer-events-none md:translate-y-0 md:opacity-100 md:pointer-events-auto'
+          }`}>
             {/* Price Column */}
             <div className="flex flex-col min-w-0">
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Price</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Price</span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-lg font-black text-gray-900 tracking-tight">
+                <span className="text-xl font-black text-gray-900 tracking-tight">
                   ₹{(p.price * quantity).toLocaleString('en-IN')}
                 </span>
                 {quantity > 1 && (
@@ -1237,16 +1363,29 @@ export const ProductDetailModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="flex-1 py-3 px-2 bg-white hover:bg-orange-50 text-[#F95721] border-2 border-[#F95721] font-black text-xs rounded-2xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-xs"
+                className={`flex-1 py-3 px-2 font-black text-xs rounded-2xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-xs cursor-pointer ${
+                  detailJustAdded
+                    ? 'bg-[#00A859] text-white border-2 border-[#00A859] scale-[1.02] shadow-emerald-200'
+                    : 'bg-white hover:bg-orange-50 text-[#F95721] border-2 border-[#F95721]'
+                }`}
               >
-                <ShoppingCart className="w-4 h-4" />
-                <span>Add to Cart</span>
+                {detailJustAdded ? (
+                  <>
+                    <Check className="w-4 h-4 stroke-[3px]" />
+                    <span>✓ Added!</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4" />
+                    <span>Add to Cart</span>
+                  </>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={handleBuyNow}
-                className="flex-1 py-3 px-2 bg-gradient-to-r from-[#F95721] to-[#E44813] hover:from-[#E44813] hover:to-[#D43D0A] text-white font-black text-xs rounded-2xl flex items-center justify-center gap-1.5 shadow-md shadow-orange-200 active:scale-95 transition-all"
+                className="flex-1 py-3 px-2 bg-gradient-to-r from-[#F95721] to-[#E44813] hover:from-[#E44813] hover:to-[#D43D0A] text-white font-black text-xs rounded-2xl flex items-center justify-center gap-1.5 shadow-md shadow-orange-200 active:scale-95 transition-all cursor-pointer"
               >
                 <Zap className="w-4 h-4 fill-white" />
                 <span>Buy Now</span>
@@ -1264,7 +1403,7 @@ export const ProductDetailModal: React.FC = () => {
         >
           <button
             onClick={() => setLightboxImage(null)}
-            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/40 transition-colors"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/40 transition-colors cursor-pointer"
           >
             <X className="w-6 h-6" />
           </button>

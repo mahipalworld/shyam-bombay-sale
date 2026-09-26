@@ -192,10 +192,10 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
             </button>
           )}
 
-          {/* Search Button (Accessible on both Mobile & Desktop) */}
+          {/* Search Button: Hidden on Mobile Home (large search bar is below); Visible on Mobile for all other pages & on Desktop */}
           <button
             onClick={() => setIsSearchOpen(true)}
-            className="p-2 sm:p-2.5 text-gray-700 hover:text-[#F95721] hover:bg-orange-50 rounded-2xl transition-colors tap-active"
+            className={`${activeTab === 'home' ? 'hidden md:flex' : 'flex'} p-2 sm:p-2.5 text-gray-700 hover:text-[#F95721] hover:bg-orange-50 rounded-2xl transition-colors tap-active`}
             aria-label="Search products"
           >
             <Search className="w-5 h-5 stroke-[2.2px]" />
@@ -228,11 +228,15 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           >
             <div className="relative">
               <ShoppingCart className="w-5 h-5 stroke-[2.2px]" />
-              {totalCartCount > 0 && (
-                <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 bg-[#F95721] text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-xs">
-                  {totalCartCount}
-                </span>
-              )}
+              <span 
+                className={`absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-xs transition-transform ${
+                  totalCartCount > 0 
+                    ? 'bg-[#F95721] scale-100' 
+                    : 'bg-gray-400/90 scale-90'
+                }`}
+              >
+                {totalCartCount}
+              </span>
             </div>
             <span className="hidden lg:inline text-xs font-bold ml-1.5">
               ₹{cartTotal.toLocaleString('en-IN')}
@@ -296,6 +300,26 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           )}
         </div>
       </div>
+
+      {/* Mobile Sticky Quick Search Bar — Rendered ONLY on Home Screen */}
+      {activeTab === 'home' && (
+        <div className="md:hidden px-3.5 pb-2.5 pt-0.5">
+          <div 
+            onClick={() => setIsSearchOpen(true)}
+            className="w-full flex items-center justify-between bg-gray-100/90 hover:bg-gray-100 active:scale-[0.99] rounded-2xl px-3.5 py-2.5 cursor-pointer border border-gray-200/60 shadow-2xs transition-all select-none"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Search className="w-4 h-4 text-[#F95721] flex-shrink-0" />
+              <div className="text-xs text-gray-500 font-medium truncate">
+                Search <span className="text-gray-900 font-bold">&ldquo;cleaner&rdquo;</span>, <span className="text-gray-900 font-bold">&ldquo;storage&rdquo;</span>, &ldquo;mop&rdquo;...
+              </div>
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-wider text-[#F95721] bg-orange-100/80 px-2 py-0.5 rounded-lg flex-shrink-0">
+              Search
+            </span>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

@@ -35,7 +35,7 @@ export const WishlistView: React.FC = () => {
 
   if (wishlist.length === 0) {
     return (
-      <div className="py-8 space-y-8 pb-28 animate-fadeIn">
+      <div className="py-8 space-y-8 pb-40 md:pb-12 animate-fadeIn">
         <div className="flex flex-col items-center justify-center text-center space-y-3 pt-4">
           <div className="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center text-[#F95721]">
             <Heart className="w-10 h-10" />
@@ -126,7 +126,7 @@ export const WishlistView: React.FC = () => {
   }
 
   return (
-    <div className="py-2 space-y-6 pb-28 md:pb-12 animate-fadeIn">
+    <div className="py-2 space-y-6 pb-40 md:pb-12 animate-fadeIn">
       {/* Wishlist Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -4,7 +4,6 @@ import React from 'react';
 import { useStore } from '@/context/StoreContext';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { FloatingQuickCart } from '@/components/FloatingQuickCart';
 import { HomeView } from '@/components/views/HomeView';
 import { CategoriesView } from '@/components/views/CategoriesView';
 import { CartView } from '@/components/views/CartView';
@@ -92,7 +91,7 @@ export default function App() {
       )}
 
       {/* Main Content Area - Expands comfortably on Desktop and Mobile */}
-      <main className={`flex-1 w-full ${activeTab === 'admin' ? 'w-full max-w-none px-0 py-0' : activeTab === 'categories' ? 'max-w-6xl mx-auto px-2 sm:px-4 md:px-6 py-1 sm:py-2' : activeTab === 'home' ? 'max-w-6xl mx-auto px-2 sm:px-4 md:px-8 pt-0.5 sm:pt-1.5 pb-3' : 'max-w-6xl mx-auto px-2 sm:px-4 md:px-8 py-3'}`}>
+      <main className={`flex-1 w-full ${activeTab === 'admin' ? 'w-full max-w-none px-0 py-0' : activeTab === 'categories' ? 'max-w-6xl mx-auto px-2 sm:px-4 md:px-6 py-1 sm:py-2 pb-36 md:pb-6' : activeTab === 'home' ? 'max-w-6xl mx-auto px-2 sm:px-4 md:px-8 pt-0.5 sm:pt-1.5 pb-36 sm:pb-40 md:pb-8' : 'max-w-6xl mx-auto px-2 sm:px-4 md:px-8 py-3 pb-36 sm:pb-40 md:pb-8'}`}>
         {activeTab === 'admin' ? (
           renderActiveView()
         ) : (

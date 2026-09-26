@@ -378,7 +378,7 @@ export const HomeView: React.FC = () => {
     }
   };
 
-  // Section 1: Hero Carousel Renderer
+  // Section 1: Hero Carousel Renderer — Modern, high-converting compact mobile & desktop banner
   const renderHeroSection = () => {
     const currentSlide = activeSlides[activeHeroSlide] || activeSlides[0];
     if (!currentSlide) return null;
@@ -397,139 +397,137 @@ export const HomeView: React.FC = () => {
           onMouseDown={handleHeroMouseDown}
           onMouseMove={handleHeroMouseMove}
           onMouseUp={handleHeroMouseUp}
-          className="group/hero relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#FFF5EE] via-[#FFF0E6] to-[#FFEAD9] border border-[#FFE2D1] p-5 sm:p-7 md:p-10 shadow-sm min-h-[230px] sm:min-h-[270px] flex flex-col justify-between select-none cursor-grab active:cursor-grabbing transition-all"
+          className="group/hero relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#FFF6EF] via-[#FFF0E6] to-[#FFE8DA] border border-[#FFDEC9] p-3.5 sm:p-5 md:p-8 shadow-subtle min-h-[175px] sm:min-h-[220px] md:min-h-[250px] flex flex-col justify-between select-none cursor-grab active:cursor-grabbing transition-all"
         >
           {/* Decorative background glow */}
-          <div className="absolute -right-16 -top-16 w-80 h-80 bg-orange-200/40 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -right-16 -top-16 w-72 h-72 bg-orange-200/40 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Previous / Next Controls */}
+          {/* Previous / Next Controls (Desktop) */}
           {slideCount > 1 && (
             <>
               <button
                 onClick={handleHeroPrev}
-                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-gray-800 shadow-md backdrop-blur-xs items-center justify-center opacity-0 group-hover/hero:opacity-100 transition-all active:scale-90"
+                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-white/95 hover:bg-white text-gray-800 shadow-md backdrop-blur-xs items-center justify-center opacity-0 group-hover/hero:opacity-100 transition-all active:scale-90"
                 aria-label="Previous slide"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={handleHeroNext}
-                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-gray-800 shadow-md backdrop-blur-xs items-center justify-center opacity-0 group-hover/hero:opacity-100 transition-all active:scale-90"
+                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-white/95 hover:bg-white text-gray-800 shadow-md backdrop-blur-xs items-center justify-center opacity-0 group-hover/hero:opacity-100 transition-all active:scale-90"
                 aria-label="Next slide"
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-4 h-4" />
               </button>
             </>
           )}
 
-          {/* Render Active Slide */}
+          {/* Render Active Slide — Balanced Horizontal Layout */}
           {currentSlide.type === 'flash' ? (
             /* Flash Deal Slide with Live Countdown */
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fadeIn">
-              <div className="max-w-md space-y-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500 text-white text-xs font-black shadow-xs animate-pulse">
-                    <Flame className="w-3.5 h-3.5" /> {flashDealConfig?.badgeText || 'LIVE FLASH SALE'}
+            <div 
+              onClick={() => {
+                const targetProd = currentSlide.product || (flashDealConfig?.productId ? products.find(p => p.id === flashDealConfig.productId) : null) || products[0];
+                if (targetProd) setSelectedProductDetail(targetProd);
+              }}
+              className="relative z-10 flex flex-row items-center justify-between gap-3 sm:gap-6 animate-fadeIn cursor-pointer"
+            >
+              <div className="flex-1 min-w-0 pr-1 space-y-1.5 sm:space-y-2">
+                <div className="flex items-center flex-wrap gap-1.5">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] sm:text-xs font-black shadow-2xs animate-pulse">
+                    <Flame className="w-3 h-3" /> {flashDealConfig?.badgeText || 'FLASH DEAL'}
                   </span>
-                  <span className="text-xs font-black text-gray-700">
+                  <span className="text-[10px] sm:text-xs font-black text-[#EA580C] bg-orange-100/80 px-2 py-0.5 rounded-full">
                     {flashDealConfig?.discountText || 'Up to 55% Off'}
                   </span>
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
-                  {flashDealConfig?.title || 'Deals of the Day'} <br />
-                  <span className="text-[#F95721]">Limited Time Only</span>
+                <h2 className="text-base sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight leading-tight line-clamp-2">
+                  {flashDealConfig?.title || (currentSlide.product ? currentSlide.product.name : 'Deal of the Day')}
                 </h2>
 
                 {/* Live Countdown Ticker */}
-                <div className="flex items-center gap-2 pt-1">
-                  <span className="text-xs font-bold text-gray-500 flex items-center gap-1">
-                    <Timer className="w-4 h-4 text-[#F95721]" /> Ends in:
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  <span className="text-[10px] sm:text-xs font-bold text-gray-500 flex items-center gap-1">
+                    <Timer className="w-3.5 h-3.5 text-[#F95721]" /> Ends in:
                   </span>
-                  <div className="flex items-center gap-1.5 font-mono text-xs sm:text-sm font-black text-white">
-                    <span className="bg-gray-900 px-2 py-1 rounded-lg">
+                  <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs font-black text-white">
+                    <span className="bg-gray-900 px-1.5 py-0.5 rounded">
                       {String(countdown.hours).padStart(2, '0')}h
                     </span>
-                    <span className="text-gray-800 font-bold">:</span>
-                    <span className="bg-gray-900 px-2 py-1 rounded-lg">
+                    <span className="text-gray-700 font-bold">:</span>
+                    <span className="bg-gray-900 px-1.5 py-0.5 rounded">
                       {String(countdown.minutes).padStart(2, '0')}m
                     </span>
-                    <span className="text-gray-800 font-bold">:</span>
-                    <span className="bg-[#F95721] px-2 py-1 rounded-lg">
+                    <span className="text-gray-700 font-bold">:</span>
+                    <span className="bg-[#F95721] px-1.5 py-0.5 rounded">
                       {String(countdown.seconds).padStart(2, '0')}s
                     </span>
                   </div>
                 </div>
 
-                <div className="pt-2 flex items-center gap-2.5">
+                <div className="pt-1 sm:pt-2 flex items-center gap-2">
+                  <span className="text-base sm:text-xl font-black text-[#F95721]">
+                    ₹{flashDealConfig?.dealPrice || currentSlide.product?.price || products[0]?.price || 99}
+                  </span>
+                  {(currentSlide.product?.originalPrice || flashDealConfig?.originalPrice || (products[0]?.originalPrice ?? 0)) > (flashDealConfig?.dealPrice || currentSlide.product?.price || products[0]?.price || 99) && (
+                    <span className="text-[11px] sm:text-xs text-gray-400 font-medium line-through">
+                      ₹{currentSlide.product ? currentSlide.product.originalPrice : (flashDealConfig?.originalPrice || products[0]?.originalPrice || 199)}
+                    </span>
+                  )}
                   <button
-                    onClick={() => {
-                      if (currentSlide.product) {
-                        setSelectedProductDetail(currentSlide.product);
-                      } else {
-                        setSelectedCategoryFilter('offers');
-                        setActiveTab('categories');
-                      }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const targetProd = currentSlide.product || (flashDealConfig?.productId ? products.find(p => p.id === flashDealConfig.productId) : null) || products[0];
+                      if (targetProd) setSelectedProductDetail(targetProd);
                     }}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#F95721] hover:bg-[#E44813] text-white text-xs md:text-sm font-bold rounded-xl shadow-float active:scale-95 transition-all"
+                    className="ml-auto sm:ml-2 inline-flex items-center gap-1 px-3 py-1.5 sm:px-4 sm:py-2 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-xl shadow-xs active:scale-95 transition-all"
                   >
-                    <span>Claim Flash Deal</span>
-                    <Zap className="w-4 h-4" />
+                    <span>Claim</span>
+                    <Zap className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
 
-              {/* Flash Deal Visual Hero */}
-              <div className="relative flex items-center justify-center md:justify-end">
-                <div 
-                  onClick={() => {
-                    const targetProd = currentSlide.product || (flashDealConfig?.productId ? products.find(p => p.id === flashDealConfig.productId) : null) || products[0];
-                    if (targetProd) setSelectedProductDetail(targetProd);
-                  }}
-                  className="bg-white/95 rounded-2xl p-4 shadow-xl border border-orange-200 max-w-[260px] w-full flex flex-col items-center cursor-pointer group tap-active"
-                >
-                  <span className="self-start text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-600">
-                    {flashDealConfig?.discountText || '55% OFF'}
-                  </span>
-                  <div className="w-28 h-28 my-1 flex items-center justify-center">
-                    <ResolvedImage
-                      src={currentSlide.product ? currentSlide.product.image : (flashDealConfig?.productImage || products[0]?.image || '/icon-192x192.png?v=2')}
-                      alt={currentSlide.product ? currentSlide.product.name : (flashDealConfig?.productName || products[0]?.name || 'Flash Deal')}
-                      priority={true}
-                      className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
-                    />
-                  </div>
-                  <p className="text-xs font-extrabold text-gray-900 text-center line-clamp-1">
-                    {currentSlide.product ? currentSlide.product.name : (flashDealConfig?.productName || products[0]?.name || 'Special Deal')}
-                  </p>
-                  <div className="flex items-baseline gap-1.5 mt-1">
-                    <span className="text-sm font-black text-[#F95721]">₹{flashDealConfig?.dealPrice || currentSlide.product?.price || products[0]?.price || 99}</span>
-                    {(currentSlide.product?.originalPrice || flashDealConfig?.originalPrice || (products[0]?.originalPrice ?? 0)) > (flashDealConfig?.dealPrice || currentSlide.product?.price || products[0]?.price || 99) && (
-                      <span className="text-[10px] text-gray-500 font-medium line-through">
-                        ₹{currentSlide.product ? currentSlide.product.originalPrice : (flashDealConfig?.originalPrice || products[0]?.originalPrice || 199)}
-                      </span>
-                    )}
-                  </div>
-                </div>
+              {/* Flash Deal Floating Image Stage */}
+              <div className="flex-shrink-0 relative w-28 sm:w-40 md:w-52 h-28 sm:h-40 md:h-52 flex items-center justify-center">
+                <ResolvedImage
+                  src={currentSlide.product ? currentSlide.product.image : (flashDealConfig?.productImage || products[0]?.image || '/icon-192x192.png?v=2')}
+                  alt={currentSlide.product ? currentSlide.product.name : (flashDealConfig?.productName || products[0]?.name || 'Flash Deal')}
+                  priority={true}
+                  className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
+                />
               </div>
             </div>
           ) : (
             /* Database Configured Hero Banner Slide */
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fadeIn">
-              <div className="max-w-md space-y-2.5">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 text-xs font-bold text-[#F95721] shadow-xs">
-                  <Sparkles className="w-3.5 h-3.5" /> 
-                  {currentSlide.banner?.badgeText || 'Special Everyday Collection'}
+            <div 
+              onClick={() => {
+                if (currentSlide.product) {
+                  setSelectedProductDetail(currentSlide.product);
+                } else if (currentSlide.banner?.ctaDestination) {
+                  handleCategoryClick(currentSlide.banner.ctaDestination);
+                } else {
+                  setActiveTab('categories');
+                }
+              }}
+              className="relative z-10 flex flex-row items-center justify-between gap-3 sm:gap-6 animate-fadeIn cursor-pointer"
+            >
+              <div className="flex-1 min-w-0 pr-1 space-y-1.5 sm:space-y-2">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/95 text-xs font-bold text-[#F95721] shadow-2xs">
+                  <Sparkles className="w-3 h-3" /> 
+                  {currentSlide.banner?.badgeText || 'Special Collection'}
                 </span>
-                <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
+                <h2 className="text-base sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight leading-tight line-clamp-2">
                   {currentSlide.product ? currentSlide.product.name : currentSlide.banner?.heading}
                 </h2>
-                <p className="text-xs sm:text-sm md:text-base text-gray-600 font-medium line-clamp-2">
-                  {currentSlide.banner?.description || (currentSlide.product ? currentSlide.product.description : 'Smart everyday utilities at direct factory rates.')}
+                <p className="text-[11px] sm:text-xs md:text-sm text-gray-600 font-medium line-clamp-2">
+                  {currentSlide.banner?.description || (currentSlide.product ? currentSlide.product.description : 'Smart everyday utilities at factory rates.')}
                 </p>
-                <div className="pt-2 flex items-center gap-2.5">
+                <div className="pt-1 sm:pt-2 flex items-center gap-2">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       if (currentSlide.product) {
                         setSelectedProductDetail(currentSlide.product);
                       } else if (currentSlide.banner?.ctaDestination) {
@@ -538,71 +536,62 @@ export const HomeView: React.FC = () => {
                         setActiveTab('categories');
                       }
                     }}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-[#F95721] hover:bg-[#E44813] text-white text-xs md:text-sm font-bold rounded-xl shadow-float active:scale-95 transition-all"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-xl shadow-xs active:scale-95 transition-all"
                   >
                     <span>{currentSlide.banner?.ctaText || 'Shop Now'}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => setIsScratchModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 sm:py-3 bg-white/90 hover:bg-white text-gray-800 text-xs md:text-sm font-bold rounded-xl border border-orange-200 shadow-2xs transition-all tap-active"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsScratchModalOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-white/90 hover:bg-white text-gray-800 text-xs font-bold rounded-xl border border-orange-200 shadow-2xs transition-all tap-active"
                   >
-                    <Gift className="w-3.5 h-3.5 text-[#F95721]" />
-                    <span>Scratch & Win</span>
+                    <Gift className="w-3 h-3 text-[#F95721]" />
+                    <span className="hidden sm:inline">Scratch &amp; Win</span>
+                    <span className="sm:hidden">Rewards</span>
                   </button>
                 </div>
               </div>
 
-              {/* Product Showcase */}
-              <div className="relative flex items-center justify-center md:justify-end mt-2 md:mt-0">
-                <div 
-                  onClick={() => {
-                    if (currentSlide.product) {
-                      setSelectedProductDetail(currentSlide.product);
-                    }
-                  }}
-                  className={`relative w-full max-w-[320px] h-44 sm:h-52 md:h-60 flex items-center justify-center ${
-                    currentSlide.product ? 'cursor-pointer group' : ''
-                  }`}
-                >
-                  <div className="w-40 sm:w-48 md:w-56 h-40 sm:h-48 md:h-56 bg-white/80 backdrop-blur-xs p-3 rounded-3xl border border-orange-200/80 shadow-lg flex flex-col items-center justify-center group-hover:scale-105 transition-transform">
-                    <ResolvedImage
-                      src={currentSlide.product ? currentSlide.product.image : (currentSlide.banner?.image || '/icon-512x512.png?v=2')}
-                      alt={currentSlide.banner?.heading || 'Featured Banner'}
-                      priority={true}
-                      className="w-full h-full object-contain mix-blend-multiply"
-                    />
-                    {currentSlide.product && (
-                      <div className="absolute bottom-2 bg-gray-900/90 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-xs">
-                        ₹{currentSlide.product.price}
-                        {currentSlide.product.originalPrice && (
-                          <span className="line-through text-gray-400 ml-1.5 text-[9px]">
-                            ₹{currentSlide.product.originalPrice}
-                          </span>
-                        )}
-                      </div>
+              {/* Floating Product Image Stage */}
+              <div className="flex-shrink-0 relative w-28 sm:w-40 md:w-52 h-28 sm:h-40 md:h-52 flex items-center justify-center">
+                <ResolvedImage
+                  src={currentSlide.product ? currentSlide.product.image : (currentSlide.banner?.image || '/icon-512x512.png?v=2')}
+                  alt={currentSlide.banner?.heading || 'Featured Banner'}
+                  priority={true}
+                  className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
+                />
+                {currentSlide.product && (
+                  <div className="absolute bottom-1 bg-gray-900/90 text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow-xs">
+                    ₹{currentSlide.product.price}
+                    {currentSlide.product.originalPrice && (
+                      <span className="line-through text-gray-400 ml-1 text-[9px]">
+                        ₹{currentSlide.product.originalPrice}
+                      </span>
                     )}
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}
 
           {/* Dots Carousel Navigation */}
           {slideCount > 1 && (
-            <div className="relative z-10 flex justify-center items-center gap-1 mt-4">
+            <div className="relative z-10 flex justify-center items-center gap-1 mt-2 sm:mt-3">
               {activeSlides.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveHeroSlide(idx)}
-                  className="w-7 h-7 flex items-center justify-center p-1 cursor-pointer tap-active"
+                  className="w-6 h-6 flex items-center justify-center p-1 cursor-pointer tap-active"
                   aria-label={`Slide ${idx + 1}`}
                 >
                   <span
                     className={`h-1.5 rounded-full transition-all duration-300 block ${
                       activeHeroSlide === idx
-                        ? 'w-6 bg-[#F95721]'
-                        : 'w-2.5 bg-orange-200/80 hover:bg-orange-300'
+                        ? 'w-5 bg-[#F95721]'
+                        : 'w-2 bg-orange-200/80 hover:bg-orange-300'
                     }`}
                   />
                 </button>
@@ -620,105 +609,97 @@ export const HomeView: React.FC = () => {
     if (liveActions.length === 0) return null;
 
     return (
-      <section className="py-1">
-        <div className="flex items-center gap-2.5 sm:gap-3.5 overflow-x-auto no-scrollbar py-2 -mx-2 px-2 select-none">
-          {liveActions.map((qa) => (
-            <button
-              key={qa.id}
-              onClick={() => handleQuickActionClick(qa)}
-              className="flex-shrink-0 flex items-center gap-2.5 px-3 py-2 sm:px-3.5 sm:py-2.5 bg-white border border-gray-100 hover:border-orange-200 rounded-2xl shadow-2xs hover:shadow-xs transition-all active:scale-95 group text-left"
-            >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-50/80 border border-orange-100/80 flex items-center justify-center flex-shrink-0 overflow-hidden text-base group-hover:scale-105 transition-transform">
-                {qa.image ? (
-                  <ResolvedImage src={qa.image} alt={qa.label} className="w-full h-full object-contain p-1" />
-                ) : (
-                  <span>{qa.icon || '⚡'}</span>
-                )}
-              </div>
-              <div className="min-w-0 pr-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-gray-900 truncate">{qa.label}</span>
-                  {qa.badge && (
-                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-red-50 text-red-600 border border-red-200">
-                      {qa.badge}
-                    </span>
+      <section className="py-1 relative">
+        <div className="relative">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 overflow-x-auto no-scrollbar py-1 -mx-1 px-1 pr-8 select-none">
+            {liveActions.map((qa) => (
+              <button
+                key={qa.id}
+                onClick={() => handleQuickActionClick(qa)}
+                className="flex-shrink-0 flex items-center gap-2.5 px-3 py-2 sm:px-3.5 sm:py-2.5 bg-white border border-gray-100 hover:border-orange-200 rounded-2xl shadow-2xs hover:shadow-xs transition-all active:scale-95 group text-left"
+              >
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-50/80 border border-orange-100/80 flex items-center justify-center flex-shrink-0 overflow-hidden text-base group-hover:scale-105 transition-transform">
+                  {qa.image ? (
+                    <ResolvedImage src={qa.image} alt={qa.label} className="w-full h-full object-contain p-1" />
+                  ) : (
+                    <span>{qa.icon || '⚡'}</span>
                   )}
                 </div>
-                {qa.subtitle && (
-                  <p className="text-[11px] text-gray-500 line-clamp-1">{qa.subtitle}</p>
-                )}
-              </div>
-            </button>
-          ))}
+                <div className="min-w-0 pr-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-gray-900 truncate">{qa.label}</span>
+                    {qa.badge && (
+                      <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-red-50 text-red-600 border border-red-200">
+                        {qa.badge}
+                      </span>
+                    )}
+                  </div>
+                  {qa.subtitle && (
+                    <p className="text-[11px] text-gray-500 line-clamp-1">{qa.subtitle}</p>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+          {/* Subtle right gradient fade indicating more items */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent" />
         </div>
       </section>
     );
   };
 
-  // Section 3: Feature / Trust Badges Strip
+  // Section 3: Feature / Trust Badges Micro-Ticker Strip (Compact Modern Strip)
   const renderTrustSection = () => {
     return (
-      <section className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
-        <div className="bg-gradient-to-b from-orange-50/50 via-white to-white border border-orange-100/70 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center text-center sm:text-left gap-2 sm:gap-3.5 shadow-xs hover:shadow-sm hover:border-orange-200 transition-all group">
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-orange-100/80 text-[#F95721] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-900 leading-snug">
-              <span className="sm:hidden">Free Delivery</span>
-              <span className="hidden sm:inline">Free Express Delivery</span>
-            </p>
-            <p className="text-[10px] sm:text-xs md:text-xs text-gray-500 mt-0.5 leading-tight">
-              <span className="sm:hidden">Above ₹{storeSettings?.freeDeliveryThreshold ?? 499}</span>
-              <span className="hidden sm:inline">On all orders above ₹{storeSettings?.freeDeliveryThreshold ?? 499}</span>
-            </p>
-          </div>
-        </div>
+      <section className="py-0.5 relative">
+        <div className="relative">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-1 px-1 pr-8 select-none">
+            {/* 100% Genuine */}
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-blue-50/80 border border-blue-200/80 text-blue-900 rounded-xl text-[11px] font-black shadow-2xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#0076D7]" />
+              <span>100% Genuine</span>
+            </div>
 
-        <div className="bg-gradient-to-b from-emerald-50/50 via-white to-white border border-emerald-100/70 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center text-center sm:text-left gap-2 sm:gap-3.5 shadow-xs hover:shadow-sm hover:border-emerald-200 transition-all group">
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-emerald-100/80 text-[#00A859] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-900 leading-snug">
-              <span className="sm:hidden">7 Days Return</span>
-              <span className="hidden sm:inline">7 Days Easy Return</span>
-            </p>
-            <p className="text-[10px] sm:text-xs md:text-xs text-gray-500 mt-0.5 leading-tight">
-              <span className="sm:hidden">Easy replacement</span>
-              <span className="hidden sm:inline">Hassle-free replacement</span>
-            </p>
-          </div>
-        </div>
+            {/* 7-Day Return */}
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50/80 border border-emerald-200/80 text-emerald-900 rounded-xl text-[11px] font-black shadow-2xs">
+              <RotateCcw className="w-3.5 h-3.5 text-[#00A859]" />
+              <span>7-Day Return</span>
+            </div>
 
-        <div className="bg-gradient-to-b from-blue-50/50 via-white to-white border border-blue-100/70 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center text-center sm:text-left gap-2 sm:gap-3.5 shadow-xs hover:shadow-sm hover:border-blue-200 transition-all group">
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-blue-100/80 text-[#0284C7] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
+            {/* Justdial Verified */}
+            <a
+              href="https://www.justdial.com/Vadodara/Shyam-Bombay-Sale-Subhanpura/0265PX265-X265-260124041911-U8Y6_BZDET"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[#0076D7]/10 hover:bg-[#0076D7]/20 border border-[#0076D7]/30 text-[#0076D7] rounded-xl text-[11px] font-black shadow-2xs transition-colors"
+            >
+              <Star className="w-3.5 h-3.5 fill-[#0076D7] text-[#0076D7]" />
+              <span>Justdial Verified</span>
+              <ExternalLink className="w-2.5 h-2.5 opacity-70" />
+            </a>
+
+            {/* Free Delivery */}
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-orange-50/80 border border-orange-200/80 text-orange-950 rounded-xl text-[11px] font-black shadow-2xs">
+              <Truck className="w-3.5 h-3.5 text-[#F95721]" />
+              <span>Free Delivery &gt;₹{storeSettings?.freeDeliveryThreshold ?? 499}</span>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-900 leading-snug">
-              <span className="sm:hidden">100% Genuine</span>
-              <span className="hidden sm:inline">SBS Quality Certified</span>
-            </p>
-            <p className="text-[10px] sm:text-xs md:text-xs text-gray-500 mt-0.5 leading-tight">
-              <span className="sm:hidden">Quality verified</span>
-              <span className="hidden sm:inline">100% Genuine products</span>
-            </p>
-          </div>
+          {/* Subtle right gradient fade indicating more badges */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent" />
         </div>
       </section>
     );
   };
 
-  // Section 4: Shop by Category
+  // Section 4: Shop by Category — Clean Non-Truncating 2-Row Grid
   const renderCategoriesSection = () => {
     if (visibleCategories.length === 0) return null;
 
     return (
       <section>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div>
-            <h2 className="text-lg md:text-xl font-bold text-gray-900">Shop by Category</h2>
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-gray-900 tracking-tight">Shop by Category</h2>
             <p className="text-xs text-gray-500 hidden sm:block">Explore all daily life and home categories</p>
           </div>
           <button
@@ -733,16 +714,17 @@ export const HomeView: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex sm:grid sm:grid-cols-4 md:grid-cols-8 gap-3 overflow-x-auto no-scrollbar py-1">
+        {/* 2-Row Grid with clean auto-wrapping multi-line titles — No Ellipsis Truncation */}
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2.5 sm:gap-3.5 py-1">
           {visibleCategories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => handleCategoryClick(cat.id)}
-              className="flex flex-col items-center gap-2 group tap-active flex-shrink-0 w-20 sm:w-auto"
+              className="flex flex-col items-center gap-1.5 group tap-active w-full select-none"
             >
               <div 
-                style={{ backgroundColor: cat.bgColor }}
-                className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center p-2.5 border border-black/5 group-hover:scale-105 transition-transform shadow-xs overflow-hidden"
+                style={{ backgroundColor: cat.bgColor || '#FFF5EE' }}
+                className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center p-2 border border-black/5 group-hover:scale-105 transition-transform shadow-xs overflow-hidden"
               >
                 <ResolvedImage
                   src={cat.image}
@@ -750,7 +732,7 @@ export const HomeView: React.FC = () => {
                   className="w-full h-full object-contain mix-blend-multiply"
                 />
               </div>
-              <span className="text-[11px] md:text-xs font-bold text-gray-800 text-center leading-tight capitalize line-clamp-2">
+              <span className="text-[10px] sm:text-xs font-bold text-gray-800 text-center leading-tight capitalize line-clamp-2 max-w-full break-words min-h-[26px] flex items-center justify-center">
                 {cat.name}
               </span>
             </button>
@@ -819,55 +801,59 @@ export const HomeView: React.FC = () => {
         </div>
 
         {availableCategoryPills.length > 1 && (
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-            <button
-              onClick={() => {
-                setActiveCategoryPill('all');
-                subcategoryScrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
-              }}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
-                activeCategoryPill === 'all'
-                  ? 'bg-[#F95721] text-white shadow-xs'
-                  : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 hover:border-gray-300'
-              }`}
-            >
-              <span>All</span>
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                  activeCategoryPill === 'all' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+          <div className="relative">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 pr-8">
+              <button
+                onClick={() => {
+                  setActiveCategoryPill('all');
+                  subcategoryScrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
+                  activeCategoryPill === 'all'
+                    ? 'bg-[#F95721] text-white shadow-xs'
+                    : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 hover:border-gray-300'
                 }`}
               >
-                {featuredSubcategoryItems.length}
-              </span>
-            </button>
-
-            {availableCategoryPills.map((cat) => {
-              const count = featuredSubcategoryItems.filter((i) => i.categoryId === cat.id).length;
-              const isActive = activeCategoryPill === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => {
-                    setActiveCategoryPill(cat.id);
-                    subcategoryScrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
-                  }}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
-                    isActive
-                      ? 'bg-[#F95721] text-white shadow-xs'
-                      : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 hover:border-gray-300'
+                <span>All</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                    activeCategoryPill === 'all' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
                   }`}
                 >
-                  <span>{cat.name}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                  {featuredSubcategoryItems.length}
+                </span>
+              </button>
+
+              {availableCategoryPills.map((cat) => {
+                const count = featuredSubcategoryItems.filter((i) => i.categoryId === cat.id).length;
+                const isActive = activeCategoryPill === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setActiveCategoryPill(cat.id);
+                      subcategoryScrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
+                      isActive
+                        ? 'bg-[#F95721] text-white shadow-xs'
+                        : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 hover:border-gray-300'
                     }`}
                   >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
+                    <span>{cat.name}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Subtle right gradient fade indicating more pills */}
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#FFF8F3] to-transparent" />
           </div>
         )}
 
@@ -937,7 +923,7 @@ export const HomeView: React.FC = () => {
     if (trendingProducts.length === 0) return null;
 
     return (
-      <section>
+      <section className="lazy-section">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">🔥</span>
@@ -1034,7 +1020,7 @@ export const HomeView: React.FC = () => {
     if (bestSellers.length === 0) return null;
 
     return (
-      <section>
+      <section className="lazy-section">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">⭐</span>
@@ -1097,7 +1083,7 @@ export const HomeView: React.FC = () => {
         SBS Store — Shyam Bombay Sale | Official Online Shopping &amp; Retail Store Vadodara
       </h1>
 
-      <div className="space-y-4 md:space-y-6 pb-36 md:pb-12 animate-fadeIn">
+      <div className="space-y-4 md:space-y-6 pb-40 md:pb-12 animate-fadeIn">
         {/* Dynamic Sections in order configured in admin panel */}
         {homepageSections
           .filter((sec) => sec.enabled !== false)
@@ -1135,7 +1121,7 @@ export const HomeView: React.FC = () => {
       </section>
 
       {/* Comprehensive Brand & Local SEO Overview Section (Targeting 'SBS Store' & 'Shyam Bombay Sale') */}
-      <section id="store-overview" className="mt-8 pt-8 border-t border-gray-200/80 space-y-6">
+      <section id="store-overview" className="lazy-section mt-8 pt-8 border-t border-gray-200/80 space-y-6">
         {/* Brand Banner Card */}
         <div className="p-5 sm:p-7 md:p-8 bg-gradient-to-br from-[#FFF5EE] via-white to-[#FFF0E6] rounded-3xl border border-orange-100/90 shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-orange-100/80 pb-5">
@@ -1252,21 +1238,25 @@ export const HomeView: React.FC = () => {
               return (
                 <div
                   key={idx}
-                  className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-2xs transition-all"
+                  className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-2xs transition-all"
                 >
                   <button
+                    type="button"
                     onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                    className="w-full text-left px-4 py-3.5 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-xs sm:text-sm font-bold text-gray-900 hover:text-[#F95721] transition-colors"
+                    aria-expanded={isOpen}
+                    className="w-full text-left px-4 py-3.5 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-xs sm:text-sm font-bold text-gray-900 hover:text-[#F95721] active:bg-orange-50/40 transition-colors cursor-pointer select-none"
                   >
-                    <span>{faq.q}</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                        isOpen ? 'rotate-180 text-[#F95721]' : ''
-                      }`}
-                    />
+                    <span className="flex-1 pr-2">{faq.q}</span>
+                    <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0 border border-gray-100">
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+                          isOpen ? 'rotate-180 text-[#F95721]' : ''
+                        }`}
+                      />
+                    </div>
                   </button>
                   {isOpen && (
-                    <div className="px-4 pb-4 sm:px-5 sm:pb-5 text-xs sm:text-sm text-gray-600 leading-relaxed border-t border-gray-50 pt-2 animate-fadeIn">
+                    <div className="px-4 pb-4 sm:px-5 sm:pb-5 text-xs sm:text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-3 animate-fadeIn">
                       {faq.a}
                     </div>
                   )}

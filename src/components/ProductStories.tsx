@@ -6,7 +6,16 @@ import { X, ChevronLeft, ChevronRight, ShoppingCart, Check, Volume2, VolumeX } f
 import { ResolvedImage, ResolvedVideo } from '@/components/common/ResolvedMedia';
 
 export const ProductStories: React.FC = () => {
-  const { stories, storeSettings, products, addToCart, setSelectedProductDetail } = useStore();
+  const { 
+    stories, 
+    storeSettings, 
+    products, 
+    addToCart, 
+    setSelectedProductDetail,
+    setActiveTab,
+    setSelectedCategoryFilter,
+    setIsRewardsOpen
+  } = useStore();
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -22,6 +31,52 @@ export const ProductStories: React.FC = () => {
   const activeStories = stories.filter((s) => s.enabled);
   const activeStory = activeStoryIndex !== null ? activeStories[activeStoryIndex] : null;
   const activeProduct = activeStory ? products.find((p) => p.id === activeStory.productId) : null;
+
+  const companionBubbles = [
+    {
+      id: 'scratch_companion',
+      title: 'Scratch & Win',
+      tag: 'Win ₹100',
+      icon: '🎁',
+      gradient: 'from-amber-400 via-orange-500 to-rose-500',
+      action: () => setIsRewardsOpen(true),
+    },
+    {
+      id: 'deals_companion',
+      title: 'Flash Deals',
+      tag: 'Up to 50%',
+      icon: '⚡',
+      gradient: 'from-rose-500 via-red-500 to-orange-500',
+      action: () => {
+        setSelectedCategoryFilter('offers');
+        setActiveTab('categories');
+      },
+    },
+    {
+      id: 'under99_companion',
+      title: 'Under ₹99',
+      tag: 'Best Value',
+      icon: '🏷️',
+      gradient: 'from-emerald-400 via-teal-500 to-cyan-500',
+      action: () => {
+        setSelectedCategoryFilter(null);
+        setActiveTab('categories');
+      },
+    },
+    {
+      id: 'trending_companion',
+      title: 'Top Savers',
+      tag: 'Verified',
+      icon: '🔥',
+      gradient: 'from-purple-500 via-pink-500 to-orange-400',
+      action: () => {
+        setSelectedCategoryFilter(null);
+        setActiveTab('categories');
+      },
+    },
+  ];
+
+  const visibleCompanions = activeStories.length < 5 ? companionBubbles.slice(0, 5 - activeStories.length) : [];
 
   // Auto-progress timer for active story
   useEffect(() => {
@@ -108,46 +163,79 @@ export const ProductStories: React.FC = () => {
 
   return (
     <>
-      {/* Horizontal Story Bubble Strip */}
-      <div className="flex items-center gap-3 sm:gap-4 overflow-x-auto no-scrollbar pt-0.5 pb-2 -mx-1 px-1 select-none">
-        {activeStories.map((story, idx) => (
-          <button
-            key={story.id}
-            onClick={() => setActiveStoryIndex(idx)}
-            className="flex flex-col items-center gap-1.5 flex-shrink-0 group tap-active focus:outline-none"
-          >
-            {/* Gradient Ring Outer Frame */}
-            <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full p-[2.5px] bg-gradient-to-tr from-[#F95721] via-[#FF7038] to-[#EC4899] shadow-xs group-hover:scale-105 transition-transform">
-              <div className="w-full h-full rounded-full border-2 border-white overflow-hidden bg-gray-50 flex items-center justify-center relative">
-                {isStoryVideo(story) ? (
-                  <ResolvedVideo
-                    src={story.media}
-                    className="w-full h-full object-cover"
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                  />
-                ) : (
-                  <ResolvedImage
-                    src={story.media}
-                    alt={story.title}
-                    className="w-full h-full object-contain p-1 mix-blend-multiply group-hover:scale-110 transition-transform duration-300"
-                  />
-                )}
-                {/* Micro play badge */}
-                <div className="absolute bottom-0.5 right-0.5 w-4 h-4 rounded-full bg-[#F95721] text-white flex items-center justify-center text-[8px] font-black shadow-xs">
-                  ▶
+      {/* Horizontal Story Bubble Strip with subtle right gradient fade */}
+      <div className="relative">
+        <div className="flex items-center gap-3 sm:gap-4 overflow-x-auto no-scrollbar pt-0.5 pb-2 -mx-1 px-1 pr-8 select-none">
+          {activeStories.map((story, idx) => (
+            <button
+              key={story.id}
+              onClick={() => setActiveStoryIndex(idx)}
+              className="flex flex-col items-center gap-1.5 flex-shrink-0 group tap-active focus:outline-none"
+            >
+              {/* Gradient Ring Outer Frame */}
+              <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full p-[2.5px] bg-gradient-to-tr from-[#F95721] via-[#FF7038] to-[#EC4899] shadow-xs group-hover:scale-105 transition-transform">
+                <div className="w-full h-full rounded-full border-2 border-white overflow-hidden bg-white flex items-center justify-center relative">
+                  {story.title?.toLowerCase().includes('sbs') ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src="/logo.png?v=3"
+                      alt="SBS Store"
+                      className="w-full h-full object-contain p-2 mix-blend-multiply group-hover:scale-110 transition-transform duration-300"
+                    />
+                  ) : isStoryVideo(story) ? (
+                    <ResolvedVideo
+                      src={story.media}
+                      className="w-full h-full object-cover"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <ResolvedImage
+                      src={story.media}
+                      alt={story.title}
+                      className="w-full h-full object-contain p-1 mix-blend-multiply group-hover:scale-110 transition-transform duration-300"
+                    />
+                  )}
+                  {/* Micro play badge */}
+                  <div className="absolute bottom-0.5 right-0.5 w-4 h-4 rounded-full bg-[#F95721] text-white flex items-center justify-center text-[8px] font-black shadow-xs">
+                    ▶
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Title & Tag */}
-            <span className="text-[11px] font-bold text-gray-800 line-clamp-2 max-w-[76px] min-h-[26px] text-center leading-tight">
-              {story.title}
-            </span>
-          </button>
-        ))}
+              {/* Title & Tag */}
+              <span className="text-[11px] font-bold text-gray-800 line-clamp-2 max-w-[76px] min-h-[26px] text-center leading-tight">
+                {story.title}
+              </span>
+            </button>
+          ))}
+
+          {/* Companion Interactive Action Bubbles to prevent empty ribbon */}
+          {visibleCompanions.map((comp) => (
+            <button
+              key={comp.id}
+              onClick={comp.action}
+              className="flex flex-col items-center gap-1.5 flex-shrink-0 group tap-active focus:outline-none"
+            >
+              <div className={`w-16 h-16 sm:w-18 sm:h-18 rounded-full p-[2.5px] bg-gradient-to-tr ${comp.gradient} shadow-xs group-hover:scale-105 transition-transform`}>
+                <div className="w-full h-full rounded-full border-2 border-white overflow-hidden bg-gradient-to-b from-orange-50/60 to-white flex items-center justify-center relative">
+                  <span className="text-xl group-hover:scale-110 transition-transform">{comp.icon}</span>
+                  <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-[#F95721] text-white flex items-center justify-center text-[7px] font-black shadow-xs">
+                    ★
+                  </div>
+                </div>
+              </div>
+
+              <span className="text-[11px] font-bold text-gray-800 line-clamp-2 max-w-[76px] min-h-[26px] text-center leading-tight">
+                {comp.title}
+              </span>
+            </button>
+          ))}
+        </div>
+        {/* Subtle right gradient fade indicating horizontal scroll */}
+        <div className="pointer-events-none absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-white to-transparent" />
       </div>
 
       {/* Fullscreen Interactive Story Viewer Overlay */}

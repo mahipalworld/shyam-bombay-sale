@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useStore } from '@/context/StoreContext';
+import { useStore, sanitizeProductFeatures, sanitizeProductDescription } from '@/context/StoreContext';
 import { 
   X, 
   ChevronRight, 
@@ -300,8 +300,8 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         name: productToEdit.name,
         category: productToEdit.category,
         subcategory: productToEdit.subcategory || '',
-        shortDescription: productToEdit.description.slice(0, 80),
-        description: productToEdit.description,
+        shortDescription: sanitizeProductDescription(productToEdit.description).slice(0, 80),
+        description: sanitizeProductDescription(productToEdit.description),
         image: productToEdit.image,
         images: allImgs,
         video: productToEdit.video || '',
@@ -318,13 +318,13 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         lowStockThreshold: storeSettings.lowStockThreshold.toString(),
         stockStatus: productToEdit.inStock ? 'In Stock' : 'Out of Stock',
         capacity: '',
-        weight: '350g',
-        dimensions: '15 x 10 x 5 cm',
-        material: 'Virgin Plastic / Stainless Steel',
-        color: 'Pastel Slate',
-        warranty: '6 Months Replacement',
+        weight: '',
+        dimensions: '',
+        material: '',
+        color: '',
+        warranty: '',
         subtitle: productToEdit.subtitle || '',
-        features: productToEdit.features || [],
+        features: sanitizeProductFeatures(productToEdit.features),
         featureIcons: productToEdit.featureIcons || [],
         specifications: (productToEdit.specifications && productToEdit.specifications.length > 0)
           ? productToEdit.specifications
@@ -593,20 +593,9 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
     const primaryImg = formData.image || formData.images[0] || 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&auto=format&fit=crop&q=80';
     const allGalleryImages = formData.images.length > 0 ? formData.images : [primaryImg];
 
-    // Build features bullet points (merging manually added features with adaptive specs if any)
-    const combinedFeatures: string[] = [...formData.features];
-    if (formData.capacity && !combinedFeatures.some(f => f.toLowerCase().includes('capacity'))) {
-      combinedFeatures.push(`Capacity: ${formData.capacity}`);
-    }
-    if (formData.material && !combinedFeatures.some(f => f.toLowerCase().includes('material'))) {
-      combinedFeatures.push(`Material: ${formData.material}`);
-    }
-    if (formData.color && !combinedFeatures.some(f => f.toLowerCase().includes('color'))) {
-      combinedFeatures.push(`Color: ${formData.color}`);
-    }
-    if (formData.warranty && !combinedFeatures.some(f => f.toLowerCase().includes('warranty'))) {
-      combinedFeatures.push(`Warranty: ${formData.warranty}`);
-    }
+    // Build features bullet points (only user-entered highlights, excluding legacy dummy presets)
+    const combinedFeatures: string[] = sanitizeProductFeatures(formData.features);
+    const cleanDescription = sanitizeProductDescription(formData.description || formData.shortDescription || '');
 
     if (productToEdit) {
       updateProduct(productToEdit.id, {
@@ -625,8 +614,8 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         descriptionBlocks: formData.descriptionBlocks,
         stockCount,
         inStock,
-        description: formData.description || formData.shortDescription,
-        features: combinedFeatures.length > 0 ? combinedFeatures : productToEdit.features,
+        description: cleanDescription,
+        features: combinedFeatures,
         subtitle: formData.subtitle || undefined,
         featureIcons: formData.featureIcons.length > 0 ? formData.featureIcons : undefined,
         specifications: formData.specifications,
@@ -661,7 +650,7 @@ export const AddEditProductModal: React.FC<AddEditProductModalProps> = ({
         descriptionBlocks: formData.descriptionBlocks,
         inStock,
         stockCount,
-        description: formData.description || formData.shortDescription || 'Everyday home essential from SBS Store.',
+        description: cleanDescription,
         features: combinedFeatures,
         subtitle: formData.subtitle || undefined,
         featureIcons: formData.featureIcons.length > 0 ? formData.featureIcons : undefined,

@@ -76,6 +76,12 @@ body {
   padding-bottom: calc(1.5rem + var(--safe-bottom));
 }
 
+/* Lazy rendering for below-the-fold sections */
+.lazy-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}
+
 /* Custom animated gradient for Deals banner */
 @keyframes shimmer {
   0% { background-position: -200% 0; }

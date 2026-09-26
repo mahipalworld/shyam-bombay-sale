@@ -268,7 +268,7 @@ export const CategoriesView: React.FC = () => {
       {/* ==================================================== */}
       <main 
         ref={rightPaneRef}
-        className="flex-1 min-w-0 h-full overflow-y-auto no-scrollbar space-y-6 sm:space-y-8 pr-0.5 pb-16"
+        className="flex-1 min-w-0 h-full overflow-y-auto no-scrollbar space-y-6 sm:space-y-8 pr-0.5 pb-36 sm:pb-40 md:pb-16"
       >
         {categories.map((cat, index) => {
           const categoryProducts = products.filter(p => {

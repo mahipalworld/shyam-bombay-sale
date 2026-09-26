@@ -74,6 +74,8 @@ interface StoreContextType {
   selectedSubcategoryFilter: string | null;
   activeSubcategoryModal: { category: Category; subcategory: Subcategory | null } | null;
   selectedProductDetail: Product | null;
+  productDetailStack: Product[];
+  popProductDetail: () => boolean;
   isCheckoutOpen: boolean;
   selectedOrderForModal: Order | null;
   isSearchOpen: boolean;
@@ -349,6 +351,58 @@ const addDeletedCouponCode = (code: string) => {
   } catch {}
 };
 
+export const isLegacyDummyHighlight = (text: string): boolean => {
+  if (!text || typeof text !== 'string') return true;
+  const lower = text.toLowerCase().trim();
+  if (
+    lower.includes('virgin plastic') ||
+    lower.includes('pastel slate') ||
+    lower.includes('6 months replacement') ||
+    lower.includes('premium ergonomic design') ||
+    lower.includes('certified durability tested') ||
+    lower.includes('zero maintenance') ||
+    lower.includes('compatible with indian standards') ||
+    lower.includes('matte pastel slate') ||
+    lower.includes('food grade stainless steel & bpa-free') ||
+    lower.startsWith('material:') ||
+    lower.startsWith('color:') ||
+    lower.startsWith('warranty:') ||
+    lower.startsWith('capacity:') ||
+    lower.startsWith('dimensions:') ||
+    lower.startsWith('weight:') ||
+    lower.startsWith('dispatch origin:') ||
+    lower.startsWith('country of origin:') ||
+    lower.startsWith('brand:') ||
+    lower.startsWith('condition:') ||
+    lower.startsWith('in the box:')
+  ) {
+    return true;
+  }
+  return false;
+};
+
+export const sanitizeProductFeatures = (features?: string[]): string[] => {
+  if (!features || !Array.isArray(features)) return [];
+  return features
+    .map((f) => (typeof f === 'string' ? f.trim() : ''))
+    .filter((f) => f.length > 0 && !isLegacyDummyHighlight(f));
+};
+
+export const sanitizeProductDescription = (desc?: string): string => {
+  if (!desc || typeof desc !== 'string') return '';
+  const trimmed = desc.trim();
+  if (trimmed.toLowerCase() === 'everyday home essential from sbs store.') return '';
+  return trimmed;
+};
+
+export const sanitizeProductData = (product: Product): Product => {
+  return {
+    ...product,
+    features: sanitizeProductFeatures(product.features),
+    description: sanitizeProductDescription(product.description),
+  };
+};
+
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -432,18 +486,39 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setSelectedSubcategoryFilter(null);
   };
   const [selectedProductDetail, setSelectedProductDetailState] = useState<Product | null>(null);
+  const [productDetailStack, setProductDetailStack] = useState<Product[]>([]);
   const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
 
   const setSelectedProductDetail = (product: Product | null) => {
-    setSelectedProductDetailState(product);
-    if (product && product.id) {
-      setRecentlyViewedIds((prev) => {
-        const next = [product.id, ...prev.filter((id) => id !== product.id)].slice(0, 10);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('sbs_recently_viewed_ids', JSON.stringify(next));
-        }
-        return next;
-      });
+    if (product) {
+      if (selectedProductDetail && selectedProductDetail.id !== product.id) {
+        setProductDetailStack((prev) => [...prev, selectedProductDetail]);
+      }
+      setSelectedProductDetailState(product);
+      if (product.id) {
+        setRecentlyViewedIds((prev) => {
+          const next = [product.id, ...prev.filter((id) => id !== product.id)].slice(0, 10);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('sbs_recently_viewed_ids', JSON.stringify(next));
+          }
+          return next;
+        });
+      }
+    } else {
+      setProductDetailStack([]);
+      setSelectedProductDetailState(null);
+    }
+  };
+
+  const popProductDetail = () => {
+    if (productDetailStack.length > 0) {
+      const prevProduct = productDetailStack[productDetailStack.length - 1];
+      setProductDetailStack((s) => s.slice(0, -1));
+      setSelectedProductDetailState(prevProduct);
+      return true;
+    } else {
+      setSelectedProductDetailState(null);
+      return false;
     }
   };
 
@@ -803,17 +878,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         try {
           const parsedProducts: Product[] = JSON.parse(savedProducts);
           // Filter out deleted and legacy test products
-          const activeSaved = parsedProducts.filter((p) => !deletedProductIds.has(p.id) && !/^p\d+$/.test(p.id));
+          const activeSaved = parsedProducts
+            .filter((p) => !deletedProductIds.has(p.id) && !/^p\d+$/.test(p.id))
+            .map(sanitizeProductData);
           if (activeSaved.length > 0) {
             setProducts(activeSaved);
           } else {
-            setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id) && !/^p\d+$/.test(p.id)));
+            setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id) && !/^p\d+$/.test(p.id)).map(sanitizeProductData));
           }
         } catch {
-          setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id) && !/^p\d+$/.test(p.id)));
+          setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id) && !/^p\d+$/.test(p.id)).map(sanitizeProductData));
         }
       } else {
-        setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id) && !/^p\d+$/.test(p.id)));
+        setProducts(INITIAL_PRODUCTS.filter((p) => !deletedProductIds.has(p.id) && !/^p\d+$/.test(p.id)).map(sanitizeProductData));
       }
 
       const deletedCategoryIds = getDeletedCategoryIds();
@@ -1128,9 +1205,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               videoThumbnail: p.video_thumbnail || initMatch?.videoThumbnail || undefined,
               inStock: p.in_stock,
               stockCount: p.stock_count,
-              description: p.description,
+              description: sanitizeProductDescription(p.description),
               descriptionBlocks: p.description_blocks || initMatch?.descriptionBlocks,
-              features: p.features || initMatch?.features || [],
+              features: sanitizeProductFeatures(p.features || initMatch?.features),
               isTrending: Boolean(p.is_trending),
               isBestSeller: Boolean(p.is_best_seller),
               isDealOfDay: Boolean(p.is_deal_of_day),
@@ -1323,9 +1400,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           videoThumbnail: p.video_thumbnail || undefined,
           inStock: p.in_stock,
           stockCount: p.stock_count,
-          description: p.description,
+          description: sanitizeProductDescription(p.description),
           descriptionBlocks: p.description_blocks || [],
-          features: p.features || [],
+          features: sanitizeProductFeatures(p.features),
           isTrending: Boolean(p.is_trending),
           isBestSeller: Boolean(p.is_best_seller),
           isDealOfDay: Boolean(p.is_deal_of_day),
@@ -1369,9 +1446,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   videoThumbnail: p.video_thumbnail !== undefined ? p.video_thumbnail : item.videoThumbnail,
                   inStock: p.in_stock ?? item.inStock,
                   stockCount: p.stock_count ?? item.stockCount,
-                  description: p.description ?? item.description,
+                  description: p.description !== undefined ? sanitizeProductDescription(p.description) : item.description,
                   descriptionBlocks: p.description_blocks ?? item.descriptionBlocks,
-                  features: p.features ?? item.features,
+                  features: p.features !== undefined ? sanitizeProductFeatures(p.features) : item.features,
                   isTrending: p.is_trending !== undefined ? Boolean(p.is_trending) : item.isTrending,
                   isBestSeller: p.is_best_seller !== undefined ? Boolean(p.is_best_seller) : item.isBestSeller,
                   isDealOfDay: p.is_deal_of_day !== undefined ? Boolean(p.is_deal_of_day) : item.isDealOfDay,
@@ -4223,6 +4300,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         selectedSubcategoryFilter,
         activeSubcategoryModal,
         selectedProductDetail,
+        productDetailStack,
+        popProductDetail,
         isCheckoutOpen,
         selectedOrderForModal,
         isSearchOpen,

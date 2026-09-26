@@ -114,10 +114,13 @@ export const AddressesModal: React.FC = () => {
               />
               <input
                 type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={10}
                 required
-                placeholder="Phone Number"
+                placeholder="10-digit Phone Number"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                 className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721]"
               />
               <textarea
@@ -138,11 +141,14 @@ export const AddressesModal: React.FC = () => {
                   className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721]"
                 />
                 <input
-                  type="text"
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
                   required
-                  placeholder="Pincode"
+                  placeholder="6-digit Pincode"
                   value={formData.pincode}
-                  onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
                   className="w-full border rounded-xl px-3 py-2 bg-white outline-none focus:border-[#F95721]"
                 />
               </div>

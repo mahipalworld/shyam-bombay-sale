@@ -43,7 +43,40 @@ export const ResolvedImage: React.FC<ResolvedImageProps> = ({
 
   const activeSrc = fallbackSrc || url || (!isS3Key ? src : '');
 
+  const isSbsBrand = Boolean(
+    (alt && alt.toLowerCase().includes('sbs')) || 
+    (src && src.toLowerCase().includes('sbs'))
+  );
+
+  const imgRef = React.useRef<HTMLImageElement | null>(null);
+  const [isImageLoaded, setIsImageLoaded] = React.useState(false);
+
+  const setImgRef = React.useCallback((node: HTMLImageElement | null) => {
+    imgRef.current = node;
+    if (node && node.complete && node.naturalWidth > 0) {
+      setIsImageLoaded(true);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      setIsImageLoaded(true);
+    }
+  }, [activeSrc]);
+
   if (hasError || !activeSrc) {
+    if (isSbsBrand) {
+      return (
+        <div className={`w-full h-full flex items-center justify-center p-1 bg-orange-50/80 rounded-lg select-none ${className || ''}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png?v=3"
+            alt="SBS Store"
+            className="w-full h-full object-contain"
+          />
+        </div>
+      );
+    }
     return (
       <div 
         className={`w-full h-full flex flex-col items-center justify-center bg-orange-50/60 rounded-lg p-1 text-center select-none overflow-hidden ${className || ''}`}
@@ -62,23 +95,36 @@ export const ResolvedImage: React.FC<ResolvedImageProps> = ({
   const computedFetchPriority = fetchPriority ?? (priority ? 'high' : undefined);
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={activeSrc}
-      alt={alt}
-      onError={() => {
-        if (!fallbackSrc && activeSrc.endsWith('.webp')) {
-          setFallbackSrc(activeSrc.replace(/\.webp$/, '.png'));
-        } else {
-          setHasError(true);
-        }
-      }}
-      className={`${className || ''} ${isLoading ? 'opacity-70 blur-2xs' : 'opacity-100 transition-opacity duration-200'}`}
-      loading={computedLoading}
-      fetchPriority={computedFetchPriority}
-      decoding="async"
-      {...props}
-    />
+    <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+      {/* Skeleton Shimmer Loader shown while image is loading */}
+      {!isImageLoaded && !hasError && (
+        <div 
+          className="absolute inset-0 z-0 bg-gradient-to-r from-gray-100 via-gray-200/50 to-gray-100 animate-pulse rounded-lg pointer-events-none" 
+          aria-hidden="true"
+        />
+      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        ref={setImgRef}
+        src={activeSrc}
+        alt={alt}
+        onLoad={() => setIsImageLoaded(true)}
+        onError={() => {
+          if (!fallbackSrc && activeSrc.endsWith('.webp')) {
+            setFallbackSrc(activeSrc.replace(/\.webp$/, '.png'));
+          } else if (isSbsBrand && !fallbackSrc) {
+            setFallbackSrc('/logo.png?v=3');
+          } else {
+            setHasError(true);
+          }
+        }}
+        className={`relative z-10 transition-opacity duration-300 ${className || ''}`}
+        loading={computedLoading}
+        fetchPriority={computedFetchPriority}
+        decoding="async"
+        {...props}
+      />
+    </div>
   );
 };
 

@@ -98,6 +98,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, pri
     }
   };
 
+  const [justAdded, setJustAdded] = useState(false);
+
   const handleClick = () => {
     if (onSelect) {
       onSelect();
@@ -106,28 +108,39 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, pri
     }
   };
 
+  const handleCycleImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (cardImages.length > 1) {
+      setCardImgIndex((prev) => (prev + 1) % cardImages.length);
+      if ('vibrate' in navigator) navigator.vibrate(8);
+    } else {
+      handleClick();
+    }
+  };
+
   return (
     <div 
-      className="bg-white rounded-2xl border border-gray-100 p-3 flex flex-col justify-between shadow-subtle hover:shadow-card transition-all duration-200 group relative"
+      className="bg-white rounded-2xl border border-gray-100 hover:border-orange-200/80 p-2.5 sm:p-3 flex flex-col justify-between shadow-subtle hover:shadow-card transition-all duration-200 group relative"
     >
-      {/* Wishlist Button */}
+      {/* Wishlist Button with 44x44px accessible touch target */}
       <button
         onClick={(e) => {
           e.stopPropagation();
           toggleWishlist(product);
         }}
         aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-        className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:scale-110 active:scale-95 transition-all"
+        className="absolute top-1 right-1 z-10 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:scale-110 active:scale-95 transition-all tap-active"
       >
-        <Heart
-          className={`w-4 h-4 ${
-            wishlisted ? 'fill-[#E53E3E] text-[#E53E3E]' : 'text-gray-400 hover:text-gray-600'
-          }`}
-        />
+        <div className="w-7 h-7 rounded-full bg-white/95 backdrop-blur-xs shadow-2xs flex items-center justify-center border border-gray-100/60">
+          <Heart
+            className={`w-3.5 h-3.5 ${
+              wishlisted ? 'fill-[#E53E3E] text-[#E53E3E]' : 'text-gray-400 hover:text-gray-600'
+            }`}
+          />
+        </div>
       </button>
 
-
-      {/* Product Image Area with Finger Sliding Animation */}
+      {/* Product Image Area with Finger Sliding & Tap Fallback — Pure white seamless container */}
       <div 
         onClick={() => {
           if (Math.abs(cardDragOffset) > 8) return;
@@ -137,8 +150,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, pri
         onTouchMove={handleCardTouchMove}
         onTouchEnd={handleCardTouchEnd}
         onTouchCancel={handleCardTouchEnd}
-        className="cursor-pointer aspect-square w-full rounded-xl bg-[#F9FAFB] flex items-center justify-center overflow-hidden relative select-none touch-pan-y"
+        className="cursor-pointer aspect-square w-full rounded-xl bg-white flex items-center justify-center overflow-hidden relative select-none touch-pan-y"
       >
+        {/* Discount Badge on Product Image Top-Left Corner */}
+        {product.discountPercentage > 0 && (
+          <div className="absolute top-2 left-2 z-10 pointer-events-none">
+            <span className="px-2 py-0.5 rounded-md bg-[#008744] text-white text-[10px] font-black shadow-2xs tracking-wide">
+              {product.discountPercentage}% OFF
+            </span>
+          </div>
+        )}
+
         <div 
           className="w-full h-full flex"
           style={{
@@ -148,7 +170,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, pri
           }}
         >
           {cardImages.map((img, i) => (
-            <div key={i} className="w-full h-full flex-shrink-0 flex items-center justify-center p-3 relative">
+            <div key={i} className="w-full h-full flex-shrink-0 flex items-center justify-center p-2.5 relative">
               <ResolvedImage
                 src={img}
                 alt={product.name}
@@ -160,9 +182,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, pri
           ))}
         </div>
 
-        {/* Small Dot Indicators on Card if Multiple Images */}
+        {/* Small Dot Indicators on Card if Multiple Images — Also Tappable */}
         {cardImages.length > 1 && (
-          <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-white/75 backdrop-blur-xs px-1.5 py-0.5 rounded-full pointer-events-none shadow-2xs">
+          <div 
+            onClick={handleCycleImage}
+            className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-white/85 backdrop-blur-xs px-2 py-1 rounded-full shadow-2xs cursor-pointer"
+            title="Tap to see next image"
+          >
             {cardImages.map((_, i) => (
               <span
                 key={i}
@@ -180,35 +206,35 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, pri
       {/* Product Details */}
       <div className="mt-2 flex-1 flex flex-col justify-between">
         <div onClick={handleClick} className="cursor-pointer space-y-1">
+          {/* Truncate Product Name to 2 lines max with ellipsis */}
           <h3 className="font-bold text-gray-900 text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-[#F95721] transition-colors min-h-[32px] sm:min-h-[38px]">
             {product.name}
           </h3>
 
-          {/* Verified Quality Badge */}
-          <div className="flex items-center gap-1 text-[11px] font-bold text-[#00A859]">
-            <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>Verified</span>
+          {/* Compact Trust / Verified Pill */}
+          <div className="flex items-center gap-1 text-[10px] font-bold text-[#00A859]">
+            <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
+            <span>SBS Verified</span>
           </div>
 
-          {/* Pricing Row */}
+          {/* Price Row: Bold larger current price + muted strikethrough MRP */}
           <div className="flex items-baseline flex-wrap gap-1.5 pt-0.5">
-            <span className="text-sm sm:text-base font-black text-gray-900">
+            <span className="text-base sm:text-lg font-black text-gray-900">
               ₹{product.price.toLocaleString('en-IN')}
             </span>
-            <span className="text-[11px] text-gray-400 font-medium line-through">
-              ₹{product.originalPrice.toLocaleString('en-IN')}
-            </span>
-            <span className="text-[11px] font-extrabold text-[#F95721] bg-[#FFF0E8] border border-orange-200/80 px-1.5 py-0.5 rounded-md">
-              {product.discountPercentage}% OFF
-            </span>
+            {product.originalPrice > product.price && (
+              <span className="text-xs text-gray-400 font-medium line-through">
+                ₹{product.originalPrice.toLocaleString('en-IN')}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Dynamic Add to Cart / Quantity Stepper */}
+        {/* Dynamic Add to Cart / Compact Stepper */}
         {quantityInCart > 0 ? (
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="mt-2.5 w-full h-9 sm:h-10 px-1 bg-gradient-to-r from-[#F95721] to-[#E44813] text-white rounded-xl flex items-center justify-between shadow-xs select-none animate-scaleUp"
+            className="mt-2.5 w-full h-8 sm:h-9 px-1 bg-gradient-to-r from-[#F95721] to-[#E44813] text-white rounded-xl flex items-center justify-between shadow-xs select-none animate-scaleUp"
           >
             <button
               onClick={(e) => {
@@ -219,13 +245,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, pri
                   updateCartQuantity(product.id, quantityInCart - 1);
                 }
               }}
-              className="w-8 h-full flex items-center justify-center hover:bg-black/15 active:scale-75 rounded-lg transition-all"
+              className="w-7 h-full flex items-center justify-center hover:bg-black/15 active:scale-75 rounded-lg transition-all"
               aria-label="Decrease quantity"
             >
-              <Minus className="w-4 h-4 stroke-[3px]" />
+              <Minus className="w-3.5 h-3.5 stroke-[3px]" />
             </button>
 
-            <span className="font-black text-xs sm:text-sm tracking-tight px-2 scale-100">
+            <span className="font-black text-xs sm:text-sm tracking-tight px-1 scale-100">
               {quantityInCart}
             </span>
 
@@ -238,23 +264,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, pri
                 }
               }}
               disabled={quantityInCart >= Math.min(10, product.stockCount || 10)}
-              className="w-8 h-full flex items-center justify-center hover:bg-black/15 disabled:opacity-30 active:scale-75 rounded-lg transition-all"
+              className="w-7 h-full flex items-center justify-center hover:bg-black/15 disabled:opacity-30 active:scale-75 rounded-lg transition-all"
               aria-label="Increase quantity"
             >
-              <Plus className="w-4 h-4 stroke-[3px]" />
+              <Plus className="w-3.5 h-3.5 stroke-[3px]" />
             </button>
+          </div>
+        ) : justAdded ? (
+          <div className="mt-2.5 w-full h-8 sm:h-9 px-3 bg-[#00A859] text-white text-xs font-black rounded-xl flex items-center justify-center gap-1 shadow-xs animate-scaleUp">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Added!</span>
           </div>
         ) : (
           <button
             onClick={(e) => {
               e.stopPropagation();
+              setJustAdded(true);
               addToCart(product, 1, e.currentTarget);
               if ('vibrate' in navigator) navigator.vibrate(10);
+              setTimeout(() => setJustAdded(false), 900);
             }}
-            className="mt-2.5 w-full h-9 sm:h-10 px-3 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
+            className="mt-2.5 w-full h-8 sm:h-9 px-3 bg-orange-50 hover:bg-[#F95721] text-[#F95721] hover:text-white border border-orange-200/90 hover:border-[#F95721] text-xs font-black rounded-xl flex items-center justify-center gap-1 shadow-2xs active:scale-95 transition-all duration-150"
           >
-            <Plus className="w-4 h-4 stroke-[2.5px]" />
-            <span>Add to Cart</span>
+            <Plus className="w-3.5 h-3.5 stroke-[3px]" />
+            <span>ADD</span>
           </button>
         )}
       </div>

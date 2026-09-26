@@ -12,6 +12,8 @@ export const MobileBackHandler: React.FC = () => {
     setActiveSubcategoryModal,
     selectedProductDetail,
     setSelectedProductDetail,
+    productDetailStack,
+    popProductDetail,
     isCheckoutOpen,
     setIsCheckoutOpen,
     selectedOrderForModal,
@@ -40,6 +42,7 @@ export const MobileBackHandler: React.FC = () => {
 
   const lastBackPressTimeRef = useRef<number>(0);
   const isPopstateHandlingRef = useRef(false);
+  const prevProductIdRef = useRef<string | null>(null);
 
   // Track previous state of modal openings to push history entries when a new layer opens
   const prevStatesRef = useRef({
@@ -58,7 +61,7 @@ export const MobileBackHandler: React.FC = () => {
     tab: activeTab,
   });
 
-  // Whenever a modal/screen OPENS, push an entry to browser history
+  // Whenever a modal/screen OPENS or a new product is selected from within product modal, push an entry to browser history
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -82,13 +85,21 @@ export const MobileBackHandler: React.FC = () => {
     // If change was triggered by popstate, simply update tracking and don't push duplicate history
     if (isPopstateHandlingRef.current) {
       prevStatesRef.current = curr;
+      prevProductIdRef.current = selectedProductDetail?.id || null;
       isPopstateHandlingRef.current = false;
       return;
     }
 
-    // Did any modal or sub-view open?
+    const isNavigatingToAnotherProduct = Boolean(
+      selectedProductDetail &&
+      prevProductIdRef.current &&
+      selectedProductDetail.id !== prevProductIdRef.current
+    );
+
+    // Did any modal or sub-view open, or did user navigate to another product from recommendations?
     if (
       (!prev.productDetail && curr.productDetail) ||
+      isNavigatingToAnotherProduct ||
       (!prev.subcategoryModal && curr.subcategoryModal) ||
       (!prev.checkout && curr.checkout) ||
       (!prev.search && curr.search) ||
@@ -102,9 +113,10 @@ export const MobileBackHandler: React.FC = () => {
       (!prev.phonePrompt && curr.phonePrompt) ||
       (prev.tab === 'home' && curr.tab !== 'home')
     ) {
-      window.history.pushState({ sbsNav: true }, '');
+      window.history.pushState({ sbsNav: true, productId: selectedProductDetail?.id }, '');
     }
 
+    prevProductIdRef.current = selectedProductDetail?.id || null;
     prevStatesRef.current = curr;
   }, [
     selectedProductDetail,
@@ -133,9 +145,15 @@ export const MobileBackHandler: React.FC = () => {
     const handlePopState = () => {
       isPopstateHandlingRef.current = true;
 
-      // 1. Priority 1: Topmost Product Detail Modal (closes product detail, keeps search results or subcategory drawer intact!)
+      // 1. Priority 1: Topmost Product Detail Modal (support popping to previous viewed product first!)
       if (selectedProductDetail) {
+        if (productDetailStack.length > 0) {
+          popProductDetail();
+          prevProductIdRef.current = productDetailStack[productDetailStack.length - 1]?.id || null;
+          return;
+        }
         setSelectedProductDetail(null);
+        prevProductIdRef.current = null;
         return;
       }
 
@@ -186,6 +204,8 @@ export const MobileBackHandler: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [
     selectedProductDetail,
+    productDetailStack,
+    popProductDetail,
     activeSubcategoryModal,
     isCheckoutOpen,
     selectedOrderForModal,

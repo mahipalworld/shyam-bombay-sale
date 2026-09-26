@@ -341,25 +341,29 @@ export const CartView: React.FC = () => {
 
                 {/* Available Quick-Apply Coupons */}
                 {coupons && coupons.length > 0 && (
-                  <div className="flex gap-2 overflow-x-auto no-scrollbar pt-1">
-                    {coupons.slice(0, 3).map((cp) => (
-                      <button
-                        key={cp.id}
-                        type="button"
-                        onClick={() => {
-                          setCouponCodeInput(cp.code);
-                          if (applyCoupon(cp.code)) {
-                            setCouponCodeInput('');
-                            triggerConfetti();
-                          }
-                        }}
-                        className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1 flex-shrink-0"
-                      >
-                        <Tag className="w-3 h-3 text-[#00A859]" />
-                        <span>{cp.code}</span>
-                        <span className="text-[#00A859]">• Tap to Apply</span>
-                      </button>
-                    ))}
+                  <div className="relative">
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar pt-1 pr-8">
+                      {coupons.slice(0, 3).map((cp) => (
+                        <button
+                          key={cp.id}
+                          type="button"
+                          onClick={() => {
+                            setCouponCodeInput(cp.code);
+                            if (applyCoupon(cp.code)) {
+                              setCouponCodeInput('');
+                              triggerConfetti();
+                            }
+                          }}
+                          className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1 flex-shrink-0"
+                        >
+                          <Tag className="w-3 h-3 text-[#00A859]" />
+                          <span>{cp.code}</span>
+                          <span className="text-[#00A859]">• Tap to Apply</span>
+                        </button>
+                      ))}
+                    </div>
+                    {/* Subtle right gradient fade indicating more coupons */}
+                    <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent" />
                   </div>
                 )}
               </div>

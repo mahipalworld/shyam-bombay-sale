@@ -88,8 +88,9 @@ export const PincodeChecker: React.FC<PincodeCheckerProps> = ({ onPincodeVerifie
         <form onSubmit={handleCheck} className="flex gap-2">
           <div className="relative flex-1">
             <input
-              type="text"
+              type="tel"
               inputMode="numeric"
+              pattern="[0-9]*"
               maxLength={6}
               value={pincode}
               onChange={(e) => {
