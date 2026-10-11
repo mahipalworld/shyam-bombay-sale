@@ -163,6 +163,7 @@ interface StoreContextType {
       keepCart?: boolean;
       pointsRedeemed?: number;
       pointsDiscount?: number;
+      prepaidDiscount?: number;
     }
   ) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
@@ -2574,13 +2575,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       keepCart?: boolean;
       pointsRedeemed?: number;
       pointsDiscount?: number;
+      prepaidDiscount?: number;
     }
   ) => {
     const orderNum = `SBS-${Math.floor(1000 + Math.random() * 9000)}`;
     const isUpi = paymentMethod.includes('UPI') || paymentMethod === 'UPI';
     const initialPaymentStatus: PaymentStatus = options?.paymentStatus || (isUpi ? 'PENDING' : 'PAYMENT_VERIFIED');
-    const finalDiscount = couponDiscount + (options?.pointsDiscount || 0);
-    const finalTotal = Math.max(0, cartTotal - (options?.pointsDiscount || 0));
+    const finalDiscount = couponDiscount + (options?.pointsDiscount || 0) + (options?.prepaidDiscount || 0);
+    const finalTotal = Math.max(0, cartTotal - (options?.pointsDiscount || 0) - (options?.prepaidDiscount || 0));
 
     // Auto-save address permanently if provided
     if (address && address.street) {
@@ -2611,6 +2613,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       trackingNumber: `TRK-SBS-${Math.floor(100000 + Math.random() * 900000)}`,
       estimatedDelivery: '3-4 Business Days',
       userId: currentUserIdRef.current || undefined,
+      prepaidDiscount: options?.prepaidDiscount || 0,
     };
 
     setOrders((prev) => [newOrder, ...prev]);
@@ -2682,8 +2685,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Create payment ledger record
     const payMethodMap: Record<string, PaymentRecord['method']> = {
       'Cash on Delivery': 'COD',
+      'COD': 'COD',
       'UPI (GPay / PhonePe)': 'UPI',
       'UPI': 'UPI',
+      'Online (Razorpay)': 'UPI',
+      'Razorpay': 'UPI',
       'Credit Card': 'Card',
       'Net Banking': 'Net Banking'
     };

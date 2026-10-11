@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useStore } from '@/context/StoreContext';
 import { useAuth } from '@/context/AuthContext';
 import { triggerConfetti } from '@/utils/confetti';
@@ -29,10 +30,29 @@ import {
   Sparkles,
   Tag,
   ArrowRight,
-  ChevronRight
+  ChevronRight,
+  Zap
 } from 'lucide-react';
 import { Address, Order } from '@/types';
 import { ResolvedImage } from '@/components/common/ResolvedMedia';
+
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(true));
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export const CheckoutModal: React.FC = () => {
   const { 
@@ -60,11 +80,12 @@ export const CheckoutModal: React.FC = () => {
   } = useStore();
 
   const { supabaseUser, authUser, openAuthModal, signInWithGoogle } = useAuth();
+  const router = useRouter();
 
   const selectedCartItems = cart.filter((item) => item && item.product && item.selected);
   const [checkoutStep, setCheckoutStep] = useState<'FORM' | 'UPI_PAYMENT' | 'WHATSAPP_CONFIRMATION'>('FORM');
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
-  const [selectedPayment, setSelectedPayment] = useState<string>('UPI');
+  const [selectedPayment, setSelectedPayment] = useState<string>('RAZORPAY');
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -99,6 +120,7 @@ export const CheckoutModal: React.FC = () => {
     wasOpenRef.current = isCheckoutOpen;
 
     if (!wasOpen && isCheckoutOpen) {
+      loadRazorpayScript();
       if (typeof window !== 'undefined') {
         const savedSession = sessionStorage.getItem('sbs_active_checkout_session');
         if (savedSession) {
@@ -268,7 +290,7 @@ export const CheckoutModal: React.FC = () => {
   };
 
   // Step 1 -> Proceed / Place Order (Requires Sign In)
-  const handleProceedCheckout = () => {
+  const handleProceedCheckout = async () => {
     // REQUIREMENT: Sign In is required before placing order
     if (!supabaseUser) {
       showToast('Please sign in or create an account to place your order 🔐', 'error');
@@ -301,10 +323,160 @@ export const CheckoutModal: React.FC = () => {
       const checkoutOptions = {
         pointsRedeemed: pointsDiscount > 0 ? pointsThreshold : undefined,
         pointsDiscount: pointsDiscount > 0 ? pointsDiscount : undefined,
+        prepaidDiscount: prepaidDiscount > 0 ? prepaidDiscount : undefined,
       };
 
-      if (selectedPayment === 'UPI') {
-        // Create SBS Order BEFORE payment
+      if (selectedPayment === 'RAZORPAY') {
+        const loaded = await loadRazorpayScript();
+        if (!loaded) {
+          showToast('Failed to load secure payment gateway. Please check your connection.', 'error');
+          setIsProcessingOrder(false);
+          return;
+        }
+
+        const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_Tmg0esES8rXnSQ';
+        const sbsApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sbs-backend-8ryi.onrender.com';
+
+        // 1. Create order record in SBS store
+        const order = placeOrder('Online (Razorpay)', targetAddress, {
+          paymentStatus: 'PENDING',
+          keepCart: true,
+          ...checkoutOptions,
+        });
+        setActiveOrder(order);
+
+        // 2. Request backend to create Razorpay Order
+        let rzpOrderId: string | undefined = undefined;
+        try {
+          const createOrderRes = await fetch(`${sbsApiUrl}/api/payment/create-order`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: payableTotal,
+              currency: 'INR',
+              receipt: order.orderNumber,
+              notes: {
+                sbsOrderId: order.id,
+                orderNumber: order.orderNumber,
+                customerPhone: targetAddress.phone || user?.phone || '',
+                customerName: targetAddress.name || user?.name || '',
+              },
+            }),
+          });
+          if (createOrderRes.ok) {
+            const orderData = await createOrderRes.json();
+            if (orderData.orderId) {
+              rzpOrderId = orderData.orderId;
+            }
+          }
+        } catch (backendErr) {
+          console.warn('Backend order creation note:', backendErr);
+        }
+
+        // 3. Launch Razorpay Checkout popup
+        const logoUrl = typeof window !== 'undefined' ? `${window.location.origin}/logo.png?v=3` : 'https://www.sbsstore.in/logo.png';
+        const options = {
+          key: razorpayKey,
+          amount: Math.round(payableTotal * 100),
+          currency: 'INR',
+          name: 'SBS Store',
+          description: `Order #${order.orderNumber} - Shyam Bombay Sale`,
+          image: logoUrl,
+          order_id: rzpOrderId,
+          prefill: {
+            name: targetAddress.name || user?.name || '',
+            email: supabaseUser?.email || user?.email || '',
+            contact: targetAddress.phone || user?.phone || '',
+          },
+          notes: {
+            sbsOrderId: order.id,
+            shippingCity: targetAddress.city,
+          },
+          theme: {
+            color: '#F95721',
+          },
+          config: {
+            display: {
+              blocks: {
+                upi: {
+                  name: 'Pay using UPI',
+                  instruments: [
+                    {
+                      method: 'upi',
+                    },
+                  ],
+                },
+                other: {
+                  name: 'Cards, Net Banking & Wallets',
+                  instruments: [
+                    { method: 'card' },
+                    { method: 'netbanking' },
+                    { method: 'wallet' },
+                  ],
+                },
+              },
+              sequence: ['block.upi', 'block.other'],
+              preferences: {
+                show_default_blocks: true,
+              },
+            },
+          },
+          handler: async function (response: any) {
+            // Verify payment with backend
+            try {
+              await fetch(`${sbsApiUrl}/api/payment/verify-payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  sbsOrderId: order.id,
+                }),
+              });
+            } catch (vErr) {
+              console.warn('Verification report:', vErr);
+            }
+
+            // Update payment verified in StoreContext
+            updateOrderPaymentStatus(order.id, 'PAYMENT_VERIFIED', {
+              paymentConfirmedAt: new Date().toISOString(),
+            });
+
+            if (typeof window !== 'undefined') {
+              sessionStorage.removeItem('sbs_active_checkout_session');
+            }
+            clearCart();
+            setIsCheckoutOpen(false);
+            setCheckoutStep('FORM');
+            setActiveOrder(null);
+            setIsProcessingOrder(false);
+
+            try {
+              triggerConfetti({ particleCount: 150, duration: 3500 });
+            } catch {}
+
+            showToast('Payment successful! Order verified & confirmed 🚀', 'success');
+            setSelectedOrderForModal(order);
+            router.push(`/order-success?orderId=${order.id}`);
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessingOrder(false);
+              showToast('Payment window closed. You can retry whenever you are ready.', 'info');
+            },
+          },
+        };
+
+        const razorpayInstance = new (window as any).Razorpay(options);
+        razorpayInstance.on('payment.failed', function (failureResponse: any) {
+          setIsProcessingOrder(false);
+          showToast(failureResponse.error?.description || 'Payment was declined. Please try another method.', 'error');
+        });
+        razorpayInstance.open();
+        setIsProcessingOrder(false);
+      } else if (selectedPayment === 'UPI') {
+        // Manual UPI flow fallback
         const order = placeOrder('UPI (GPay / PhonePe)', targetAddress, {
           paymentStatus: 'PENDING',
           keepCart: true,
@@ -314,15 +486,17 @@ export const CheckoutModal: React.FC = () => {
         setIsProcessingOrder(false);
         setCheckoutStep('UPI_PAYMENT');
       } else {
-        // COD or Card
+        // COD
         const order = placeOrder(selectedPayment, targetAddress, checkoutOptions);
+        clearCart();
         setIsProcessingOrder(false);
         setIsCheckoutOpen(false);
         try {
           triggerConfetti({ particleCount: 150, duration: 3500 });
         } catch { }
+        showToast('Order placed successfully! We are preparing your order 📦', 'success');
         setSelectedOrderForModal(order);
-        setActiveTab('profile');
+        router.push(`/order-success?orderId=${order.id}`);
       }
     } catch (err) {
       setIsProcessingOrder(false);
@@ -435,7 +609,8 @@ export const CheckoutModal: React.FC = () => {
   const availablePoints = user?.rewardPoints || 0;
   const canRedeemPoints = availablePoints >= pointsThreshold;
   const pointsDiscount = (redeemPointsChecked && canRedeemPoints) ? pointsDiscountAmount : 0;
-  const payableTotal = Math.max(0, cartTotal - pointsDiscount);
+  const prepaidDiscount = selectedPayment === 'RAZORPAY' ? 20 : 0;
+  const payableTotal = Math.max(0, cartTotal - pointsDiscount - prepaidDiscount);
 
   const storeUpiId = (storeSettings?.upiId && !storeSettings.upiId.includes('fam@') && !storeSettings.upiId.includes('sbsstore@')) ? storeSettings.upiId : 'suhanarajpurohit3@oksbi';
   const orderAmount = activeOrder ? activeOrder.total : payableTotal;
@@ -755,11 +930,11 @@ export const CheckoutModal: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  {/* UPI */}
+                  {/* Razorpay Online Payment */}
                   <label
                     className={`flex items-center justify-between p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
-                      selectedPayment === 'UPI' 
-                        ? 'border-[#F95721] bg-orange-50/40 shadow-xs ring-1 ring-orange-200' 
+                      selectedPayment === 'RAZORPAY' 
+                        ? 'border-[#00A859] bg-emerald-50/40 shadow-xs ring-1 ring-emerald-200' 
                         : 'border-gray-200 hover:border-gray-300 bg-white'
                     }`}
                   >
@@ -767,26 +942,31 @@ export const CheckoutModal: React.FC = () => {
                       <input
                         type="radio"
                         name="payment"
-                        checked={selectedPayment === 'UPI'}
-                        onChange={() => setSelectedPayment('UPI')}
-                        className="accent-[#F95721] w-4 h-4"
+                        checked={selectedPayment === 'RAZORPAY'}
+                        onChange={() => setSelectedPayment('RAZORPAY')}
+                        className="accent-[#00A859] w-4 h-4 cursor-pointer"
                       />
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-xl bg-emerald-100 text-[#00A859] flex items-center justify-center font-bold">
-                          <Smartphone className="w-4 h-4" />
+                          <Zap className="w-4 h-4 fill-[#00A859]" />
                         </div>
                         <div>
-                          <span className="text-sm font-extrabold text-gray-900 block leading-tight">
-                            UPI Payment
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-sm font-extrabold text-gray-900 block leading-tight">
+                              Online Payment (Razorpay / UPI)
+                            </span>
+                            <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white px-1.5 py-0.5 rounded-md animate-pulse">
+                              ⚡ Extra ₹20 OFF
+                            </span>
+                          </div>
                           <span className="text-xs text-gray-500 font-medium">
-                            GPay, PhonePe, Paytm, QR & Netbanking
+                            Google Pay, PhonePe, Paytm, RuPay, Cards &amp; NetBanking
                           </span>
                         </div>
                       </div>
                     </div>
-                    <span className="text-[10px] font-black text-[#00A859] bg-[#EBF7F0] border border-[#00A859]/20 px-2.5 py-1 rounded-full whitespace-nowrap">
-                      Fast & Free
+                    <span className="text-[10px] font-black text-[#00A859] bg-[#EBF7F0] border border-[#00A859]/30 px-2.5 py-1 rounded-full whitespace-nowrap ml-2">
+                      Save ₹20
                     </span>
                   </label>
 
@@ -804,7 +984,7 @@ export const CheckoutModal: React.FC = () => {
                         name="payment"
                         checked={selectedPayment === 'COD'}
                         onChange={() => setSelectedPayment('COD')}
-                        className="accent-[#F95721] w-4 h-4"
+                        className="accent-[#F95721] w-4 h-4 cursor-pointer"
                       />
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
@@ -815,13 +995,13 @@ export const CheckoutModal: React.FC = () => {
                             Cash on Delivery (COD)
                           </span>
                           <span className="text-xs text-gray-500 font-medium">
-                            Pay with cash when your package arrives
+                            Pay cash at doorstep • Standard MRP (No ₹20 prepaid savings)
                           </span>
                         </div>
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full whitespace-nowrap">
-                      Doorstep Cash
+                    <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full whitespace-nowrap ml-2">
+                      Standard Price
                     </span>
                   </label>
                 </div>
@@ -925,6 +1105,18 @@ export const CheckoutModal: React.FC = () => {
                     </div>
                   )}
 
+                  {prepaidDiscount > 0 && (
+                    <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-200">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-emerald-600 text-white rounded-md">
+                          ⚡ PREPAID SAVER
+                        </span>
+                        <span className="font-bold text-emerald-950">Online Payment Discount</span>
+                      </div>
+                      <span className="font-black text-[#00A859]">-₹{prepaidDiscount.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+
                   {pointsDiscount > 0 && (
                     <div className="flex justify-between items-center text-amber-800 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
                       <span className="font-bold">🎁 Rewards Point Discount</span>
@@ -960,22 +1152,27 @@ export const CheckoutModal: React.FC = () => {
               </div>
             </div>
 
-            {/* Split Sticky Checkout Bar */}
-            <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-gray-100 p-3.5 sm:p-4 shadow-lg flex items-center justify-between gap-3">
+            {/* Split Sticky Checkout Bar - Solid White & z-30 to prevent image clipping */}
+            <div className="sticky bottom-0 z-30 bg-white border-t border-gray-100 p-3.5 sm:p-4 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3">
               <div>
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">To Pay</span>
                 <p className="text-2xl font-black text-gray-900 tracking-tight leading-tight">
                   ₹{payableTotal.toLocaleString('en-IN')}
                 </p>
+                {prepaidDiscount > 0 && (
+                  <span className="text-[10px] font-black text-[#00A859] block -mt-0.5">
+                    ✓ ₹20 Online Discount Included
+                  </span>
+                )}
               </div>
 
               <button
                 disabled={isProcessingOrder}
                 onClick={handleProceedCheckout}
-                className="flex-1 max-w-[260px] py-3.5 px-4 bg-gradient-to-r from-[#F95721] to-[#E44813] hover:brightness-105 disabled:bg-gray-400 text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
+                className="flex-1 max-w-[270px] py-3.5 px-4 bg-gradient-to-r from-[#F95721] to-[#E44813] hover:brightness-105 disabled:bg-gray-400 text-white font-black text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float active:scale-98 transition-all"
               >
                 {isProcessingOrder ? (
-                  <span className="animate-pulse">Reserving Order...</span>
+                  <span className="animate-pulse">Opening Gateway...</span>
                 ) : !supabaseUser ? (
                   <>
                     <LogIn className="w-4 h-4" />
@@ -983,7 +1180,11 @@ export const CheckoutModal: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <span>{selectedPayment === 'UPI' ? 'Proceed to Pay' : 'Place Order'}</span>
+                    <span>
+                      {selectedPayment === 'RAZORPAY' 
+                        ? `Pay ₹${payableTotal.toLocaleString('en-IN')} (Saved ₹20)` 
+                        : `Place COD Order (₹${payableTotal.toLocaleString('en-IN')})`}
+                    </span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}

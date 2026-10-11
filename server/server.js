@@ -10,6 +10,8 @@ const {
   ListObjectsV2Command 
 } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const crypto = require('crypto');
+const Razorpay = require('razorpay');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 require('dotenv').config();
 
@@ -45,7 +47,17 @@ const s3Client = isS3Configured ? new S3Client({
   },
 }) : null;
 
-// CORS configuration supporting frontend deployments and localhost
+// Razorpay Payment Gateway Configuration
+const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
+const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
+const isRazorpayConfigured = Boolean(razorpayKeyId && razorpayKeySecret);
+
+const razorpay = isRazorpayConfigured ? new Razorpay({
+  key_id: razorpayKeyId,
+  key_secret: razorpayKeySecret,
+}) : null;
+
+// CORS configuration supporting verified frontend deployments and localhost
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'https://sbs-store.pages.dev',
@@ -59,17 +71,23 @@ const allowedOrigins = [
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    if (
-      allowedOrigins.length === 0 ||
-      allowedOrigins.includes(origin) ||
-      origin.endsWith('.pages.dev') ||
-      origin.endsWith('sbsstore.in') ||
-      origin.includes('localhost') ||
-      origin.includes('127.0.0.1')
-    ) {
-      return callback(null, true);
-    }
-    return callback(new Error('Not allowed by CORS'));
+    try {
+      const parsed = new URL(origin);
+      const isAllowed = 
+        allowedOrigins.includes(origin) ||
+        parsed.hostname === 'sbsstore.in' ||
+        parsed.hostname === 'www.sbsstore.in' ||
+        parsed.hostname === 'sbs-store.pages.dev' ||
+        parsed.hostname.endsWith('.sbs-store.pages.dev') ||
+        parsed.hostname.endsWith('.ngrok-free.dev') ||
+        parsed.hostname === 'localhost' ||
+        parsed.hostname === '127.0.0.1';
+
+      if (isAllowed) {
+        return callback(null, true);
+      }
+    } catch (e) { }
+    return callback(new Error('Not allowed by CORS policy'));
   },
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-SBS-Admin-Role', 'Accept']
@@ -77,7 +95,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 
-// Helper: Verify Admin Role
+// Helper: Verify Admin Role Strictly Via Authenticated Supabase JWT
 const PRIMARY_ADMIN_EMAILS = [
   'mahipalstudent71@gmail.com',
   'shyambombaysale@gmail.com',
@@ -87,10 +105,8 @@ const PRIMARY_ADMIN_EMAILS = [
 
 async function verifyAdminAuth(req) {
   const authHeader = req.headers.authorization;
-  const adminRoleHeader = req.headers['x-sbs-admin-role'];
-  const origin = req.headers.origin;
 
-  // 1. Check if request carries a Supabase Bearer token
+  // 1. Require a verified Supabase Bearer token for administrative operations
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
     if (token && supabase) {
@@ -114,29 +130,15 @@ async function verifyAdminAuth(req) {
           }
         }
       } catch (err) {
-        console.warn('Supabase token verification check:', err.message);
+        console.warn('Supabase token verification check error:', err.message);
       }
     }
   }
 
-  // 2. Allow verified store origins with admin role header
-  const isAllowedOrigin = !origin || 
-    origin.includes('sbsstore.in') || 
-    origin.includes('sbs-store.pages.dev') || 
-    origin.includes('localhost') || 
-    origin.includes('127.0.0.1');
-
-  if (isAllowedOrigin && ['OWNER', 'MANAGER', 'MARKETING', 'STAFF'].includes(adminRoleHeader)) {
-    return { authorized: true, role: adminRoleHeader, user: { email: PRIMARY_ADMIN_EMAILS[0] } };
-  }
-
-  // 3. Fallback for non-production environments
-  if (!supabase || process.env.NODE_ENV !== 'production') {
-    return { authorized: true, user: { email: PRIMARY_ADMIN_EMAILS[0] }, role: 'OWNER' };
-  }
-
-  return { authorized: false, reason: 'Missing or unauthorized admin credentials' };
+  // Reject unauthenticated requests or spoofed headers
+  return { authorized: false, reason: 'Unauthorized: A verified administrator session is required.' };
 }
+
 
 // Health Check Endpoint
 app.get('/health', (req, res) => {
@@ -535,7 +537,144 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
+// ==========================================
+// Razorpay Payment Gateway Endpoints
+// ==========================================
+
+// 1. Payment Gateway Configuration Status
+app.get('/api/payment/config', (req, res) => {
+  res.json({
+    configured: isRazorpayConfigured,
+    keyId: isRazorpayConfigured ? razorpayKeyId : null,
+  });
+});
+
+// 2. Create Razorpay Order
+app.post('/api/payment/create-order', async (req, res) => {
+  try {
+    if (!isRazorpayConfigured || !razorpay) {
+      return res.status(503).json({ error: 'Razorpay is not configured on the server.' });
+    }
+
+    const { amount, currency = 'INR', receipt, notes } = req.body;
+    let verifiedAmount = Number(amount);
+
+    if (!verifiedAmount || isNaN(verifiedAmount) || verifiedAmount <= 0) {
+      return res.status(400).json({ error: 'Valid positive payment amount is required.' });
+    }
+
+    // Server-side price tampering verification against registered Supabase order
+    const sbsOrderId = notes?.sbsOrderId;
+    if (sbsOrderId && supabase) {
+      try {
+        const { data: orderRecord, error: orderErr } = await supabase
+          .from('orders')
+          .select('id, total, status')
+          .eq('id', sbsOrderId)
+          .single();
+
+        if (!orderErr && orderRecord && orderRecord.total !== undefined) {
+          const dbTotal = Number(orderRecord.total);
+          // If customer-sent amount deviates from registered order total, lock to verified database total
+          if (Math.abs(verifiedAmount - dbTotal) > 0.5) {
+            console.warn(`Price tampering detected for order ${sbsOrderId}: Client sent ₹${verifiedAmount}, DB record is ₹${dbTotal}`);
+            return res.status(400).json({ 
+              error: `Amount mismatch detected. Order total is ₹${dbTotal}. Please refresh checkout.` 
+            });
+          }
+          verifiedAmount = dbTotal;
+        }
+      } catch (dbCheckErr) {
+        console.warn('Order amount verification note:', dbCheckErr.message);
+      }
+    }
+
+    // Razorpay amount is in paise (1 INR = 100 paise)
+    const amountInPaise = Math.round(verifiedAmount * 100);
+
+    const orderOptions = {
+      amount: amountInPaise,
+      currency: currency || 'INR',
+      receipt: receipt || `rcpt_${Date.now()}`,
+      notes: notes || {}
+    };
+
+    const razorpayOrder = await razorpay.orders.create(orderOptions);
+
+    res.json({
+      success: true,
+      orderId: razorpayOrder.id,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      keyId: razorpayKeyId,
+    });
+  } catch (err) {
+    console.error('Razorpay create-order error:', err);
+    res.status(500).json({ 
+      error: 'Failed to create payment order: ' + (err.description || err.message) 
+    });
+  }
+});
+
+// 3. Verify Razorpay Payment Signature
+app.post('/api/payment/verify-payment', async (req, res) => {
+  try {
+    if (!isRazorpayConfigured || !razorpayKeySecret) {
+      return res.status(503).json({ error: 'Razorpay is not configured on the server.' });
+    }
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, sbsOrderId } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ error: 'Missing required Razorpay payment verification fields.' });
+    }
+
+    // Cryptographic HMAC SHA256 verification
+    const expectedSignature = crypto
+      .createHmac('sha256', razorpayKeySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex');
+
+    // Prevent timing attacks using crypto.timingSafeEqual
+    const expectedBuf = Buffer.from(expectedSignature, 'utf8');
+    const receivedBuf = Buffer.from(razorpay_signature, 'utf8');
+
+    const isValid = expectedBuf.length === receivedBuf.length && crypto.timingSafeEqual(expectedBuf, receivedBuf);
+
+    if (!isValid) {
+      return res.status(400).json({ success: false, error: 'Payment verification failed: Invalid signature.' });
+    }
+
+    // If SBS Order ID provided, update Supabase order record
+    if (supabase && sbsOrderId) {
+      try {
+        await supabase
+          .from('orders')
+          .update({
+            payment_status: 'PAYMENT_VERIFIED',
+            payment_confirmed_at: new Date().toISOString(),
+          })
+          .eq('id', sbsOrderId);
+      } catch (dbErr) {
+        console.warn('Could not auto-update order status in Supabase:', dbErr.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      verified: true,
+      paymentId: razorpay_payment_id,
+      orderId: razorpay_order_id,
+      message: 'Payment verified successfully.'
+    });
+  } catch (err) {
+    console.error('Razorpay verify-payment error:', err);
+    res.status(500).json({ error: 'Payment verification failed: ' + err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`SBS Backend API listening on port ${PORT}`);
   console.log(`AWS S3 Storage module: ${isS3Configured ? 'ENABLED (' + s3Bucket + ' in ' + s3Region + ')' : 'DISABLED'}`);
+  console.log(`Razorpay Gateway module: ${isRazorpayConfigured ? 'ENABLED (' + razorpayKeyId + ')' : 'DISABLED'}`);
 });

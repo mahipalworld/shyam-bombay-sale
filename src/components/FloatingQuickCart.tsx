@@ -6,10 +6,11 @@ import { ShoppingBag, ArrowRight, Sparkles, Truck } from 'lucide-react';
 import { ResolvedImage } from '@/components/common/ResolvedMedia';
 
 export const FloatingQuickCart: React.FC = () => {
-  const { cart, activeTab, setActiveTab, cartSubtotal, storeSettings } = useStore();
+  const { cart, activeTab, setActiveTab, cartSubtotal, storeSettings, isCheckoutOpen } = useStore();
 
-  // Don't show if cart is empty or user is on Cart, Admin, Categories, or Profile view
+  // Don't show if checkout is open, cart is empty, or user is on Cart, Admin, Categories, or Profile view
   if (
+    isCheckoutOpen ||
     cart.length === 0 || 
     activeTab === 'cart' || 
     activeTab === 'admin' || 

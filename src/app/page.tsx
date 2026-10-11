@@ -137,12 +137,14 @@ export default function App() {
               </div>
 
               <div className="space-y-2 text-xs">
-                <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Customer Support</h4>
+                <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Customer Support &amp; Legal</h4>
                 <ul className="space-y-1 text-gray-400">
-                  <li><button onClick={() => setIsHelpCenterOpen(true)} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Help Center & Support</button></li>
+                  <li><button onClick={() => setIsHelpCenterOpen(true)} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Help Center &amp; Support</button></li>
                   <li><button onClick={() => setActiveTab('profile')} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Track Your Order</button></li>
-                  <li><button onClick={() => setIsHelpCenterOpen(true)} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Return & Refund Policy</button></li>
-                  <li><button onClick={() => setIsHelpCenterOpen(true)} className="py-1 inline-block hover:text-[#F95721] transition-colors text-left">Store Location & Directions</button></li>
+                  <li><a href="/refund-policy" className="py-1 inline-block hover:text-[#F95721] transition-colors">Return &amp; Refund Policy</a></li>
+                  <li><a href="/shipping-policy" className="py-1 inline-block hover:text-[#F95721] transition-colors">Shipping &amp; Delivery Policy</a></li>
+                  <li><a href="/terms" className="py-1 inline-block hover:text-[#F95721] transition-colors">Terms &amp; Conditions</a></li>
+                  <li><a href="/privacy" className="py-1 inline-block hover:text-[#F95721] transition-colors">Privacy Policy</a></li>
                 </ul>
               </div>
 
@@ -158,8 +160,15 @@ export default function App() {
               </div>
             </div>
 
-            <div className="pt-6 border-t border-gray-800 flex justify-between items-center text-xs text-gray-400">
-              <p>© {new Date().getFullYear()} SBS Store — Shyam Bombay Sale. All rights reserved.</p>
+            <div className="pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-gray-400">
+              <div className="flex flex-wrap items-center gap-3">
+                <p>© {new Date().getFullYear()} SBS Store — Shyam Bombay Sale. All rights reserved.</p>
+                <span className="hidden md:inline text-gray-600">•</span>
+                <a href="/terms" className="hover:text-[#F95721] transition-colors">Terms</a>
+                <a href="/privacy" className="hover:text-[#F95721] transition-colors">Privacy</a>
+                <a href="/refund-policy" className="hover:text-[#F95721] transition-colors">Refunds</a>
+                <a href="/shipping-policy" className="hover:text-[#F95721] transition-colors">Shipping</a>
+              </div>
               <p className="flex items-center gap-1">Made with <Heart className="w-3.5 h-3.5 fill-[#F95721] text-[#F95721]" /> for Smart Living</p>
             </div>
           </div>

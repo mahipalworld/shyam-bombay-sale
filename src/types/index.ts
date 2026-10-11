@@ -130,6 +130,7 @@ export interface Order {
   trackingNumber?: string;
   estimatedDelivery?: string;
   userId?: string;
+  prepaidDiscount?: number;
 }
 
 export interface Coupon {
