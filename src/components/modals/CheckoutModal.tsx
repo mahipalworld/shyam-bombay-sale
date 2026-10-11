@@ -334,7 +334,7 @@ export const CheckoutModal: React.FC = () => {
           return;
         }
 
-        const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_Tmg0esES8rXnSQ';
+        const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TmiU1QiCGShTMs';
         const sbsApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sbs-backend-8ryi.onrender.com';
 
         // 1. Create order record in SBS store
