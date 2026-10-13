@@ -102,7 +102,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   };
 
   return (
-    <div className="space-y-4 pb-28 animate-fadeIn">
+    <div className="space-y-4 pb-40 sm:pb-24 animate-fadeIn">
       {/* Top Action & Title Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
@@ -320,34 +320,30 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 {/* Top Row: Thumbnail + Info */}
                 <div className="flex items-start gap-3">
                   {/* Large Product Thumbnail */}
-                  <div className="w-20 h-20 rounded-2xl bg-gray-50 p-1.5 flex items-center justify-center flex-shrink-0 border border-gray-100 relative overflow-hidden">
+                  <div className="w-20 h-20 rounded-2xl bg-gray-50 p-1.5 flex items-center justify-center flex-shrink-0 border border-gray-100 overflow-hidden">
                     <ResolvedImage src={p.image} alt={p.name} className="w-full h-full object-contain" />
-                    
-                    {/* Media count indicators */}
-                    <div className="absolute bottom-1 right-1 flex items-center gap-1">
-                      {photoCount > 1 && (
-                        <span className="text-[9px] font-bold bg-black/60 text-white px-1 py-0.2 rounded">
-                          📷 {photoCount}
-                        </span>
-                      )}
-                      {hasVideo && (
-                        <span className="text-[9px] font-bold bg-purple-600 text-white px-1 py-0.2 rounded">
-                          🎥
-                        </span>
-                      )}
-                    </div>
                   </div>
 
                   {/* Title & Metadata */}
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center justify-between gap-1 flex-wrap">
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 flex-wrap">
                         <span className="text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md truncate">
                           {p.category}
                         </span>
                         {p.subcategory && (
                           <span className="text-[10px] font-bold text-[#F95721] bg-orange-50 px-2 py-0.5 rounded-md truncate border border-orange-200/60 capitalize">
                             {p.subcategory}
+                          </span>
+                        )}
+                        {photoCount > 1 && (
+                          <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                            📷 {photoCount}
+                          </span>
+                        )}
+                        {hasVideo && (
+                          <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded-md border border-purple-200">
+                            🎥
                           </span>
                         )}
                       </div>

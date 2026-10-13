@@ -102,7 +102,7 @@ export interface Address {
 
 export type OrderStatus = 'To Pay' | 'Processing' | 'Shipped' | 'Delivered' | 'Returns' | 'Cancelled';
 
-export type PaymentStatus = 'PENDING' | 'CUSTOMER_CONFIRMED' | 'PAYMENT_VERIFIED' | 'PAYMENT_FAILED';
+export type PaymentStatus = 'PENDING' | 'CUSTOMER_CONFIRMED' | 'PAYMENT_VERIFIED' | 'PAYMENT_FAILED' | 'CANCELLED';
 
 export interface OrderItem {
   productId: string;
@@ -205,12 +205,20 @@ export interface ReturnRequest {
   id: string;
   orderId: string;
   customerName: string;
+  customerPhone?: string;
+  customerAddress?: string;
   productName: string;
   productImage: string;
   reason: string;
   date: string;
   status: 'Pending' | 'Approved' | 'Rejected' | 'Refunded';
   amount: number;
+  pickupStatus?: 'Pending' | 'Scheduled' | 'Picked Up' | 'Inspected';
+  pickupCourier?: string;
+  pickupTrackingNumber?: string;
+  inspectionNotes?: string;
+  refundTxnId?: string;
+  refundMethod?: string;
 }
 
 export interface PaymentRecord {
@@ -219,7 +227,7 @@ export interface PaymentRecord {
   customerName: string;
   amount: number;
   method: 'UPI' | 'Card' | 'Net Banking' | 'COD';
-  status: 'Success' | 'Pending' | 'Failed' | 'Refunded' | 'Customer Confirmed' | 'Verified';
+  status: 'Success' | 'Pending' | 'Failed' | 'Refunded' | 'Customer Confirmed' | 'Verified' | 'Cancelled';
   timestamp: string;
 }
 

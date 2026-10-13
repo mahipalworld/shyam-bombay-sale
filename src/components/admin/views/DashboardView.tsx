@@ -29,7 +29,11 @@ import {
   Percent,
   Activity,
   Flame,
-  Check
+  Check,
+  ScanLine,
+  CreditCard,
+  Truck,
+  Layers
 } from 'lucide-react';
 import { AdminActiveTab } from '../AdminMobileNav';
 import { Product, Order } from '@/types';
@@ -61,7 +65,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     products, 
     user, 
     storeSettings, 
-    updateProduct,
+    updateProduct, 
     showToast,
     refreshOrders,
     returnRequests
@@ -72,6 +76,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [adminOrders, orders]);
 
   const [dateRange, setDateRange] = useState<'today' | '7d' | '30d'>('today');
+  const [chartMetric, setChartMetric] = useState<'revenue' | 'orders'>('revenue');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeChartPoint, setActiveChartPoint] = useState<ChartDataPoint | null>(null);
 
@@ -158,11 +163,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     }
 
     const cur = allOrdersList.filter(o => {
+      if (o.status === 'Cancelled') return false;
       const t = new Date(o.createdAt).getTime();
       return !isNaN(t) && t >= currentStart && t <= currentEnd;
     });
 
     const prev = allOrdersList.filter(o => {
+      if (o.status === 'Cancelled') return false;
       const t = new Date(o.createdAt).getTime();
       return !isNaN(t) && t >= prevStart && t <= prevEnd;
     });
@@ -186,9 +193,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return Math.round(((displayRevenue - previousRevenue) / previousRevenue) * 100);
   }, [displayRevenue, previousRevenue]);
 
-  // Total store lifetime revenue
+  // Total store lifetime revenue (excluding cancelled orders)
   const lifetimeRevenue = useMemo(() => {
-    return allOrdersList.reduce((sum, o) => sum + (o.total || 0), 0);
+    return allOrdersList.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (o.total || 0), 0);
   }, [allOrdersList]);
 
   // Orders metrics & dispatch rates
@@ -203,10 +210,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [displayOrders, dispatchedOrdersCount]);
 
   const pendingOrdersCount = useMemo(() => {
-    return currentOrders.filter(o => o.status === 'Processing' || o.status === 'To Pay').length;
+    return currentOrders.filter(o => o.status !== 'Cancelled' && (o.status === 'Processing' || o.status === 'To Pay')).length;
   }, [currentOrders]);
 
-  // Customer Analytics (Unique customer aggregation)
+  // Customer Analytics
   const customerAnalytics = useMemo(() => {
     const customerMap = new Map<string, { id: string; ordersCount: number; firstOrderTime: number }>();
     
@@ -264,7 +271,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Operational Pulse Metrics
   const pendingPaymentCount = useMemo(() => {
-    return allOrdersList.filter(o => o.paymentStatus === 'PENDING' || o.status === 'To Pay').length;
+    return allOrdersList.filter(o => 
+      o.status !== 'Cancelled' && 
+      o.status !== 'Delivered' && 
+      o.status !== 'Shipped' && 
+      o.status !== 'Returns' && 
+      (
+        o.paymentStatus === 'CUSTOMER_CONFIRMED' || 
+        o.status === 'Processing' || 
+        (o.status === 'To Pay' && o.paymentStatus !== 'PAYMENT_FAILED' && o.paymentStatus !== 'CANCELLED')
+      )
+    ).length;
   }, [allOrdersList]);
 
   const pendingReturnsCount = useMemo(() => {
@@ -277,11 +294,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return 0;
   }, [displayOrders, displayRevenue, allOrdersList.length, lifetimeRevenue]);
 
-  // Real Top Performing Products from Genuine Order Line Items
+  // Top Performing Products
   const topPerformingProducts = useMemo(() => {
     const salesMap = new Map<string, { unitsSold: number; totalSales: number }>();
 
-    // Count items across all orders
     allOrdersList.forEach(o => {
       o.items?.forEach(item => {
         const pId = item.productId;
@@ -297,8 +313,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
     const hasAnyRealSales = salesMap.size > 0;
 
-    // Map each catalog product with actual sales metrics
-    const enriched = products.map(p => {
+    const catalogWithSales = products.map(p => {
       const sales = salesMap.get(p.id) || { unitsSold: 0, totalSales: 0 };
       return {
         product: p,
@@ -308,80 +323,67 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     });
 
     if (hasAnyRealSales) {
-      enriched.sort((a, b) => b.unitsSold - a.unitsSold || b.totalSales - a.totalSales);
+      catalogWithSales.sort((a, b) => b.unitsSold - a.unitsSold || b.totalSales - a.totalSales);
     } else {
-      // Fallback to stock availability or catalog order
-      enriched.sort((a, b) => (b.product.reviewCount || 0) - (a.product.reviewCount || 0));
+      catalogWithSales.sort((a, b) => (b.product.stockCount || 0) - (a.product.stockCount || 0));
     }
 
     return {
-      items: enriched.slice(0, 4),
+      items: catalogWithSales.slice(0, 5),
       hasRealSales: hasAnyRealSales,
     };
   }, [allOrdersList, products]);
 
-  // --- DYNAMIC REVENUE TRAJECTORY CHART GENERATOR ---
+  // Chart Data Preparation (Supports both Revenue and Orders metrics!)
   const chartData = useMemo(() => {
+    const now = new Date();
+    const buckets: { label: string; subLabel: string; startTime: number; endTime: number; revenue: number; ordersCount: number }[] = [];
+
     const svgWidth = 500;
     const svgHeight = 130;
-    const padTop = 16;
-    const padBottom = 26;
-    const padLeft = 20;
-    const padRight = 20;
-
+    const padLeft = 24;
+    const padRight = 24;
+    const padBottom = 22;
+    const padTop = 18;
     const usableWidth = svgWidth - padLeft - padRight;
     const usableHeight = svgHeight - padTop - padBottom;
 
-    interface Bucket {
-      label: string;
-      subLabel: string;
-      startTime: number;
-      endTime: number;
-      revenue: number;
-      ordersCount: number;
-    }
-
-    const now = new Date();
-    const buckets: Bucket[] = [];
-
     if (dateRange === 'today') {
-      // 6 time buckets across today: 0-4, 4-8, 8-12, 12-16, 16-20, 20-24
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
-      const slotDuration = 4 * 60 * 60 * 1000;
-      const slotLabels = ['4 AM', '8 AM', '12 PM', '4 PM', '8 PM', '12 AM'];
-      const slotSubLabels = ['00:00 - 04:00', '04:00 - 08:00', '08:00 - 12:00', '12:00 - 16:00', '16:00 - 20:00', '20:00 - 24:00'];
+      const slots = [
+        { label: 'Morning', subLabel: '6 AM - 12 PM', startH: 6, endH: 12 },
+        { label: 'Afternoon', subLabel: '12 PM - 4 PM', startH: 12, endH: 16 },
+        { label: 'Evening', subLabel: '4 PM - 8 PM', startH: 16, endH: 20 },
+        { label: 'Night', subLabel: '8 PM - 12 AM', startH: 20, endH: 24 },
+      ];
 
-      for (let i = 0; i < 6; i++) {
-        const slotStart = startOfToday + i * slotDuration;
-        const slotEnd = slotStart + slotDuration - 1;
+      slots.forEach(s => {
+        const dStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), s.startH, 0, 0);
+        const dEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), s.endH - 1, 59, 59);
         buckets.push({
-          label: slotLabels[i],
-          subLabel: slotSubLabels[i],
-          startTime: slotStart,
-          endTime: slotEnd,
+          label: s.label,
+          subLabel: s.subLabel,
+          startTime: dStart.getTime(),
+          endTime: dEnd.getTime(),
           revenue: 0,
           ordersCount: 0,
         });
-      }
+      });
     } else if (dateRange === '7d') {
-      // 7 calendar days up to today
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       for (let i = 6; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i, 0, 0, 0, 0);
-        const dayStart = d.getTime();
-        const dayEnd = dayStart + 24 * 60 * 60 * 1000 - 1;
-        const isCurrentDay = i === 0;
+        const dStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i, 0, 0, 0, 0);
+        const dEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i, 23, 59, 59, 999);
         buckets.push({
-          label: isCurrentDay ? 'Today' : `${dayNames[d.getDay()]} ${d.getDate()}`,
-          subLabel: d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
-          startTime: dayStart,
-          endTime: dayEnd,
+          label: i === 0 ? 'Today' : dayNames[dStart.getDay()],
+          subLabel: `${dStart.getDate()} ${dStart.toLocaleDateString('en-IN', { month: 'short' })}`,
+          startTime: dStart.getTime(),
+          endTime: dEnd.getTime(),
           revenue: 0,
           ordersCount: 0,
         });
       }
     } else {
-      // 30 days broken into 5 intervals (6 days each)
+      // 30 days broken into 5 intervals
       for (let i = 4; i >= 0; i--) {
         const dStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (i + 1) * 6, 0, 0, 0, 0);
         const dEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i * 6, 23, 59, 59, 999);
@@ -397,7 +399,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       }
     }
 
-    // Populate bucket revenues from real orders
+    // Populate bucket metrics
     allOrdersList.forEach(o => {
       const t = new Date(o.createdAt).getTime();
       if (isNaN(t)) return;
@@ -408,12 +410,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       }
     });
 
-    const maxRevenue = Math.max(...buckets.map(b => b.revenue), 1000);
+    const isRevenueMode = chartMetric === 'revenue';
+    const maxVal = isRevenueMode 
+      ? Math.max(...buckets.map(b => b.revenue), 1000)
+      : Math.max(...buckets.map(b => b.ordersCount), 5);
 
-    // Compute coordinate points
+    // Coordinate mapping
     const points: ChartDataPoint[] = buckets.map((b, idx) => {
       const x = padLeft + (idx / (buckets.length - 1)) * usableWidth;
-      const y = (svgHeight - padBottom) - (b.revenue / maxRevenue) * usableHeight;
+      const val = isRevenueMode ? b.revenue : b.ordersCount;
+      const y = (svgHeight - padBottom) - (val / maxVal) * usableHeight;
       return {
         label: b.label,
         subLabel: b.subLabel,
@@ -424,12 +430,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       };
     });
 
-    // Create SVG Path string
+    // Cubic bezier path
     let pathD = `M ${points[0].x} ${points[0].y}`;
     for (let i = 1; i < points.length; i++) {
       const prev = points[i - 1];
       const cur = points[i];
-      // Smooth cubic bezier control points
       const cx1 = prev.x + (cur.x - prev.x) / 2;
       const cy1 = prev.y;
       const cx2 = prev.x + (cur.x - prev.x) / 2;
@@ -439,18 +444,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
     const baselineY = svgHeight - padBottom;
     const areaD = `${pathD} L ${points[points.length - 1].x} ${baselineY} L ${points[0].x} ${baselineY} Z`;
-
-    const hasAnySalesInPeriod = buckets.some(b => b.revenue > 0);
+    const hasAnyActivity = buckets.some(b => b.revenue > 0 || b.ordersCount > 0);
 
     return {
       points,
       pathD,
       areaD,
       baselineY,
-      maxRevenue,
-      hasAnySalesInPeriod,
+      hasAnyActivity,
     };
-  }, [allOrdersList, dateRange]);
+  }, [allOrdersList, dateRange, chartMetric]);
 
   // Quick Restock helper
   const handleQuickRestock = (p: Product) => {
@@ -468,23 +471,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       : '30-Day Revenue';
 
   return (
-    <div className="space-y-6 pb-24 animate-fadeIn">
-      {/* 1. Header Greeting, Live Status & Range Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-gray-100 p-4 sm:p-5 rounded-3xl shadow-xs">
+    <div className="space-y-4 sm:space-y-6 pb-20 lg:pb-8 animate-fadeIn">
+      {/* ========================================================= */}
+      {/* 1. EXECUTIVE HEADER: Greeting, Live Status & Range Selector */}
+      {/* ========================================================= */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 bg-white border border-slate-200/80 p-4 sm:p-5 rounded-3xl shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-black text-[#F95721] uppercase tracking-wider">
+            <span className="text-[10px] font-black text-[#F95721] uppercase tracking-wider">
               SBS Executive Suite
             </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/50">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Live Store
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight mt-0.5">
+          <h1 className="text-lg sm:text-2xl font-black text-slate-900 leading-tight mt-0.5">
             {greeting}, Store Admin 👋
           </h1>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Real-time business performance from verified orders and catalog inventory.
           </p>
         </div>
@@ -495,12 +500,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onClick={handleManualRefresh}
             disabled={isRefreshing}
             title="Sync metrics with live database"
-            className="p-2 rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 transition-all hover:text-gray-900 active:scale-95 flex items-center justify-center"
+            className="p-2 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 transition-all hover:text-slate-900 active:scale-95 flex items-center justify-center shadow-3xs"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#F95721]' : ''}`} />
           </button>
 
-          <div className="bg-gray-100 p-1 rounded-2xl flex gap-1 border border-gray-200/60">
+          <div className="bg-slate-100 p-1 rounded-2xl flex gap-1 border border-slate-200/70">
             {(['today', '7d', '30d'] as const).map((rng) => (
               <button
                 key={rng}
@@ -511,18 +516,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all uppercase ${
                   dateRange === rng
                     ? 'bg-white text-[#F95721] shadow-xs'
-                    : 'text-gray-500 hover:text-gray-900'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 {rng}
               </button>
             ))}
           </div>
+
+          <button
+            onClick={onOpenAddProduct}
+            className="hidden md:flex items-center gap-1.5 px-3.5 py-2 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-2xl shadow-xs shadow-orange-500/20 active:scale-95 transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Product</span>
+          </button>
         </div>
       </div>
 
-      {/* 2. Key Metrics 4-Column Responsive Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+      {/* ========================================================= */}
+      {/* 2. 4-CARD EXECUTIVE KPI GRID (Responsive 2x2 on Mobile, 4x1 on Desktop) */}
+      {/* ========================================================= */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Metric 1: Total Sales */}
         <div className="bg-gradient-to-br from-[#F95721] to-[#E44813] text-white p-4 sm:p-5 rounded-3xl shadow-sm space-y-1.5 relative overflow-hidden group">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform" />
@@ -532,8 +547,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <TrendingUp className="w-4 h-4 text-white" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black tracking-tight">₹{displayRevenue.toLocaleString('en-IN')}</p>
-          <div className="flex items-center gap-1.5 text-xs text-white/90 font-medium">
+          <p className="text-xl sm:text-3xl font-black tracking-tight">₹{displayRevenue.toLocaleString('en-IN')}</p>
+          <div className="flex items-center gap-1.5 text-xs text-white/90 font-medium flex-wrap">
             <span className="bg-white/20 px-1.5 py-0.5 rounded-md font-bold inline-flex items-center gap-0.5">
               {revenueGrowth >= 0 ? (
                 <>
@@ -547,54 +562,54 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </>
               )}
             </span>
-            <span className="text-white/80 text-[11px] truncate">{comparisonLabel}</span>
+            <span className="text-white/80 text-[10px] sm:text-[11px] truncate">{comparisonLabel}</span>
           </div>
         </div>
 
         {/* Metric 2: Total Orders */}
-        <div className="bg-white border border-gray-100 p-4 sm:p-5 rounded-3xl shadow-2xs space-y-1.5 hover:border-gray-200 transition-all">
-          <div className="flex items-center justify-between text-gray-400">
+        <div className="bg-white border border-slate-200/80 p-4 sm:p-5 rounded-3xl shadow-2xs space-y-1.5 hover:border-slate-300 transition-all">
+          <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Orders</span>
             <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
               <ShoppingBag className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-gray-900">{displayOrders}</p>
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium truncate">
+          <p className="text-xl sm:text-3xl font-black text-slate-900">{displayOrders}</p>
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium truncate">
             {displayOrders > 0 ? (
               <>
-                <span className={dispatchRate >= 75 ? "text-[#00A859] font-bold" : "text-amber-600 font-bold"}>
+                <span className={dispatchRate >= 75 ? "text-emerald-600 font-bold" : "text-amber-600 font-bold"}>
                   {dispatchRate}%
                 </span>
                 <span className="truncate">dispatched ({pendingOrdersCount} pending)</span>
               </>
             ) : (
-              <span className="text-gray-400 text-[11px]">
+              <span className="text-slate-400 text-[11px]">
                 {allOrdersList.length} lifetime orders
               </span>
             )}
           </div>
         </div>
 
-        {/* Metric 3: Active Customers (Real aggregated directory) */}
-        <div className="bg-white border border-gray-100 p-4 sm:p-5 rounded-3xl shadow-2xs space-y-1.5 hover:border-gray-200 transition-all">
-          <div className="flex items-center justify-between text-gray-400">
+        {/* Metric 3: Active Customers */}
+        <div className="bg-white border border-slate-200/80 p-4 sm:p-5 rounded-3xl shadow-2xs space-y-1.5 hover:border-slate-300 transition-all">
+          <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Customers</span>
             <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-gray-900">
+          <p className="text-xl sm:text-3xl font-black text-slate-900">
             {customerAnalytics.total.toLocaleString('en-IN')}
           </p>
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium truncate">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium truncate">
             {customerAnalytics.newThisWeek > 0 ? (
               <>
-                <span className="text-[#00A859] font-bold">+{customerAnalytics.newThisWeek}</span>
+                <span className="text-emerald-600 font-bold">+{customerAnalytics.newThisWeek}</span>
                 <span>new this week</span>
               </>
             ) : (
-              <span>
+              <span className="truncate">
                 {customerAnalytics.repeatBuyers > 0 
                   ? `${customerAnalytics.repeatBuyers} repeat buyers` 
                   : `${customerAnalytics.total} registered buyers`}
@@ -603,319 +618,359 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        {/* Metric 4: Catalog Products & Real Inventory Health */}
-        <div className="bg-white border border-gray-100 p-4 sm:p-5 rounded-3xl shadow-2xs space-y-1.5 hover:border-gray-200 transition-all">
-          <div className="flex items-center justify-between text-gray-400">
+        {/* Metric 4: Catalog & Real Stock Health */}
+        <div className="bg-white border border-slate-200/80 p-4 sm:p-5 rounded-3xl shadow-2xs space-y-1.5 hover:border-slate-300 transition-all">
+          <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Catalog Items</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <Package className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-gray-900">{products.length}</p>
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium truncate">
+          <p className="text-xl sm:text-3xl font-black text-slate-900">{products.length}</p>
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium truncate">
             {lowStockProducts.length > 0 || outOfStockProducts.length > 0 ? (
               <span className="text-amber-600 font-bold truncate">
-                {lowStockProducts.length} low • {outOfStockProducts.length} out of stock
+                {lowStockProducts.length} low • {outOfStockProducts.length} depleted
               </span>
             ) : (
               <span className="text-emerald-600 font-bold truncate">
-                {totalInventoryUnits.toLocaleString('en-IN')} units in stock
+                {totalInventoryUnits.toLocaleString('en-IN')} units ready
               </span>
             )}
           </div>
         </div>
       </div>
 
-      {/* 3. Operational Pulse / Quick Action KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200/70 p-3.5 sm:p-4 rounded-3xl shadow-2xs">
+      {/* ========================================================= */}
+      {/* 3. OPERATIONAL ATTENTION HUB (Pending Action Bar) */}
+      {/* ========================================================= */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 bg-gradient-to-r from-slate-50 to-orange-50/30 border border-slate-200/80 p-3 sm:p-4 rounded-3xl shadow-3xs">
         <div 
           onClick={() => onNavigateToTab('orders')}
-          className="p-2.5 rounded-2xl bg-white border border-gray-100 hover:border-orange-200 cursor-pointer transition-all shadow-3xs"
+          className="p-3 rounded-2xl bg-white border border-slate-200/70 hover:border-orange-200 cursor-pointer transition-all shadow-3xs tap-active group"
         >
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Average Order Value</p>
-          <p className="text-base sm:text-lg font-black text-gray-900 mt-0.5">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Average Order Value</p>
+          <p className="text-sm sm:text-base font-black text-slate-900 mt-0.5 group-hover:text-[#F95721] transition-colors">
             ₹{averageOrderValue.toLocaleString('en-IN')}
           </p>
-          <p className="text-[10px] text-gray-400">Per customer checkout</p>
+          <p className="text-[9px] text-slate-400">Per checkout basket</p>
         </div>
 
         <div 
           onClick={() => onNavigateToTab('orders')}
-          className="p-2.5 rounded-2xl bg-white border border-gray-100 hover:border-orange-200 cursor-pointer transition-all shadow-3xs"
+          className="p-3 rounded-2xl bg-white border border-slate-200/70 hover:border-orange-200 cursor-pointer transition-all shadow-3xs tap-active group"
         >
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Pending Action</p>
-            {pendingPaymentCount > 0 && (
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending Action</p>
+            {pendingPaymentCount > 0 ? (
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+            ) : (
+              <span className="w-2 h-2 rounded-full bg-emerald-500/80" />
             )}
           </div>
-          <p className={`text-base sm:text-lg font-black mt-0.5 ${pendingPaymentCount > 0 ? 'text-amber-600' : 'text-gray-900'}`}>
+          <p className={`text-sm sm:text-base font-black mt-0.5 ${pendingPaymentCount > 0 ? 'text-amber-600' : 'text-slate-900'} group-hover:text-[#F95721] transition-colors`}>
             {pendingPaymentCount} Order{pendingPaymentCount === 1 ? '' : 's'}
           </p>
-          <p className="text-[10px] text-gray-400">Awaiting verification / pay</p>
+          <p className="text-[9px] text-slate-400">
+            {pendingPaymentCount > 0 ? 'Awaiting pay / review' : 'All orders clear'}
+          </p>
         </div>
 
         <div 
-          onClick={() => onNavigateToTab('orders')}
-          className="p-2.5 rounded-2xl bg-white border border-gray-100 hover:border-orange-200 cursor-pointer transition-all shadow-3xs"
+          onClick={() => onNavigateToTab('returns')}
+          className="p-3 rounded-2xl bg-white border border-slate-200/70 hover:border-orange-200 cursor-pointer transition-all shadow-3xs tap-active group"
         >
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Return Requests</p>
-          <p className={`text-base sm:text-lg font-black mt-0.5 ${pendingReturnsCount > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Returns Queue</p>
+            {pendingReturnsCount > 0 && (
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+            )}
+          </div>
+          <p className={`text-sm sm:text-base font-black mt-0.5 ${pendingReturnsCount > 0 ? 'text-red-600' : 'text-slate-900'} group-hover:text-[#F95721] transition-colors`}>
             {pendingReturnsCount} Pending
           </p>
-          <p className="text-[10px] text-gray-400">Customer reverse pickups</p>
+          <p className="text-[9px] text-slate-400">Customer reverse pickups</p>
         </div>
 
         <div 
           onClick={() => onNavigateToTab('inventory')}
-          className="p-2.5 rounded-2xl bg-white border border-gray-100 hover:border-orange-200 cursor-pointer transition-all shadow-3xs"
+          className="p-3 rounded-2xl bg-white border border-slate-200/70 hover:border-orange-200 cursor-pointer transition-all shadow-3xs tap-active group"
         >
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Stock Health</p>
-          <p className={`text-base sm:text-lg font-black mt-0.5 ${outOfStockProducts.length > 0 ? 'text-orange-600' : 'text-emerald-600'}`}>
-            {outOfStockProducts.length > 0 ? `${outOfStockProducts.length} Depleted` : '100% Active'}
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Stock Readiness</p>
+          <p className={`text-sm sm:text-base font-black mt-0.5 ${outOfStockProducts.length > 0 ? 'text-orange-600' : 'text-emerald-600'} group-hover:text-[#F95721] transition-colors`}>
+            {outOfStockProducts.length > 0 ? `${outOfStockProducts.length} Depleted` : '100% Ready'}
           </p>
-          <p className="text-[10px] text-gray-400">{totalInventoryUnits} total items on shelf</p>
+          <p className="text-[9px] text-slate-400">{totalInventoryUnits} items on shelf</p>
         </div>
       </div>
 
-      {/* 4. Low Stock Alert Warning Banner (If any) */}
-      {lowStockProducts.length > 0 && (
-        <div className="bg-amber-50/90 border border-amber-200 rounded-3xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
-              <AlertTriangle className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs sm:text-sm font-bold text-amber-950">
-                {lowStockProducts.length} Product{lowStockProducts.length > 1 ? 's' : ''} Running Low in Stock
-              </p>
-              <p className="text-xs text-amber-800">Replenish inventory to avoid missing potential customer sales</p>
-            </div>
-          </div>
-          <button
-            onClick={() => onNavigateToTab('inventory')}
-            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl whitespace-nowrap shadow-xs self-end sm:self-auto"
-          >
-            Review Stock
-          </button>
-        </div>
-      )}
-
-      {/* 5. Middle Section: Revenue Trajectory & Quick Business Actions (2-Column Grid) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Dynamic Real-Data Revenue Trajectory SVG Chart */}
-        <div className="lg:col-span-2 bg-white border border-gray-100 rounded-3xl p-5 space-y-3 shadow-2xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-black text-gray-900">Revenue Trajectory</h3>
-                {chartData.hasAnySalesInPeriod && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-50 text-[#F95721] border border-orange-200/50">
-                    Live Velocity
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-400">
-                {dateRange === 'today' 
-                  ? 'Hourly order sales breakdown across today' 
-                  : dateRange === '7d' 
-                    ? 'Daily sales trajectory for the last 7 calendar days' 
-                    : 'Weekly revenue aggregation for past 30 days'}
-              </p>
-            </div>
-
-            <div className="text-right">
-              <span className="text-base sm:text-lg font-extrabold text-[#F95721]">
-                ₹{displayRevenue.toLocaleString('en-IN')}
+      {/* ========================================================= */}
+      {/* 4. DUAL-METRIC INTERACTIVE SVG TRAJECTORY CHART */}
+      {/* ========================================================= */}
+      <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 space-y-3 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-black text-slate-900">Sales & Demand Trajectory</h3>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-orange-50 text-[#F95721] border border-orange-200/50">
+                Live Velocity
               </span>
-              <p className="text-[10px] text-gray-400">Period Total ({displayOrders} orders)</p>
             </div>
+            <p className="text-xs text-slate-400">
+              {dateRange === 'today' 
+                ? 'Hourly sales and order volume across today' 
+                : dateRange === '7d' 
+                  ? 'Daily trajectory over the last 7 calendar days' 
+                  : 'Weekly aggregations for past 30 days'}
+            </p>
           </div>
 
-          {/* Active Data Point Hover Inspector */}
-          {activeChartPoint && (
-            <div className="bg-orange-50/80 border border-orange-200/70 px-3 py-1.5 rounded-2xl flex items-center justify-between text-xs animate-fadeIn">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-gray-900">{activeChartPoint.label}</span>
-                <span className="text-gray-500 text-[11px]">({activeChartPoint.subLabel})</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="font-black text-[#F95721]">₹{activeChartPoint.revenue.toLocaleString('en-IN')}</span>
-                <span className="text-[11px] font-bold text-gray-600 bg-white px-2 py-0.5 rounded-lg border border-orange-200">
-                  {activeChartPoint.ordersCount} order{activeChartPoint.ordersCount === 1 ? '' : 's'}
-                </span>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {/* Metric Mode Switcher */}
+            <div className="bg-slate-100 p-0.5 rounded-xl flex gap-1 border border-slate-200/60">
+              <button
+                onClick={() => setChartMetric('revenue')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  chartMetric === 'revenue'
+                    ? 'bg-white text-[#F95721] shadow-3xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                Revenue (₹)
+              </button>
+              <button
+                onClick={() => setChartMetric('orders')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  chartMetric === 'orders'
+                    ? 'bg-white text-[#F95721] shadow-3xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                Orders (Units)
+              </button>
+            </div>
+
+            <div className="text-right pl-2 hidden sm:block">
+              <span className="text-base font-extrabold text-[#F95721]">
+                {chartMetric === 'revenue' ? `₹${displayRevenue.toLocaleString('en-IN')}` : `${displayOrders} Orders`}
+              </span>
+              <p className="text-[9px] text-slate-400">Period Total</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Active Data Point Hover / Touch Inspector */}
+        {activeChartPoint && (
+          <div className="bg-orange-50/90 border border-orange-200/80 px-3.5 py-2 rounded-2xl flex items-center justify-between text-xs animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-900">{activeChartPoint.label}</span>
+              <span className="text-slate-500 text-[11px]">({activeChartPoint.subLabel})</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="font-black text-[#F95721]">₹{activeChartPoint.revenue.toLocaleString('en-IN')}</span>
+              <span className="text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded-lg border border-orange-200">
+                {activeChartPoint.ordersCount} order{activeChartPoint.ordersCount === 1 ? '' : 's'}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Dynamic SVG Area Chart */}
+        <div className="h-40 sm:h-48 w-full pt-2 relative">
+          <svg 
+            className="w-full h-full overflow-visible" 
+            viewBox="0 0 500 130" 
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient id="execChartGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#F95721" stopOpacity="0.28" />
+                <stop offset="100%" stopColor="#F95721" stopOpacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            {/* Grid Lines */}
+            <line 
+              x1="20" 
+              y1="18" 
+              x2="480" 
+              y2="18" 
+              stroke="#F1F5F9" 
+              strokeWidth="1" 
+              strokeDasharray="4 4" 
+            />
+            <line 
+              x1="20" 
+              y1="60" 
+              x2="480" 
+              y2="60" 
+              stroke="#F1F5F9" 
+              strokeWidth="1" 
+              strokeDasharray="4 4" 
+            />
+            <line 
+              x1="20" 
+              y1={chartData.baselineY} 
+              x2="480" 
+              y2={chartData.baselineY} 
+              stroke="#E2E8F0" 
+              strokeWidth="1" 
+            />
+
+            {/* Dynamic Area Fill */}
+            <path
+              d={chartData.areaD}
+              fill="url(#execChartGradient)"
+            />
+
+            {/* Dynamic Line Stroke */}
+            <path
+              d={chartData.pathD}
+              fill="none"
+              stroke="#F95721"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {/* Data Points */}
+            {chartData.points.map((pt, idx) => {
+              const isActive = activeChartPoint?.label === pt.label;
+              return (
+                <g 
+                  key={idx} 
+                  className="cursor-pointer"
+                  onMouseEnter={() => setActiveChartPoint(pt)}
+                  onClick={() => setActiveChartPoint(pt)}
+                >
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r={isActive ? "6.5" : "4.5"}
+                    fill={isActive ? "#FFFFFF" : "#F95721"}
+                    stroke={isActive ? "#F95721" : "#FFFFFF"}
+                    strokeWidth={isActive ? "3" : "2"}
+                    className="transition-all duration-150"
+                  />
+                </g>
+              );
+            })}
+          </svg>
+
+          {!chartData.hasAnyActivity && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-white/95 backdrop-blur-xs border border-slate-200 px-4 py-2 rounded-2xl shadow-xs text-center">
+                <p className="text-xs font-bold text-slate-700">No customer orders recorded in this time slot</p>
+                <p className="text-[10px] text-slate-400">Trajectory automatically updates upon next order placement</p>
               </div>
             </div>
           )}
-
-          {/* Dynamic SVG Area Chart */}
-          <div className="h-36 sm:h-44 w-full pt-2 relative">
-            <svg 
-              className="w-full h-full overflow-visible" 
-              viewBox="0 0 500 130" 
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="realChartGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#F95721" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#F95721" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-
-              {/* Grid Lines */}
-              <line 
-                x1="20" 
-                y1="16" 
-                x2="480" 
-                y2="16" 
-                stroke="#F3F4F6" 
-                strokeWidth="1" 
-                strokeDasharray="4 4" 
-              />
-              <line 
-                x1="20" 
-                y1="60" 
-                x2="480" 
-                y2="60" 
-                stroke="#F3F4F6" 
-                strokeWidth="1" 
-                strokeDasharray="4 4" 
-              />
-              <line 
-                x1="20" 
-                y1={chartData.baselineY} 
-                x2="480" 
-                y2={chartData.baselineY} 
-                stroke="#E5E7EB" 
-                strokeWidth="1" 
-              />
-
-              {/* Dynamic Area Fill */}
-              <path
-                d={chartData.areaD}
-                fill="url(#realChartGradient)"
-              />
-
-              {/* Dynamic Line Stroke */}
-              <path
-                d={chartData.pathD}
-                fill="none"
-                stroke="#F95721"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-
-              {/* Data Points */}
-              {chartData.points.map((pt, idx) => {
-                const isActive = activeChartPoint?.label === pt.label;
-                return (
-                  <g 
-                    key={idx} 
-                    className="cursor-pointer"
-                    onMouseEnter={() => setActiveChartPoint(pt)}
-                    onClick={() => setActiveChartPoint(pt)}
-                  >
-                    <circle
-                      cx={pt.x}
-                      cy={pt.y}
-                      r={isActive ? "6.5" : pt.revenue > 0 ? "5" : "3.5"}
-                      fill={isActive ? "#FFFFFF" : "#F95721"}
-                      stroke={isActive ? "#F95721" : "#FFFFFF"}
-                      strokeWidth={isActive ? "3" : "2"}
-                      className="transition-all duration-150"
-                    />
-                  </g>
-                );
-              })}
-            </svg>
-
-            {!chartData.hasAnySalesInPeriod && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="bg-white/90 backdrop-blur-xs border border-gray-200 px-3.5 py-1.5 rounded-2xl shadow-xs text-center">
-                  <p className="text-xs font-bold text-gray-700">No customer orders placed in this time slot</p>
-                  <p className="text-[10px] text-gray-400">Baseline remains calibrated for incoming orders</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Dynamic Bottom X-Axis Labels */}
-          <div className="flex justify-between text-[11px] font-bold text-gray-400 pt-2 border-t border-gray-100">
-            {chartData.points.map((pt, idx) => (
-              <span 
-                key={idx} 
-                onClick={() => setActiveChartPoint(pt)}
-                className={`cursor-pointer hover:text-[#F95721] transition-colors ${
-                  activeChartPoint?.label === pt.label ? 'text-[#F95721] font-black' : ''
-                }`}
-              >
-                {pt.label}
-              </span>
-            ))}
-          </div>
         </div>
 
-        {/* Quick Operational Shortcuts */}
-        <div className="bg-white border border-gray-100 rounded-3xl p-5 space-y-3 shadow-2xs flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-black text-gray-900">Quick Business Actions</h3>
-            <p className="text-xs text-gray-400">Fast shortcuts to essential administrative workflows</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              onClick={onOpenAddProduct}
-              className="flex flex-col items-center justify-center p-3 rounded-2xl bg-orange-50 hover:bg-orange-100/80 border border-orange-200/60 text-[#F95721] transition-all group"
+        {/* Dynamic Bottom X-Axis Labels */}
+        <div className="flex justify-between text-[11px] font-bold text-slate-400 pt-2 border-t border-slate-100">
+          {chartData.points.map((pt, idx) => (
+            <span 
+              key={idx} 
+              onClick={() => setActiveChartPoint(pt)}
+              className={`cursor-pointer hover:text-[#F95721] transition-colors ${
+                activeChartPoint?.label === pt.label ? 'text-[#F95721] font-black' : ''
+              }`}
             >
-              <div className="w-9 h-9 rounded-xl bg-[#F95721] text-white flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-110 transition-transform">
-                <Plus className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-gray-900">Add Product</span>
-            </button>
-
-            <button
-              onClick={() => onNavigateToTab('orders')}
-              className="flex flex-col items-center justify-center p-3 rounded-2xl bg-blue-50 hover:bg-blue-100/80 border border-blue-200/60 text-blue-600 transition-all group"
-            >
-              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-110 transition-transform">
-                <ShoppingBag className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-gray-900">Orders ({allOrdersList.length})</span>
-            </button>
-
-            <button
-              onClick={() => onNavigateToTab('categories')}
-              className="flex flex-col items-center justify-center p-3 rounded-2xl bg-purple-50 hover:bg-purple-100/80 border border-purple-200/60 text-purple-600 transition-all group"
-            >
-              <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-110 transition-transform">
-                <Boxes className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-gray-900">Categories</span>
-            </button>
-
-            <button
-              onClick={() => onNavigateToTab('homepage')}
-              className="flex flex-col items-center justify-center p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/60 text-emerald-600 transition-all group"
-            >
-              <div className="w-9 h-9 rounded-xl bg-[#00A859] text-white flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-110 transition-transform">
-                <LayoutTemplate className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-gray-900">Homepage</span>
-            </button>
-          </div>
+              {pt.label}
+            </span>
+          ))}
         </div>
       </div>
 
-      {/* 6. Bottom Section: Recent Orders & Genuine Top Performing Products (2-Column Grid) */}
+      {/* ========================================================= */}
+      {/* 5. QUICK BUSINESS ACTIONS (6-Tile Grid) */}
+      {/* ========================================================= */}
+      <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 space-y-3 shadow-2xs">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-black text-slate-900">Executive Quick Actions</h3>
+            <p className="text-xs text-slate-400">Fast shortcuts to essential administrative operations</p>
+          </div>
+          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full">
+            1-Tap Access
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          <button
+            onClick={onOpenAddProduct}
+            className="flex flex-col items-center justify-center p-3 rounded-2xl bg-orange-50/80 hover:bg-orange-100/90 border border-orange-200/60 text-[#F95721] transition-all group tap-active shadow-3xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-[#F95721] text-white flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-110 transition-transform">
+              <Plus className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-900">Add Product</span>
+          </button>
+
+          <button
+            onClick={() => onNavigateToTab('orders')}
+            className="flex flex-col items-center justify-center p-3 rounded-2xl bg-blue-50/80 hover:bg-blue-100/90 border border-blue-200/60 text-blue-600 transition-all group tap-active shadow-3xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-110 transition-transform">
+              <ShoppingBag className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-900">Orders ({allOrdersList.length})</span>
+          </button>
+
+          <button
+            onClick={() => onNavigateToTab('inventory')}
+            className="flex flex-col items-center justify-center p-3 rounded-2xl bg-amber-50/80 hover:bg-amber-100/90 border border-amber-200/60 text-amber-600 transition-all group tap-active shadow-3xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-110 transition-transform">
+              <Boxes className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-900">Stock & Alerts</span>
+          </button>
+
+          <button
+            onClick={() => onNavigateToTab('categories')}
+            className="flex flex-col items-center justify-center p-3 rounded-2xl bg-purple-50/80 hover:bg-purple-100/90 border border-purple-200/60 text-purple-600 transition-all group tap-active shadow-3xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-110 transition-transform">
+              <Layers className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-900">Categories</span>
+          </button>
+
+          <button
+            onClick={() => onNavigateToTab('offers')}
+            className="flex flex-col items-center justify-center p-3 rounded-2xl bg-rose-50/80 hover:bg-rose-100/90 border border-rose-200/60 text-rose-600 transition-all group tap-active shadow-3xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-110 transition-transform">
+              <Tag className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-900">Discounts</span>
+          </button>
+
+          <button
+            onClick={() => onNavigateToTab('homepage')}
+            className="flex flex-col items-center justify-center p-3 rounded-2xl bg-emerald-50/80 hover:bg-emerald-100/90 border border-emerald-200/60 text-emerald-600 transition-all group tap-active shadow-3xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-110 transition-transform">
+              <LayoutTemplate className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-900">Homepage</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* 6. BOTTOM SECTION: Recent Orders & Top Performing Products (2-Col Responsive Grid) */}
+      {/* ========================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Orders Feed */}
-        <div className="bg-white border border-gray-100 rounded-3xl p-5 space-y-3 shadow-2xs flex flex-col justify-between">
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 space-y-3 shadow-2xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-sm font-black text-gray-900">Recent Customer Orders</h3>
-                <p className="text-xs text-gray-400">Live order processing stream</p>
+                <h3 className="text-sm font-black text-slate-900">Recent Customer Orders</h3>
+                <p className="text-xs text-slate-400">Live order processing stream</p>
               </div>
               <button
                 onClick={() => onNavigateToTab('orders')}
@@ -926,14 +981,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </button>
             </div>
 
-            <div className="space-y-2.5 mt-3">
+            <div className="space-y-2 mt-3">
               {allOrdersList.length === 0 ? (
-                <div className="p-8 text-center bg-gray-50/60 rounded-2xl border border-dashed border-gray-200 space-y-2">
+                <div className="p-8 text-center bg-slate-50/60 rounded-2xl border border-dashed border-slate-200 space-y-2">
                   <div className="w-10 h-10 rounded-full bg-orange-100 text-[#F95721] flex items-center justify-center mx-auto">
                     <ShoppingBag className="w-5 h-5" />
                   </div>
-                  <p className="text-xs font-bold text-gray-700">No customer orders placed yet</p>
-                  <p className="text-[11px] text-gray-400">
+                  <p className="text-xs font-bold text-slate-700">No customer orders placed yet</p>
+                  <p className="text-[11px] text-slate-400">
                     Once a customer checks out, the live dispatch queue will populate here automatically.
                   </p>
                 </div>
@@ -951,7 +1006,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <div
                       key={o.id}
                       onClick={() => onOpenOrderDetails(o)}
-                      className="bg-gray-50/60 hover:bg-gray-50 border border-gray-100 rounded-2xl p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all hover:border-gray-200"
+                      className="bg-slate-50/60 hover:bg-slate-50 border border-slate-200/70 rounded-2xl p-3 flex items-center justify-between gap-3 cursor-pointer transition-all hover:border-slate-300 tap-active"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-10 h-10 rounded-xl bg-orange-100/70 text-[#F95721] flex items-center justify-center flex-shrink-0 font-bold">
@@ -959,23 +1014,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-xs font-bold text-gray-900">{o.orderNumber}</p>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            <p className="text-xs font-bold text-slate-900">{o.orderNumber}</p>
+                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
                               o.status === 'Delivered' 
-                                ? 'bg-green-100 text-green-700' 
+                                ? 'bg-emerald-100 text-emerald-800' 
                                 : o.status === 'Shipped'
-                                  ? 'bg-blue-100 text-blue-700'
+                                  ? 'bg-blue-100 text-blue-800'
                                   : 'bg-orange-100 text-[#F95721]'
                             }`}>
                               {o.status}
                             </span>
                             {o.paymentMethod && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-200/60 text-slate-600 hidden xs:inline-block">
                                 {o.paymentMethod}
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                          <p className="text-[11px] text-slate-500 truncate mt-0.5">
                             {o.shippingAddress?.name ? `${o.shippingAddress.name} • ` : ''}
                             {o.items?.map(i => i.name).join(', ') || 'Items ordered'}
                           </p>
@@ -983,10 +1038,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </div>
 
                       <div className="text-right flex-shrink-0">
-                        <span className="text-xs font-extrabold text-gray-900">
+                        <span className="text-xs font-black text-slate-900">
                           ₹{o.total?.toLocaleString('en-IN')}
                         </span>
-                        <p className="text-[10px] text-gray-400">
+                        <p className="text-[10px] text-slate-400">
                           {timeDisplay}
                         </p>
                       </div>
@@ -999,26 +1054,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Real Top Performing Catalog Items */}
-        <div className="bg-white border border-gray-100 rounded-3xl p-5 space-y-3 shadow-2xs flex flex-col justify-between">
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 space-y-3 shadow-2xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-black text-gray-900">Top Performing Items</h3>
+                  <h3 className="text-sm font-black text-slate-900">Top Performing Items</h3>
                   {topPerformingProducts.hasRealSales ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                      Calculated from Sales
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                      Sales Calculated
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                       Catalog Velocity
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-slate-400">
                   {topPerformingProducts.hasRealSales 
                     ? 'Products with highest units ordered across store history' 
-                    : 'Store catalog inventory ready for fulfillment'}
+                    : 'Catalog inventory ready for customer fulfillment'}
                 </p>
               </div>
               <button
@@ -1030,7 +1085,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </button>
             </div>
 
-            <div className="space-y-2.5 mt-3">
+            <div className="space-y-2 mt-3">
               {topPerformingProducts.items.map((item, idx) => {
                 const p = item.product;
                 const isLowStock = p.stockCount <= storeSettings.lowStockThreshold;
@@ -1038,16 +1093,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 return (
                   <div
                     key={p.id}
-                    className="bg-gray-50/60 border border-gray-100 rounded-2xl p-3 flex items-center justify-between gap-3 hover:border-gray-200 transition-all"
+                    className="bg-slate-50/60 border border-slate-200/70 rounded-2xl p-2.5 flex items-center justify-between gap-3 hover:border-slate-300 transition-all"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-xs font-black text-gray-400 w-4 text-center">#{idx + 1}</span>
-                      <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center flex-shrink-0 border border-gray-100">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-xs font-black text-slate-400 w-4 text-center">#{idx + 1}</span>
+                      <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center flex-shrink-0 border border-slate-200/60">
                         <ResolvedImage src={p.image} alt={p.name} className="w-full h-full object-contain" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-gray-900 truncate">{p.name}</p>
-                        <p className="text-[11px] text-gray-500">
+                        <p className="text-xs font-bold text-slate-900 truncate">{p.name}</p>
+                        <p className="text-[11px] text-slate-500">
                           ₹{p.price?.toLocaleString('en-IN')} • {p.stockCount} in stock
                           {item.unitsSold > 0 && (
                             <span className="text-emerald-700 font-bold ml-1">
@@ -1066,12 +1121,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <span>+15 Restock</span>
                       </button>
                     ) : item.unitsSold > 0 ? (
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex-shrink-0">
+                      <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex-shrink-0">
                         High Demand
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full flex-shrink-0">
-                        Active In Stock
+                      <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full flex-shrink-0">
+                        Active Catalog
                       </span>
                     )}
                   </div>

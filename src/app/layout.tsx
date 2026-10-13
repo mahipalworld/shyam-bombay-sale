@@ -7,6 +7,7 @@ import { MobileNumberPromptModal } from '@/components/modals/MobileNumberPromptM
 import { MobileBackHandler } from '@/components/MobileBackHandler';
 import { FlyToCartAnimation } from '@/components/FlyToCartAnimation';
 import { PWAProvider } from '@/context/PWAContext';
+import { IntroOverlayManager } from '@/components/IntroOverlayManager';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.sbsstore.in'),
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
   other: {
     'geo.region': 'IN-GJ',
     'geo.placename': 'Subhanpura, Vadodara, Gujarat',
-    'geo.position': '22.3323;73.1612',
+    'geo.position': '22.3287;73.1394',
   },
   manifest: '/manifest.json',
   appleWebApp: {
@@ -57,15 +58,17 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon-48x48.png', sizes: '48x48', type: 'image/png' },
-      { url: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
-      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-48x48.png?v=4', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon-32x32.png?v=4', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png?v=4', sizes: '16x16', type: 'image/png' },
+      { url: '/icon-192x192.png?v=4', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512x512.png?v=4', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon.ico?v=4', sizes: 'any' },
     ],
     apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/apple-touch-icon.png?v=4', sizes: '180x180', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico',
+    shortcut: '/favicon.ico?v=4',
   },
   openGraph: {
     title: 'SBS Store — Shyam Bombay Sale | Official Online Shopping Vadodara',
@@ -77,9 +80,9 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'https://www.sbsstore.in/logo.png',
-        width: 800,
-        height: 600,
+        url: 'https://www.sbsstore.in/logo.png?v=4',
+        width: 512,
+        height: 512,
         alt: 'SBS Store — Shyam Bombay Sale Logo',
       },
     ],
@@ -89,7 +92,7 @@ export const metadata: Metadata = {
     title: 'SBS Store — Shyam Bombay Sale | Official Online Shopping Vadodara',
     description:
       'Smart everyday essentials for home, kitchen, cleaning, and personal care. Official website of SBS Store — Shyam Bombay Sale.',
-    images: ['https://www.sbsstore.in/logo.png'],
+    images: ['https://www.sbsstore.in/logo.png?v=4'],
   },
   robots: {
     index: true,
@@ -194,8 +197,8 @@ const jsonLd = {
       },
       'geo': {
         '@type': 'GeoCoordinates',
-        'latitude': 22.3323,
-        'longitude': 73.1612,
+        'latitude': 22.328667,
+        'longitude': 73.139372,
       },
       'openingHoursSpecification': [
         {
@@ -289,14 +292,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="preload" as="image" href="/door-logo.png?v=4" />
+        <link rel="preload" as="image" href="/sbs-wordmark.png?v=4" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0'),today=y+'-'+m+'-'+day,last=localStorage.getItem('sbs_intro_last_played'),motionOk=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(last!==today){localStorage.setItem('sbs_intro_last_played',today);if(motionOk){document.documentElement.classList.add('sbs-play-intro');}}}catch(e){}})();`,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="bg-[#F8F9FA] text-gray-900 min-h-screen antialiased selection:bg-[#F95721] selection:text-white">
+      <body className="bg-[#F8F9FA] text-gray-900 min-h-screen antialiased selection:bg-[#FF6600] selection:text-white">
+        {/* Once-A-Day Intro Transition Overlay (2.0s GPU-Accelerated) */}
+        <div id="sbs-intro-overlay" aria-hidden="true">
+          <div className="sbs-intro-container">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/door-logo.png?v=4" alt="" className="sbs-intro-door" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/sbs-wordmark.png?v=4" alt="" className="sbs-intro-wordmark" />
+          </div>
+        </div>
+        <IntroOverlayManager />
         <PWAProvider>
           <AuthProvider>
             <StoreProvider>

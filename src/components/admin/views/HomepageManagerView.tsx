@@ -89,7 +89,7 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
 
   // Product Selector Modal State
   const [isProductPickerOpen, setIsProductPickerOpen] = useState(false);
-  const [productPickerTarget, setProductPickerTarget] = useState<'hero' | 'flash' | 'story' | 'quick_action' | null>(null);
+  const [productPickerTarget, setProductPickerTarget] = useState<'hero' | 'flash' | 'story' | 'quick_action' | 'today_deal' | null>(null);
 
   // Stories Modal State
   const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
@@ -289,6 +289,101 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
   const handleSaveFlashDeal = (e: React.FormEvent) => {
     e.preventDefault();
     updateFlashDealConfig(flashForm);
+  };
+
+  // Today's Deals local state and handlers
+  const [isTodayDealModalOpen, setIsTodayDealModalOpen] = useState(false);
+  const [editingTodayDeal, setEditingTodayDeal] = useState<TodayDealItem | null>(null);
+  const [todayDealForm, setTodayDealForm] = useState<{
+    id?: string;
+    productId: string;
+    title: string;
+    discount: number;
+    bannerImage: string;
+    enabled: boolean;
+  }>({
+    productId: '',
+    title: 'Deals of the Day',
+    discount: 40,
+    bannerImage: '',
+    enabled: true,
+  });
+
+  const handleOpenAddTodayDeal = () => {
+    setEditingTodayDeal(null);
+    const firstProd = products[0];
+    setTodayDealForm({
+      productId: firstProd?.id || '',
+      title: 'Deals of the Day',
+      discount: firstProd?.discountPercentage || 40,
+      bannerImage: firstProd?.image || '',
+      enabled: true,
+    });
+    setIsTodayDealModalOpen(true);
+  };
+
+  const handleOpenEditTodayDeal = (deal: TodayDealItem) => {
+    setEditingTodayDeal(deal);
+    setTodayDealForm({
+      id: deal.id,
+      productId: deal.productId,
+      title: deal.title || 'Deals of the Day',
+      discount: deal.discount,
+      bannerImage: deal.bannerImage || '',
+      enabled: deal.enabled !== false,
+    });
+    setIsTodayDealModalOpen(true);
+  };
+
+  const handleSaveTodayDeal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!todayDealForm.productId) {
+      showToast('Please pick a catalog product for this deal', 'error');
+      return;
+    }
+
+    const prod = products.find(p => p.id === todayDealForm.productId);
+    const finalImage = todayDealForm.bannerImage.trim() || prod?.image || '';
+
+    if (editingTodayDeal) {
+      const updated = todayDeals.map(d => d.id === editingTodayDeal.id ? {
+        ...d,
+        productId: todayDealForm.productId,
+        title: todayDealForm.title,
+        discount: todayDealForm.discount,
+        bannerImage: finalImage,
+        enabled: todayDealForm.enabled,
+      } : d);
+      await saveTodayDeals(updated);
+      showToast('Today\'s Deal updated! ✓', 'success');
+    } else {
+      const newDeal: TodayDealItem = {
+        id: `deal_${Date.now()}`,
+        productId: todayDealForm.productId,
+        title: todayDealForm.title,
+        discount: todayDealForm.discount,
+        bannerImage: finalImage,
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 7 * 86400000).toISOString(),
+        enabled: todayDealForm.enabled,
+      };
+      await saveTodayDeals([...todayDeals, newDeal]);
+      showToast('New Today\'s Deal added! 🎉', 'success');
+    }
+    setIsTodayDealModalOpen(false);
+  };
+
+  const handleDeleteTodayDeal = async (dealId: string) => {
+    if (!confirm('Are you sure you want to remove this Today\'s Deal?')) return;
+    const remaining = todayDeals.filter(d => d.id !== dealId);
+    await saveTodayDeals(remaining);
+    showToast('Deal removed from Today\'s Deals');
+  };
+
+  const handleToggleTodayDeal = async (dealId: string) => {
+    const updated = todayDeals.map(d => d.id === dealId ? { ...d, enabled: !d.enabled } : d);
+    await saveTodayDeals(updated);
+    showToast('Deal visibility updated');
   };
 
   // Hero banner modal state
@@ -516,7 +611,7 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
           { key: 'stories', label: 'Product Stories' },
           { key: 'sections', label: 'Layout & Order' },
           { key: 'hero', label: 'Hero Banners' },
-          { key: 'deals', label: 'Flash Deals Hero' },
+          { key: 'deals', label: 'Today\'s & Flash Deals' },
           { key: 'quick_actions', label: 'Quick Actions' },
           { key: 'categories', label: 'Categories' },
           { key: 'subcategories', label: 'Curated Collections' },
@@ -967,6 +1062,120 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
               <span>Save Flash Deal Hero Settings</span>
             </button>
           </form>
+
+          {/* Today's Deals Grid Manager (Section 7 on Customer Home) */}
+          <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-2">
+              <div>
+                <h3 className="text-sm font-black text-gray-900 flex items-center gap-1.5">
+                  <span className="text-base">🎉</span>
+                  <span>Today&apos;s Deals Grid (Section 7 on Home)</span>
+                </h3>
+                <p className="text-[10px] text-gray-500">
+                  Manage the promotional deal cards displayed under &quot;Today&apos;s Deals&quot; on the customer homepage
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleOpenAddTodayDeal}
+                className="px-3 py-1.5 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-xs active:scale-95 transition-all"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Today&apos;s Deal</span>
+              </button>
+            </div>
+
+            {todayDeals.length === 0 ? (
+              <div className="p-8 text-center bg-orange-50/40 rounded-2xl border border-dashed border-orange-200 space-y-2">
+                <span className="text-3xl">🎉</span>
+                <p className="text-xs font-bold text-gray-800">No Today&apos;s Deals configured</p>
+                <p className="text-[10px] text-gray-500 max-w-sm mx-auto">
+                  When this list is empty, Section 7 on the customer homepage is completely hidden. Click &quot;Add Today&apos;s Deal&quot; to feature a promotional deal!
+                </p>
+                <button
+                  type="button"
+                  onClick={handleOpenAddTodayDeal}
+                  className="px-4 py-2 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-black rounded-xl shadow-xs transition-colors"
+                >
+                  + Add Today&apos;s Deal
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {todayDeals.map((deal) => {
+                  const prod = products.find(p => p.id === deal.productId);
+                  const isVisible = deal.enabled !== false;
+                  return (
+                    <div
+                      key={deal.id}
+                      className={`border rounded-2xl p-4 flex items-center justify-between gap-3 transition-all ${
+                        isVisible 
+                          ? 'bg-gradient-to-r from-orange-50/50 to-amber-50/30 border-orange-200 shadow-2xs' 
+                          : 'bg-gray-50 border-gray-200 opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-14 h-14 rounded-xl bg-white p-1 border border-orange-100 flex items-center justify-center flex-shrink-0 shadow-2xs">
+                          <ResolvedImage
+                            src={deal.bannerImage || prod?.image || '/icon-192x192.png?v=2'}
+                            alt={deal.title}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-black text-[#F95721]">{deal.discount}% OFF</span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
+                              isVisible ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
+                            }`}>
+                              {isVisible ? 'Live on Home' : 'Hidden'}
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold text-gray-900 truncate mt-0.5">{deal.title}</p>
+                          <p className="text-[10px] text-gray-500 truncate">
+                            Product: <span className="font-semibold text-gray-700">{prod ? prod.name : deal.productId}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleTodayDeal(deal.id)}
+                          className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
+                            isVisible ? 'bg-amber-100 hover:bg-amber-200 text-amber-800' : 'bg-green-100 hover:bg-green-200 text-green-800'
+                          }`}
+                          title={isVisible ? 'Hide deal from home' : 'Make deal visible'}
+                        >
+                          {isVisible ? 'Hide' : 'Show'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditTodayDeal(deal)}
+                          className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg"
+                          title="Edit Deal"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTodayDeal(deal.id)}
+                          className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg"
+                          title="Remove Deal"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -2151,6 +2360,14 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
               subtitle: prev.subtitle || `₹${product.price}`,
               image: product.image,
             }));
+          } else if (productPickerTarget === 'today_deal') {
+            setTodayDealForm(prev => ({
+              ...prev,
+              productId: product.id,
+              title: prev.title || `Flash Deal: ${product.name}`,
+              discount: product.discountPercentage || 40,
+              bannerImage: product.image,
+            }));
           }
           setIsProductPickerOpen(false);
           setProductPickerTarget(null);
@@ -2159,9 +2376,146 @@ export const HomepageManagerView: React.FC<HomepageManagerViewProps> = ({
           productPickerTarget === 'hero' ? heroForm.productId :
           productPickerTarget === 'flash' ? flashForm.productId :
           productPickerTarget === 'story' ? storyForm.productId :
-          productPickerTarget === 'quick_action' ? quickActionForm.actionValue : undefined
+          productPickerTarget === 'quick_action' ? quickActionForm.actionValue :
+          productPickerTarget === 'today_deal' ? todayDealForm.productId : undefined
         }
       />
+
+      {/* Add / Edit Today's Deal Modal */}
+      {isTodayDealModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex flex-col justify-end sm:justify-center p-0 sm:p-4 animate-fadeIn">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full mx-auto p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-2.5">
+              <h3 className="text-sm font-black text-gray-900 flex items-center gap-1.5">
+                <span>🎉</span>
+                <span>{editingTodayDeal ? 'Edit Today\'s Deal' : 'New Today\'s Deal'}</span>
+              </h3>
+              <button
+                onClick={() => setIsTodayDealModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTodayDeal} className="space-y-3.5 text-xs">
+              {/* Catalog Product Selection */}
+              <div className="bg-orange-50/70 border border-orange-200 rounded-2xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-orange-950 flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-[#F95721]" />
+                    <span>Target Catalog Product *</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProductPickerTarget('today_deal');
+                      setIsProductPickerOpen(true);
+                    }}
+                    className="px-2.5 py-1 bg-[#F95721] hover:bg-[#E44813] text-white rounded-xl text-[10px] font-bold flex items-center gap-1 shadow-2xs"
+                  >
+                    <Search className="w-3 h-3" />
+                    <span>{todayDealForm.productId ? 'Change Product' : 'Pick Product'}</span>
+                  </button>
+                </div>
+
+                {todayDealForm.productId ? (
+                  <div className="flex items-center gap-2.5 bg-white border border-orange-200/80 rounded-xl p-2">
+                    <div className="w-10 h-10 rounded-lg bg-gray-50 p-1 flex items-center justify-center border border-gray-100 flex-shrink-0">
+                      <ResolvedImage
+                        src={todayDealForm.bannerImage || products.find(p => p.id === todayDealForm.productId)?.image || ''}
+                        alt="Product preview"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-gray-900 truncate">
+                        {products.find(p => p.id === todayDealForm.productId)?.name || todayDealForm.productId}
+                      </p>
+                      <p className="text-[10px] text-gray-500">
+                        Live Price: ₹{products.find(p => p.id === todayDealForm.productId)?.price || '—'}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-red-500 font-bold">Please click &quot;Pick Product&quot; to link a store item.</p>
+                )}
+              </div>
+
+              {/* Campaign Headline Title */}
+              <div>
+                <label className="block font-bold text-gray-800 mb-1">Deal Title / Headline *</label>
+                <input
+                  type="text"
+                  required
+                  value={todayDealForm.title}
+                  onChange={(e) => setTodayDealForm({ ...todayDealForm, title: e.target.value })}
+                  className="w-full border rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721]"
+                  placeholder="e.g. Deals of the Day, Flash Deal, Weekend Saver"
+                />
+              </div>
+
+              {/* Discount Percentage & Status */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-800 mb-1">Discount % *</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    required
+                    value={todayDealForm.discount}
+                    onChange={(e) => setTodayDealForm({ ...todayDealForm, discount: parseInt(e.target.value) || 0 })}
+                    className="w-full border rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] font-black text-[#F95721]"
+                    placeholder="40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-800 mb-1">Status</label>
+                  <select
+                    value={todayDealForm.enabled ? 'true' : 'false'}
+                    onChange={(e) => setTodayDealForm({ ...todayDealForm, enabled: e.target.value === 'true' })}
+                    className="w-full border rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] bg-white font-bold"
+                  >
+                    <option value="true">Visible on Homepage</option>
+                    <option value="false">Hidden / Draft</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Custom Image URL (Optional) */}
+              <div>
+                <label className="block font-bold text-gray-800 mb-1">Custom Image URL (Optional)</label>
+                <input
+                  type="text"
+                  value={todayDealForm.bannerImage}
+                  onChange={(e) => setTodayDealForm({ ...todayDealForm, bannerImage: e.target.value })}
+                  className="w-full border rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721]"
+                  placeholder="Leave empty to use catalog product image"
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsTodayDealModalOpen(false)}
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-2xl hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-[#F95721] hover:bg-[#E44813] text-white font-black rounded-2xl shadow-sm shadow-orange-500/20"
+                >
+                  {editingTodayDeal ? 'Update Deal' : 'Save Deal'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

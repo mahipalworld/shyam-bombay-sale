@@ -70,7 +70,7 @@ export const ResolvedImage: React.FC<ResolvedImageProps> = ({
         <div className={`w-full h-full flex items-center justify-center p-1 bg-orange-50/80 rounded-lg select-none ${className || ''}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo.png?v=3"
+            src="/brand/sbs-door-icon.svg"
             alt="SBS Store"
             className="w-full h-full object-contain"
           />
@@ -113,12 +113,12 @@ export const ResolvedImage: React.FC<ResolvedImageProps> = ({
           if (!fallbackSrc && activeSrc.endsWith('.webp')) {
             setFallbackSrc(activeSrc.replace(/\.webp$/, '.png'));
           } else if (isSbsBrand && !fallbackSrc) {
-            setFallbackSrc('/logo.png?v=3');
+            setFallbackSrc('/brand/sbs-door-icon.svg');
           } else {
             setHasError(true);
           }
         }}
-        className={`relative z-10 transition-opacity duration-300 ${className || ''}`}
+        className={`relative z-[1] transition-opacity duration-300 ${className || ''}`}
         loading={computedLoading}
         fetchPriority={computedFetchPriority}
         decoding="async"

@@ -178,7 +178,7 @@ export const ProductStories: React.FC = () => {
                   {story.title?.toLowerCase().includes('sbs') ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
-                      src="/logo.png?v=3"
+                      src="/brand/sbs-door-icon.svg"
                       alt="SBS Store"
                       className="w-full h-full object-contain p-2 mix-blend-multiply group-hover:scale-110 transition-transform duration-300"
                     />

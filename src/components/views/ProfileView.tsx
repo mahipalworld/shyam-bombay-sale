@@ -81,6 +81,7 @@ export const ProfileView: React.FC = () => {
 
   const handleStatusClick = (status: OrderStatus) => {
     setOrderListFilter(status);
+    setActiveTab('orders');
   };
 
   const handleLogout = async () => {
@@ -163,7 +164,10 @@ export const ProfileView: React.FC = () => {
               {/* Orders */}
 
               <div
-                onClick={() => setOrderListFilter('ALL')}
+                onClick={() => {
+                  setOrderListFilter(null);
+                  setActiveTab('orders');
+                }}
                 className="bg-white/80 backdrop-blur-xs rounded-2xl p-2 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white transition-colors"
               >
                 <div className="w-6 h-6 rounded-full bg-[#FFF4EC] text-[#F95721] flex items-center justify-center mb-1">
@@ -216,7 +220,10 @@ export const ProfileView: React.FC = () => {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-gray-900">My Orders Status</h3>
               <button
-                onClick={() => setOrderListFilter('ALL')}
+                onClick={() => {
+                  setOrderListFilter(null);
+                  setActiveTab('orders');
+                }}
                 className="text-xs font-bold text-[#F95721] flex items-center gap-0.5 hover:underline"
               >
                 <span>View All</span>
@@ -392,7 +399,10 @@ export const ProfileView: React.FC = () => {
 
             {/* My Orders */}
             <div
-              onClick={() => setOrderListFilter('ALL')}
+              onClick={() => {
+                setOrderListFilter(null);
+                setActiveTab('orders');
+              }}
               className="flex items-center justify-between p-3.5 hover:bg-orange-50/50 rounded-2xl cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3.5">

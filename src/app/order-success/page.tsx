@@ -186,16 +186,13 @@ function OrderSuccessContent() {
       {/* Top Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-30 shadow-2xs">
         <div className="max-w-4xl mx-auto px-4 md:px-8 py-3.5 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center group py-0.5" aria-label="SBS Home">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo.png?v=3"
+              src="/brand/sbs-wordmark.svg"
               alt="SBS Store — Shyam Bombay Sale"
-              className="h-8 w-auto object-contain group-hover:scale-105 transition-transform"
+              className="h-6.5 sm:h-7.5 w-auto object-contain group-hover:scale-105 group-active:scale-95 transition-transform"
             />
-            <span className="text-sm font-black text-gray-900 group-hover:text-[#F95721] transition-colors tracking-tight">
-              SBS STORE
-            </span>
           </Link>
 
           <div className="flex items-center gap-3">

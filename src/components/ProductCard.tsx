@@ -129,7 +129,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, pri
           toggleWishlist(product);
         }}
         aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-        className="absolute top-1 right-1 z-10 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:scale-110 active:scale-95 transition-all tap-active"
+        className="absolute top-1 right-1 z-[3] w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:scale-110 active:scale-95 transition-all tap-active"
       >
         <div className="w-7 h-7 rounded-full bg-white/95 backdrop-blur-xs shadow-2xs flex items-center justify-center border border-gray-100/60">
           <Heart
@@ -154,7 +154,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, pri
       >
         {/* Discount Badge on Product Image Top-Left Corner */}
         {product.discountPercentage > 0 && (
-          <div className="absolute top-2 left-2 z-10 pointer-events-none">
+          <div className="absolute top-2 left-2 z-[2] pointer-events-none">
             <span className="px-2 py-0.5 rounded-md bg-[#008744] text-white text-[10px] font-black shadow-2xs tracking-wide">
               {product.discountPercentage}% OFF
             </span>

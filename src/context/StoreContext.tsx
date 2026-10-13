@@ -164,6 +164,7 @@ interface StoreContextType {
       pointsRedeemed?: number;
       pointsDiscount?: number;
       prepaidDiscount?: number;
+      orderNumber?: string;
     }
   ) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
@@ -180,6 +181,8 @@ interface StoreContextType {
     actionUrl?: string;
   }) => void;
   refreshOrders: () => Promise<void>;
+  deleteOrder: (orderId: string) => Promise<boolean>;
+  createReturnRequest: (req: Omit<ReturnRequest, 'id' | 'date' | 'status'>) => Promise<boolean>;
 
   // User Profile & Addresses
   updateUserProfile: (updates: Partial<UserProfile>) => void;
@@ -210,7 +213,7 @@ interface StoreContextType {
   addNotification: (notification: Omit<AdminNotification, 'id' | 'timestamp' | 'read'>) => void;
   markNotificationRead: (id: string) => void;
   clearAllNotifications: () => void;
-  updateReturnRequestStatus: (id: string, status: ReturnRequest['status']) => void;
+  updateReturnRequestStatus: (id: string, status: ReturnRequest['status'], meta?: Partial<ReturnRequest>) => void;
 
   // Categories Actions
   addCategory: (category: Omit<Category, 'id' | 'itemCount'>) => void;
@@ -538,61 +541,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isNotificationRewardClaimed, setIsNotificationRewardClaimed] = useState(false);
   const [isNotificationPromptOpen, setIsNotificationPromptOpen] = useState(false);
 
-  const [userNotifications, setUserNotifications] = useState<UserBroadcastNotification[]>([
-    {
-      id: 'un_1',
-      title: '🔥 Super Weekend Sale: Up to 40% OFF!',
-      message: 'Exclusive discounts on Mini Washing Machine, Cordless Trimmers, and Smart Kitchen tools. Grab before stock runs out!',
-      type: 'deal',
-      targetAudience: 'ALL',
-      actionUrl: 'offers',
-      imageUrl: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&auto=format&fit=crop&q=80',
-      read: true,
-      status: 'SENT',
-      sentAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-      recipientCount: 1240,
-    },
-    {
-      id: 'un_2',
-      title: '🎉 Welcome to SBS Store: ₹100 Flat OFF',
-      message: 'Use coupon code SBSWELCOME on checkout on your first order. Happy smart shopping!',
-      type: 'promo',
-      targetAudience: 'CUSTOMERS',
-      actionUrl: 'categories',
-      read: true,
-      status: 'SENT',
-      sentAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-      recipientCount: 980,
-    },
-    {
-      id: 'un_3',
-      title: '🚚 Free Express Delivery Live',
-      message: 'All qualifying orders now qualify for free express courier dispatch across India.',
-      type: 'system',
-      targetAudience: 'ALL',
-      read: true,
-      status: 'SENT',
-      sentAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-      recipientCount: 1450,
-    },
-  ]);
+  const [userNotifications, setUserNotifications] = useState<UserBroadcastNotification[]>([]);
 
-  const [userNotificationDrafts, setUserNotificationDrafts] = useState<UserBroadcastNotification[]>([
-    {
-      id: 'und_1',
-      title: '⚡ Flash Midnight Sealer Combo',
-      message: 'Get 2 Heat Sealing Machines + extra batteries for just ₹499 tonight only!',
-      type: 'deal',
-      targetAudience: 'ALL',
-      actionUrl: 'cleaning',
-      read: false,
-      status: 'DRAFT',
-      createdAt: new Date().toISOString(),
-    },
-  ]);
+  const [userNotificationDrafts, setUserNotificationDrafts] = useState<UserBroadcastNotification[]>([]);
 
   const removeFlyingItem = (id: string) => {
     setFlyingItems((prev) => prev.filter((item) => item.id !== id));
@@ -603,7 +554,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [adminTeamMembers, setAdminTeamMembers] = useState<AdminTeamMember[]>([
     {
       id: 'super_admin_1',
-      name: 'Mahipal Singh (Super Admin)',
+      name: 'Mahipal Singh',
       email: 'mahipalstudent71@gmail.com',
       role: 'OWNER',
       status: 'ACTIVE',
@@ -614,58 +565,30 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       lastActive: new Date().toISOString()
     },
     {
-      id: 'team_2',
-      name: 'Kailash Sharma',
-      email: 'kailash.manager@gmail.com',
-      role: 'MANAGER',
+      id: 'admin_2',
+      name: 'Shyam Bombay Sale',
+      email: 'shyambombaysale@gmail.com',
+      role: 'OWNER',
       status: 'ACTIVE',
-      department: 'Store Operations & Catalog',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-      addedAt: '2026-02-15T10:00:00Z',
-      lastActive: '2026-09-02T14:20:00Z'
+      isSuperAdmin: true,
+      department: 'Store Owner',
+      addedAt: '2026-01-01T00:00:00Z',
+      lastActive: new Date().toISOString()
     },
     {
-      id: 'team_3',
-      name: 'Divya Patel',
-      email: 'divya.marketing@gmail.com',
-      role: 'MARKETING',
+      id: 'admin_3',
+      name: 'Mahipal World',
+      email: 'mahipalworld71@gmail.com',
+      role: 'OWNER',
       status: 'ACTIVE',
-      department: 'Growth & Promotions',
-      avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-      addedAt: '2026-03-01T11:30:00Z',
-      lastActive: '2026-09-01T09:15:00Z'
-    },
-    {
-      id: 'team_4',
-      name: 'Suresh Kumar',
-      email: 'suresh.staff@gmail.com',
-      role: 'STAFF',
-      status: 'ACTIVE',
-      department: 'Warehouse & Inventory',
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-      addedAt: '2026-04-10T16:45:00Z',
-      lastActive: '2026-09-03T08:00:00Z'
+      isSuperAdmin: true,
+      department: 'Management',
+      addedAt: '2026-01-01T00:00:00Z',
+      lastActive: new Date().toISOString()
     }
   ]);
 
-  const [roleAuditLogs, setRoleAuditLogs] = useState<RoleAuditLog[]>([
-    {
-      id: 'log_audit_1',
-      actorEmail: 'mahipalstudent71@gmail.com',
-      action: 'MEMBER_ADDED',
-      targetEmail: 'kailash.manager@gmail.com',
-      details: 'Added as Store Manager with catalog and orders permissions',
-      timestamp: '2026-02-15T10:00:00Z'
-    },
-    {
-      id: 'log_audit_2',
-      actorEmail: 'mahipalstudent71@gmail.com',
-      action: 'MEMBER_ADDED',
-      targetEmail: 'divya.marketing@gmail.com',
-      details: 'Added as Marketing Head for campaigns and banner manager',
-      timestamp: '2026-03-01T11:30:00Z'
-    }
-  ]);
+  const [roleAuditLogs, setRoleAuditLogs] = useState<RoleAuditLog[]>([]);
 
   const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([]);
   const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>([]);
@@ -675,7 +598,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setPaymentRecords(
       ordersList.map((ord) => {
         let status: PaymentRecord['status'] = 'Pending';
-        if (ord.paymentStatus === 'PAYMENT_VERIFIED') status = 'Verified';
+        if (ord.status === 'Cancelled') status = 'Failed';
+        else if (ord.paymentStatus === 'PAYMENT_VERIFIED') status = 'Verified';
         else if (ord.paymentStatus === 'CUSTOMER_CONFIRMED') status = 'Customer Confirmed';
         else if (ord.paymentStatus === 'PAYMENT_FAILED') status = 'Failed';
         else if (ord.status === 'Delivered' && ord.paymentMethod === 'COD') status = 'Success';
@@ -976,12 +900,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedTeamMembers) {
         try {
           const parsed = JSON.parse(savedTeamMembers);
+          // Purge legacy mock members
+          const cleaned = Array.isArray(parsed)
+            ? parsed.filter((m: AdminTeamMember) => !['kailash.manager@gmail.com', 'divya.marketing@gmail.com', 'suresh.staff@gmail.com'].includes(m.email?.toLowerCase()))
+            : [];
           // Ensure super admin is always present and active
-          const hasSuper = parsed.some((m: AdminTeamMember) => m.email.toLowerCase() === 'mahipalstudent71@gmail.com');
+          const hasSuper = cleaned.some((m: AdminTeamMember) => m.email?.toLowerCase() === 'mahipalstudent71@gmail.com');
           if (!hasSuper) {
-            parsed.unshift({
+            cleaned.unshift({
               id: 'super_admin_1',
-              name: 'Mahipal Singh (Super Admin)',
+              name: 'Mahipal Singh',
               email: 'mahipalstudent71@gmail.com',
               role: 'OWNER',
               status: 'ACTIVE',
@@ -992,7 +920,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               lastActive: new Date().toISOString()
             });
           }
-          setAdminTeamMembers(parsed);
+          setAdminTeamMembers(cleaned);
+          localStorage.setItem('sbs_admin_team_members', JSON.stringify(cleaned));
         } catch { }
       }
 
@@ -2576,9 +2505,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       pointsRedeemed?: number;
       pointsDiscount?: number;
       prepaidDiscount?: number;
+      orderNumber?: string;
     }
   ) => {
-    const orderNum = `SBS-${Math.floor(1000 + Math.random() * 9000)}`;
+    const orderNum = options?.orderNumber || `SBS-${Math.floor(1000 + Math.random() * 9000)}`;
     const isUpi = paymentMethod.includes('UPI') || paymentMethod === 'UPI';
     const initialPaymentStatus: PaymentStatus = options?.paymentStatus || (isUpi ? 'PENDING' : 'PAYMENT_VERIFIED');
     const finalDiscount = couponDiscount + (options?.pointsDiscount || 0) + (options?.prepaidDiscount || 0);
@@ -2589,11 +2519,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       addAddress(address);
     }
 
+    const isCod = paymentMethod.toUpperCase().includes('COD') || paymentMethod.toLowerCase().includes('cash on delivery');
+    const isPaid = initialPaymentStatus === 'PAYMENT_VERIFIED';
+    const isOrderConfirmed = isPaid || isCod;
+    const initialStatus: OrderStatus = isOrderConfirmed ? 'Processing' : 'To Pay';
+
     const newOrder: Order = {
       id: `ord_${Date.now()}`,
       orderNumber: orderNum,
       createdAt: new Date().toISOString(),
-      status: 'Processing',
+      status: initialStatus,
       items: selectedCartItems.map((item) => ({
         productId: item.productId,
         name: item.product.name,
@@ -2619,13 +2554,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setOrders((prev) => [newOrder, ...prev]);
     setAdminOrders((prev) => [newOrder, ...prev]);
 
-    // Add Customer Notification: Order Placed
-    addCustomerNotification({
-      title: 'Order Placed',
-      message: `Your SBS order #${orderNum} has been placed.`,
-      type: 'order',
-      orderId: newOrder.id
-    });
+    // Only notify customer order placed if order is confirmed/paid
+    if (isOrderConfirmed) {
+      addCustomerNotification({
+        title: 'Order Placed',
+        message: `Your SBS order #${orderNum} has been placed.`,
+        type: 'order',
+        orderId: newOrder.id
+      });
+    }
 
     // Persist order to Supabase
     if (isSupabaseConfigured && supabase) {
@@ -2735,13 +2672,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       );
     });
 
-    // Create new order admin notification
-    addNotification({
-      title: 'New Order Placed',
-      message: `Order ${orderNum} of ₹${cartTotal} by ${user.name}`,
-      type: 'order',
-      priority: 'high'
-    });
+    // Create new order admin notification only if confirmed
+    if (isOrderConfirmed) {
+      addNotification({
+        title: 'New Order Placed',
+        message: `Order ${orderNum} of ₹${cartTotal} by ${user.name}`,
+        type: 'order',
+        priority: 'high'
+      });
+    }
 
     // If keepCart is false or not passed, remove selected items from cart
     if (!options?.keepCart) {
@@ -2963,7 +2902,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           orderNum = ord.orderNumber;
           trackingNum = ord.trackingNumber || '';
           oldStatus = ord.status;
-          return { ...ord, status };
+          return { 
+            ...ord, 
+            status,
+            ...(status === 'Cancelled' ? { paymentStatus: 'CANCELLED' as any } : {})
+          };
         }
         return ord;
       })
@@ -2972,7 +2915,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setAdminOrders((prev) => {
       const updated = prev.map((ord) => {
         if (ord.id === orderId) {
-          return { ...ord, status };
+          return { 
+            ...ord, 
+            status,
+            ...(status === 'Cancelled' ? { paymentStatus: 'CANCELLED' as any } : {})
+          };
         }
         return ord;
       });
@@ -3023,6 +2970,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const updates: any = { status };
       if (status === 'Delivered' && isCod) {
         updates.payment_status = 'PAYMENT_VERIFIED';
+      } else if (status === 'Cancelled') {
+        updates.payment_status = 'CANCELLED';
       }
 
       const { error } = await supabase.from('orders').update(updates).eq('id', orderId);
@@ -3059,6 +3008,31 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     showToast(`Order status updated to ${status}`);
+  };
+
+  const deleteOrder = async (orderId: string): Promise<boolean> => {
+    try {
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      setAdminOrders((prev) => {
+        const updated = prev.filter((o) => o.id !== orderId);
+        syncPaymentRecordsFromOrders(updated);
+        return updated;
+      });
+
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase.from('orders').delete().eq('id', orderId);
+        if (error) {
+          console.error('Supabase delete order error:', error);
+          showToast(`Failed to delete order: ${error.message}`, 'error');
+          return false;
+        }
+      }
+      showToast('Order removed', 'info');
+      return true;
+    } catch (err: any) {
+      console.error('Delete order error:', err);
+      return false;
+    }
   };
 
   // User Profile & Addresses
@@ -3694,7 +3668,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     showToast('All notifications cleared');
   };
 
-  const updateReturnRequestStatus = async (id: string, status: ReturnRequest['status']) => {
+  const updateReturnRequestStatus = async (id: string, status: ReturnRequest['status'], meta?: Partial<ReturnRequest>) => {
     setReturnRequests((prev) =>
       prev.map((ret) => {
         if (ret.id === id) {
@@ -3705,7 +3679,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               orderId: ret.orderId,
               customerName: ret.customerName,
               amount: ret.amount,
-              method: 'UPI',
+              method: (meta?.refundMethod as any) || 'UPI',
               status: 'Refunded',
               timestamp: new Date().toISOString()
             };
@@ -3728,7 +3702,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               }
             }
           }
-          return { ...ret, status };
+          return { ...ret, status, ...(meta || {}) };
         }
         return ret;
       })
@@ -3757,6 +3731,48 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     showToast(`Return status updated to ${status}`);
+  };
+
+  const createReturnRequest = async (req: Omit<ReturnRequest, 'id' | 'date' | 'status'>): Promise<boolean> => {
+    try {
+      const newRet: ReturnRequest = {
+        ...req,
+        id: `ret_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        date: new Date().toISOString().split('T')[0],
+        status: 'Pending',
+        pickupStatus: 'Pending',
+      };
+      setReturnRequests((prev) => [newRet, ...prev]);
+
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase.from('return_requests').insert({
+          id: newRet.id,
+          order_id: newRet.orderId,
+          customer_name: newRet.customerName,
+          customer_phone: newRet.customerPhone,
+          customer_address: newRet.customerAddress,
+          product_name: newRet.productName,
+          product_image: newRet.productImage,
+          reason: newRet.reason,
+          date: newRet.date,
+          status: newRet.status,
+          amount: newRet.amount,
+          pickup_status: newRet.pickupStatus,
+        });
+        if (error) {
+          console.warn('Supabase insert return request error (will retain local state):', error);
+        }
+      }
+
+      // Also update order status to Returns
+      await updateOrderStatus(newRet.orderId, 'Returns');
+      showToast('Return request submitted successfully!', 'success');
+      return true;
+    } catch (err: any) {
+      console.error('Error creating return request:', err);
+      showToast('Failed to submit return request', 'error');
+      return false;
+    }
   };
 
   // Categories Actions
@@ -4386,6 +4402,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateOrderPaymentStatus,
         addCustomerNotification,
         refreshOrders,
+        deleteOrder,
 
         updateUserProfile,
         addAddress,
@@ -4414,6 +4431,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         markNotificationRead,
         clearAllNotifications,
         updateReturnRequestStatus,
+        createReturnRequest,
 
         addCategory,
         updateCategory,

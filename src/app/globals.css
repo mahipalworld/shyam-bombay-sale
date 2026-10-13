@@ -1,11 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --font-inter: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  /* SBS Brand Identity Tokens */
+  --sbs-orange: #FF6600;
+  --sbs-orange-hover: #E65C00;
+  --sbs-black: #0F0F0F;
+  --sbs-white: #FFFFFF;
+  --sbs-dark-secondary: #1F2937;
+  --sbs-gray-light: #E5E7EB;
+  --sbs-warm-bg: #FFF4EA;
+
+  --font-brand: 'Manrope', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-inter: 'Manrope', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   /* Safe area insets for notched phones (iPhone X+, modern Android) */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -218,5 +228,113 @@ input[type="checkbox"] {
 .animate-scanner-laser {
   position: absolute;
   animation: scannerLaser 2s ease-in-out infinite;
+}
+
+/* ========================================================= */
+/* ONCE-A-DAY SBS INTRO ANIMATION (2.0s GPU-Accelerated)     */
+/* ========================================================= */
+#sbs-intro-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999999;
+  background-color: #FBFBFB;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  overflow: hidden;
+  will-change: opacity;
+}
+
+html.sbs-play-intro #sbs-intro-overlay {
+  display: flex;
+  animation: sbsOverlayFade 2.0s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.sbs-intro-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.sbs-intro-door {
+  position: absolute;
+  width: clamp(90px, 20vw, 150px);
+  max-width: 40vw;
+  height: auto;
+  object-fit: contain;
+  will-change: transform, opacity;
+  animation: sbsDoorAnim 2.0s forwards;
+}
+
+.sbs-intro-wordmark {
+  position: absolute;
+  width: clamp(170px, 42vw, 320px);
+  max-width: 80vw;
+  height: auto;
+  object-fit: contain;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: sbsWordmarkAnim 2.0s forwards;
+}
+
+@keyframes sbsDoorAnim {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.3);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  35% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    animation-timing-function: ease-in-out;
+  }
+  70% {
+    opacity: 0;
+    transform: translate3d(-24px, 0, 0) scale(0.96);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-24px, 0, 0) scale(0.96);
+  }
+}
+
+@keyframes sbsWordmarkAnim {
+  0%, 35% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.96);
+    animation-timing-function: ease-in-out;
+  }
+  70% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes sbsOverlayFade {
+  0%, 70% {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  100% {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #sbs-intro-overlay {
+    display: none !important;
+  }
 }
 

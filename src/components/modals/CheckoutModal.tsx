@@ -121,6 +121,9 @@ export const CheckoutModal: React.FC = () => {
 
     if (!wasOpen && isCheckoutOpen) {
       loadRazorpayScript();
+      // Pre-warm payment server
+      const sbsApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sbs-backend-8ryi.onrender.com';
+      fetch(`${sbsApiUrl}/health`, { method: 'GET' }).catch(() => {});
       if (typeof window !== 'undefined') {
         const savedSession = sessionStorage.getItem('sbs_active_checkout_session');
         if (savedSession) {
@@ -337,32 +340,32 @@ export const CheckoutModal: React.FC = () => {
         const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TmiU1QiCGShTMs';
         const sbsApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sbs-backend-8ryi.onrender.com';
 
-        // 1. Create order record in SBS store
-        const order = placeOrder('Online (Razorpay)', targetAddress, {
-          paymentStatus: 'PENDING',
-          keepCart: true,
-          ...checkoutOptions,
-        });
-        setActiveOrder(order);
+        // Pre-allocate order number for gateway reference (DO NOT create order in DB until payment succeeds)
+        const allocatedOrderNum = `SBS-${Math.floor(1000 + Math.random() * 9000)}`;
 
-        // 2. Request backend to create Razorpay Order
+        // Request backend to create Razorpay Order with a strict 2.5s timeout to prevent hanging on cold starts
         let rzpOrderId: string | undefined = undefined;
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2500);
+
           const createOrderRes = await fetch(`${sbsApiUrl}/api/payment/create-order`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
             body: JSON.stringify({
               amount: payableTotal,
               currency: 'INR',
-              receipt: order.orderNumber,
+              receipt: allocatedOrderNum,
               notes: {
-                sbsOrderId: order.id,
-                orderNumber: order.orderNumber,
+                orderNumber: allocatedOrderNum,
                 customerPhone: targetAddress.phone || user?.phone || '',
                 customerName: targetAddress.name || user?.name || '',
               },
             }),
           });
+          clearTimeout(timeoutId);
+
           if (createOrderRes.ok) {
             const orderData = await createOrderRes.json();
             if (orderData.orderId) {
@@ -370,17 +373,20 @@ export const CheckoutModal: React.FC = () => {
             }
           }
         } catch (backendErr) {
-          console.warn('Backend order creation note:', backendErr);
+          console.warn('Backend order creation bypassed or timed out:', backendErr);
         }
 
-        // 3. Launch Razorpay Checkout popup
-        const logoUrl = typeof window !== 'undefined' ? `${window.location.origin}/logo.png?v=3` : 'https://www.sbsstore.in/logo.png';
+        // Launch Razorpay Checkout popup using the website Door Icon (Issue 1)
+        const logoUrl = typeof window !== 'undefined' 
+          ? `${window.location.origin}/door-logo.png?v=4` 
+          : 'https://www.sbsstore.in/door-logo.png?v=4';
+
         const options = {
           key: razorpayKey,
           amount: Math.round(payableTotal * 100),
           currency: 'INR',
           name: 'SBS Store',
-          description: `Order #${order.orderNumber} - Shyam Bombay Sale`,
+          description: `Order #${allocatedOrderNum} - Shyam Bombay Sale`,
           image: logoUrl,
           order_id: rzpOrderId,
           prefill: {
@@ -389,7 +395,7 @@ export const CheckoutModal: React.FC = () => {
             contact: targetAddress.phone || user?.phone || '',
           },
           notes: {
-            sbsOrderId: order.id,
+            orderNumber: allocatedOrderNum,
             shippingCity: targetAddress.city,
           },
           theme: {
@@ -422,7 +428,16 @@ export const CheckoutModal: React.FC = () => {
             },
           },
           handler: async function (response: any) {
-            // Verify payment with backend
+            // Payment verified and succeeded! Now officially place the order in SBS store
+            const order = placeOrder('Online (Razorpay)', targetAddress, {
+              orderNumber: allocatedOrderNum,
+              paymentStatus: 'PAYMENT_VERIFIED',
+              paymentConfirmedAt: new Date().toISOString(),
+              keepCart: false,
+              ...checkoutOptions,
+            });
+
+            // Report verification to backend
             try {
               await fetch(`${sbsApiUrl}/api/payment/verify-payment`, {
                 method: 'POST',
@@ -437,11 +452,6 @@ export const CheckoutModal: React.FC = () => {
             } catch (vErr) {
               console.warn('Verification report:', vErr);
             }
-
-            // Update payment verified in StoreContext
-            updateOrderPaymentStatus(order.id, 'PAYMENT_VERIFIED', {
-              paymentConfirmedAt: new Date().toISOString(),
-            });
 
             if (typeof window !== 'undefined') {
               sessionStorage.removeItem('sbs_active_checkout_session');
@@ -462,8 +472,10 @@ export const CheckoutModal: React.FC = () => {
           },
           modal: {
             ondismiss: function () {
+              // Customer exited or canceled payment without paying:
+              // NO order was placed, NO ghost order created in DB or admin panel!
               setIsProcessingOrder(false);
-              showToast('Payment window closed. You can retry whenever you are ready.', 'info');
+              showToast('Payment window closed. No charge was made.', 'info');
             },
           },
         };

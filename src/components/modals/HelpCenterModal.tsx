@@ -24,8 +24,9 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
   // Verified Google Maps place details for Shyam Bombay Sale
   const STORE_NAME = 'Shyam Bombay Sale';
   const VERIFIED_ADDRESS = 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023';
-  const MAPS_SHORT_URL = 'https://share.google/Pa5CkR6pMiRD0MMZm';
-  const MAPS_EMBED_URL = 'https://maps.google.com/maps?q=22.3323,73.1612&hl=en&z=17&output=embed';
+  const DIRECTIONS_URL = 'https://www.google.com/maps/dir/?api=1&destination=Shyam+Bombay+sale,+Subhanpura,+Vadodara';
+  const STORE_MAPS_URL = 'https://www.google.com/maps/search/?api=1&query=Shyam+Bombay+sale+Subhanpura+Vadodara';
+  const MAPS_EMBED_URL = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3690.660732280276!2d73.13937197529334!3d22.328667179666244!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395fc90072a2b239%3A0x3ef27da67a38a5ca!2sShyam%20Bombay%20sale!5e0!3m2!1sen!2sin!4v1791880692195!5m2!1sen!2sin';
   const STORE_PHONE = '+91 92262 94797';
   const WHATSAPP_LINK = 'https://wa.me/919226294797?text=Hi%20SBS%20Store%2C%20I%20need%20assistance%20with%20my%20order.';
 
@@ -120,11 +121,11 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
             {/* Embedded Responsive Google Map */}
             <div className="relative w-full h-52 sm:h-60 rounded-2xl overflow-hidden border border-gray-200 bg-gray-100 shadow-inner">
               <iframe
-                title="SBS Store Physical Location"
+                title="Shyam Bombay Sale Store Location"
                 src={MAPS_EMBED_URL}
                 className="w-full h-full border-0"
                 loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
+                referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
               />
             </div>
@@ -136,7 +137,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                 <div>
                   <span className="font-extrabold text-gray-900 block text-xs">{STORE_NAME}</span>
                   <span className="text-gray-600 block text-[11px] mt-0.5">{VERIFIED_ADDRESS}</span>
-                  <span className="text-[10px] text-gray-400 font-mono block mt-0.5">Coordinates: 22.3323° N, 73.1612° E</span>
+                  <span className="text-[10px] text-gray-400 font-mono block mt-0.5">Coordinates: 22.3287° N, 73.1394° E</span>
                 </div>
               </div>
 
@@ -151,17 +152,32 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
               </div>
             </div>
 
-            {/* Get Directions Action Button */}
-            <a
-              href={MAPS_SHORT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-3 px-4 bg-gradient-to-r from-[#F95721] to-[#FA7035] hover:from-[#E44813] hover:to-[#F95721] text-white font-black text-xs rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-orange-500/25 active:scale-98 transition-all"
-            >
-              <Navigation className="w-4 h-4" />
-              <span>Get Directions</span>
-              <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-            </a>
+            {/* Get Directions & Open in Maps Actions */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <a
+                href={DIRECTIONS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="w-full py-3 px-4 bg-gradient-to-r from-[#F95721] to-[#FA7035] hover:from-[#E44813] hover:to-[#F95721] text-white font-black text-xs rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-orange-500/25 active:scale-98 transition-all"
+              >
+                <Navigation className="w-4 h-4" />
+                <span>Get Directions</span>
+                <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+              </a>
+
+              <a
+                href={STORE_MAPS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="w-full py-3 px-4 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 font-black text-xs rounded-2xl flex items-center justify-center gap-2 shadow-2xs active:scale-98 transition-all"
+              >
+                <MapPin className="w-4 h-4 text-[#F95721]" />
+                <span>Open in Maps</span>
+                <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+              </a>
+            </div>
           </div>
 
           {/* Useful Support Information */}

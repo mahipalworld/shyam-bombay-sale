@@ -73,8 +73,12 @@ export const HomepagePreviewModal: React.FC<HomepagePreviewModalProps> = ({
             {/* Store Top Bar */}
             <div className="flex items-center justify-between bg-white p-2.5 rounded-2xl shadow-xs border border-gray-100">
               <div className="flex items-center gap-1.5">
-                <span className="font-black text-[#F95721] text-sm">{storeSettings.logo || 'SBS'}</span>
-                <span className="font-bold text-gray-800 text-xs tracking-tight">STORE</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/brand/sbs-wordmark.svg"
+                  alt="SBS"
+                  className="h-5 w-auto object-contain"
+                />
               </div>
               <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">
                 Free Delivery ₹{storeSettings.freeDeliveryThreshold}+

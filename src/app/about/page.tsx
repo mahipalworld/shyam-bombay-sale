@@ -47,16 +47,13 @@ export default function AboutPage() {
       <div className="min-h-screen bg-[#F8F9FA]">
         <header className="bg-white border-b border-gray-100">
           <div className="max-w-4xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href="/" className="flex items-center group py-0.5" aria-label="SBS Home">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/logo.png?v=3"
+                src="/brand/sbs-wordmark.svg"
                 alt="SBS Store — Shyam Bombay Sale"
-                className="h-8 w-auto object-contain group-hover:scale-105 transition-transform"
+                className="h-6.5 sm:h-7.5 w-auto object-contain group-hover:scale-105 group-active:scale-95 transition-transform"
               />
-              <span className="text-base font-black text-gray-900 group-hover:text-[#F95721] transition-colors">
-                STORE
-              </span>
             </Link>
             <nav className="flex items-center gap-4 text-xs font-bold text-gray-600">
               <Link href="/" className="hover:text-[#F95721] transition-colors">Home</Link>

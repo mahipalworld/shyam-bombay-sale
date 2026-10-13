@@ -74,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
         {/* Left Side: Logo */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-shrink-0">
           {showBack && (
             <button
               onClick={onBack || (() => setActiveTab('home'))}
@@ -85,33 +85,27 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
             </button>
           )}
 
-          {/* Brand Logo */}
+          {/* Brand Logo: Standalone SBS Wordmark */}
           <div 
             onClick={() => {
               setSelectedCategoryFilter(null);
               setActiveTab('home');
             }} 
-            className="cursor-pointer flex items-center gap-2 select-none group"
+            className="cursor-pointer flex items-center select-none group py-1"
+            role="button"
+            aria-label="SBS Home"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo.png?v=3"
+              src="/brand/sbs-wordmark.svg"
               alt="SBS — Shyam Bombay Sale"
-              className="h-7 sm:h-8.5 w-auto object-contain group-hover:scale-105 transition-transform flex-shrink-0"
+              className="h-6 sm:h-7 md:h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-105 group-active:scale-95 flex-shrink-0"
             />
-            <div className="flex flex-col items-start justify-center leading-none">
-              <span className="text-base sm:text-lg font-black tracking-tight text-gray-900 group-hover:text-[#F95721] transition-colors">
-                STORE
-              </span>
-              <span className="hidden sm:block text-[8.5px] font-bold text-gray-400 tracking-wider uppercase mt-0.5">
-                Smart Products • Better Prices
-              </span>
-            </div>
           </div>
         </div>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-5 text-xs font-bold text-gray-700">
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-5 text-xs font-bold text-gray-700">
           <button
             onClick={() => {
               setSelectedCategoryFilter(null);
@@ -140,6 +134,14 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Today&apos;s Deals</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`transition-colors ${
+              activeTab === 'orders' ? 'text-[#F95721] font-black' : 'hover:text-[#F95721]'
+            }`}
+          >
+            My Orders
           </button>
           <a
             href="/about"

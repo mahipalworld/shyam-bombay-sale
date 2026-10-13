@@ -10,6 +10,7 @@ import { CartView } from '@/components/views/CartView';
 import { WishlistView } from '@/components/views/WishlistView';
 import { ProfileView } from '@/components/views/ProfileView';
 import { AdminView } from '@/components/views/AdminView';
+import { MyOrdersView } from '@/components/views/MyOrdersView';
 
 // Modals
 import { ProductDetailModal } from '@/components/modals/ProductDetailModal';
@@ -17,7 +18,6 @@ import { CheckoutModal } from '@/components/modals/CheckoutModal';
 import { OrderDetailsModal } from '@/components/modals/OrderDetailsModal';
 import { EditProfileModal } from '@/components/modals/EditProfileModal';
 import { SearchModal } from '@/components/modals/SearchModal';
-import { OrdersListModal } from '@/components/modals/OrdersListModal';
 import { AddressesModal } from '@/components/modals/AddressesModal';
 import { CouponsModal } from '@/components/modals/CouponsModal';
 import { CustomerNotificationsModal } from '@/components/modals/CustomerNotificationsModal';
@@ -53,6 +53,8 @@ export default function App() {
         return <WishlistView />;
       case 'profile':
         return <ProfileView />;
+      case 'orders':
+        return <MyOrdersView />;
       case 'admin':
         return <AdminView />;
       default:
@@ -62,18 +64,17 @@ export default function App() {
 
   const getHeaderTitle = () => {
     if (activeTab === 'admin') return 'Admin Dashboard';
+    if (activeTab === 'orders') return 'My Orders';
     return undefined;
   };
 
-  const showBackButton = activeTab === 'categories' || activeTab === 'cart' || activeTab === 'wishlist';
+  const showBackButton = activeTab === 'categories' || activeTab === 'cart' || activeTab === 'wishlist' || activeTab === 'orders';
 
   const handleBack = () => {
-    if (activeTab === 'categories') {
-      if (selectedSubcategoryFilter) {
-        setSelectedSubcategoryFilter(null);
-      } else {
-        setActiveTab('home');
-      }
+    if (activeTab === 'orders') {
+      setActiveTab('profile');
+    } else if (activeTab === 'categories') {
+      setActiveTab('home');
     } else {
       setActiveTab('home');
     }
@@ -91,7 +92,7 @@ export default function App() {
       )}
 
       {/* Main Content Area - Expands comfortably on Desktop and Mobile */}
-      <main className={`flex-1 w-full ${activeTab === 'admin' ? 'w-full max-w-none px-0 py-0' : activeTab === 'categories' ? 'max-w-6xl mx-auto px-2 sm:px-4 md:px-6 py-1 sm:py-2 pb-36 md:pb-6' : activeTab === 'home' ? 'max-w-6xl mx-auto px-2 sm:px-4 md:px-8 pt-0.5 sm:pt-1.5 pb-36 sm:pb-40 md:pb-8' : 'max-w-6xl mx-auto px-2 sm:px-4 md:px-8 py-3 pb-36 sm:pb-40 md:pb-8'}`}>
+      <main className={`flex-1 w-full ${activeTab === 'admin' ? 'w-full max-w-none px-0 py-0' : activeTab === 'categories' ? 'w-full max-w-7xl mx-auto px-0 sm:px-4 md:px-6 py-0 sm:py-2 pb-0 md:pb-6 overflow-hidden' : activeTab === 'home' ? 'max-w-6xl mx-auto px-2 sm:px-4 md:px-8 pt-0.5 sm:pt-1.5 pb-36 sm:pb-40 md:pb-8' : 'max-w-6xl mx-auto px-2 sm:px-4 md:px-8 py-3 pb-36 sm:pb-40 md:pb-8'}`}>
         {activeTab === 'admin' ? (
           renderActiveView()
         ) : (
@@ -110,9 +111,9 @@ export default function App() {
                 <div className="flex items-center gap-2.5">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/logo.png?v=3"
+                    src="/brand/sbs-wordmark.svg"
                     alt="SBS Store — Shyam Bombay Sale"
-                    className="h-8 w-auto object-contain flex-shrink-0 bg-white/10 p-1 rounded-lg"
+                    className="h-7 w-auto object-contain flex-shrink-0"
                   />
                   <div className="flex flex-col leading-tight">
                     <span className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold">Everyday Essentials</span>
@@ -211,7 +212,6 @@ export default function App() {
       <OrderDetailsModal />
       <EditProfileModal />
       <SearchModal />
-      <OrdersListModal />
       <AddressesModal />
       <CouponsModal />
       <CustomerNotificationsModal />

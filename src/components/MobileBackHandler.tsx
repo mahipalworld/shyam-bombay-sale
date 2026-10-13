@@ -30,6 +30,8 @@ export const MobileBackHandler: React.FC = () => {
     setIsUserNotificationsModalOpen,
     orderListFilter,
     setOrderListFilter,
+    selectedCategoryFilter,
+    setSelectedCategoryFilter,
     showToast,
   } = useStore();
 
@@ -189,7 +191,7 @@ export const MobileBackHandler: React.FC = () => {
         return;
       }
 
-      // 6. Priority 6: Home root (Double back to exit protection)
+      // 7. Priority 7: Home root (Double back to exit protection)
       const now = Date.now();
       if (now - lastBackPressTimeRef.current < 2000) {
         window.history.back();
@@ -218,6 +220,8 @@ export const MobileBackHandler: React.FC = () => {
     isSearchOpen,
     isUserNotificationsModalOpen,
     activeTab,
+    selectedCategoryFilter,
+    setSelectedCategoryFilter,
     setSelectedProductDetail,
     setActiveSubcategoryModal,
     setIsCheckoutOpen,

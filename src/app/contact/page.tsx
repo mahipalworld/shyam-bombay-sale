@@ -44,7 +44,9 @@ const WHATSAPP_LINK = 'https://wa.me/919226294797?text=Hi%20Shyam%20Bombay%20Sal
 const STORE_EMAIL = 'shyambombaysale@gmail.com';
 const STORE_HOURS = 'Monday – Sunday, 10:00 AM – 9:30 PM';
 const STORE_ADDRESS = 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023';
-const GOOGLE_MAPS_LINK = 'https://share.google/Pa5CkR6pMiRD0MMZm';
+const GOOGLE_MAPS_LINK = 'https://www.google.com/maps/search/?api=1&query=Shyam+Bombay+sale+Subhanpura+Vadodara';
+const DIRECTIONS_LINK = 'https://www.google.com/maps/dir/?api=1&destination=Shyam+Bombay+sale,+Subhanpura,+Vadodara';
+const MAPS_EMBED_URL = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3690.660732280276!2d73.13937197529334!3d22.328667179666244!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395fc90072a2b239%3A0x3ef27da67a38a5ca!2sShyam%20Bombay%20sale!5e0!3m2!1sen!2sin!4v1791880692195!5m2!1sen!2sin';
 const JUSTDIAL_LINK = 'https://www.justdial.com/Vadodara/Shyam-Bombay-Sale-Subhanpura/0265PX265-X265-260124041911-U8Y6_BZDET';
 
 export default function ContactPage() {
@@ -57,16 +59,13 @@ export default function ContactPage() {
       <div className="min-h-screen bg-[#F8F9FA]">
         <header className="bg-white border-b border-gray-100">
           <div className="max-w-4xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href="/" className="flex items-center group py-0.5" aria-label="SBS Home">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/logo.png?v=3"
+                src="/brand/sbs-wordmark.svg"
                 alt="SBS Store — Shyam Bombay Sale"
-                className="h-8 w-auto object-contain group-hover:scale-105 transition-transform"
+                className="h-6.5 sm:h-7.5 w-auto object-contain group-hover:scale-105 group-active:scale-95 transition-transform"
               />
-              <span className="text-base font-black text-gray-900 group-hover:text-[#F95721] transition-colors">
-                STORE
-              </span>
             </Link>
             <nav className="flex items-center gap-4 text-xs font-bold text-gray-600">
               <Link href="/" className="hover:text-[#F95721] transition-colors">Home</Link>
@@ -97,7 +96,7 @@ export default function ContactPage() {
           </div>
 
           {/* Offline Store Card (Google Maps) */}
-          <div className="mb-8 p-6 md:p-8 bg-gradient-to-br from-blue-50/70 via-white to-orange-50/50 rounded-3xl border border-blue-100/80 shadow-sm">
+          <div className="mb-8 p-6 md:p-8 bg-gradient-to-br from-blue-50/70 via-white to-orange-50/50 rounded-3xl border border-blue-100/80 shadow-sm space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-3 max-w-xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100/70 text-blue-800 text-xs font-bold">
@@ -118,6 +117,15 @@ export default function ContactPage() {
               </div>
 
               <div className="flex flex-col gap-2.5 flex-shrink-0">
+                <a
+                  href={DIRECTIONS_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#F95721] to-[#FA7035] hover:from-[#E44813] hover:to-[#F95721] text-white text-xs font-bold rounded-xl shadow-sm transition-all"
+                >
+                  <span>Get Directions</span>
+                  <span>↗</span>
+                </a>
                 <a
                   href={GOOGLE_MAPS_LINK}
                   target="_blank"
@@ -143,6 +151,18 @@ export default function ContactPage() {
                   <span>Call Store</span>
                 </a>
               </div>
+            </div>
+
+            {/* Embedded Responsive Google Map */}
+            <div className="w-full h-64 md:h-80 rounded-2xl overflow-hidden border border-gray-200/80 bg-gray-100 shadow-inner">
+              <iframe
+                title="Shyam Bombay Sale Store Location"
+                src={MAPS_EMBED_URL}
+                className="w-full h-full border-0"
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
             </div>
           </div>
 

@@ -9,20 +9,24 @@ module.exports = {
     extend: {
       colors: {
         sbs: {
-          orange: "#F95721",
-          orangeHover: "#E44813",
-          orangeLight: "#FFF4EC",
+          orange: "#FF6600",
+          orangeHover: "#E65C00",
+          orangeLight: "#FFF4EA",
           orangeBadge: "#FFEAD9",
           cream: "#FAF7F2",
-          dark: "#18181B",
+          black: "#0F0F0F",
+          dark: "#0F0F0F",
+          secondaryDark: "#1F2937",
+          lightGray: "#E5E7EB",
+          warmBg: "#FFF4EA",
           muted: "#71717A",
-          border: "#F0EBE6",
+          border: "#E5E7EB",
           green: "#059669",
           greenLight: "#ECFDF5",
         },
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        sans: ["var(--font-brand)", "var(--font-inter)", "system-ui", "sans-serif"],
       },
       boxShadow: {
         subtle: "0 2px 10px rgba(0, 0, 0, 0.04)",
