@@ -28,7 +28,8 @@ import {
   Clock,
   ChevronDown,
   HelpCircle,
-  Store
+  Store,
+  ShoppingBag
 } from 'lucide-react';
 
 export const HomeView: React.FC = () => {
@@ -49,11 +50,15 @@ export const HomeView: React.FC = () => {
     setSelectedCategoryFilter, 
     setSelectedSubcategoryFilter,
     setSelectedProductDetail,
-    recentlyViewedIds
+    recentlyViewedIds,
+    addToCart
   } = useStore();
 
   const [activeCategoryPill, setActiveCategoryPill] = React.useState<string>('all');
   const [activeHeroSlide, setActiveHeroSlide] = React.useState(0);
+  const [slideProgress, setSlideProgress] = React.useState(0);
+  const [heroDragOffset, setHeroDragOffset] = React.useState(0);
+  const [isHeroDragging, setIsHeroDragging] = React.useState(false);
   const [isScratchModalOpen, setIsScratchModalOpen] = React.useState(false);
   const [isHeroPaused, setIsHeroPaused] = React.useState(false);
   const [countdown, setCountdown] = React.useState({ 
@@ -64,9 +69,9 @@ export const HomeView: React.FC = () => {
   const [openFaqIndex, setOpenFaqIndex] = React.useState<number | null>(null);
   
   const subcategoryScrollRef = React.useRef<HTMLDivElement>(null);
-  const touchStartXRef = React.useRef<number | null>(null);
-  const touchEndXRef = React.useRef<number | null>(null);
-  const isMouseDownRef = React.useRef(false);
+  const heroTouchRef = React.useRef<{ x: number; y: number; time: number } | null>(null);
+  const heroIsHorizontalRef = React.useRef<boolean | null>(null);
+  const wasHeroDragRef = React.useRef(false);
 
   // Live Flash Deal Countdown Timer
   React.useEffect(() => {
@@ -149,74 +154,142 @@ export const HomeView: React.FC = () => {
 
   const slideCount = activeSlides.length;
 
-  // Auto-slide Hero Carousel
+  // Story-style 5s auto-slide timer with progress tracking
   React.useEffect(() => {
-    if (isHeroPaused || slideCount <= 1) return;
-    const heroTimer = setInterval(() => {
-      setActiveHeroSlide((prev) => (prev + 1) % slideCount);
-    }, 6000);
-    return () => clearInterval(heroTimer);
-  }, [isHeroPaused, slideCount]);
+    if (isHeroPaused || isHeroDragging || slideCount <= 1) return;
 
-  // Touch & Mouse Swipe Handlers
+    const intervalStepMs = 50;
+    const totalDurationMs = 5000;
+    const increment = (intervalStepMs / totalDurationMs) * 100;
+
+    const timer = setInterval(() => {
+      setSlideProgress((prev) => {
+        if (prev >= 100) {
+          setActiveHeroSlide((curr) => (curr + 1) % slideCount);
+          return 0;
+        }
+        return prev + increment;
+      });
+    }, intervalStepMs);
+
+    return () => clearInterval(timer);
+  }, [isHeroPaused, isHeroDragging, slideCount]);
+
+  // Reset slide progress whenever active slide changes
+  React.useEffect(() => {
+    setSlideProgress(0);
+  }, [activeHeroSlide]);
+
+  // Real-time touch gestures with horizontal physics
   const handleHeroTouchStart = (e: React.TouchEvent) => {
-    touchStartXRef.current = e.targetTouches[0].clientX;
-    touchEndXRef.current = null;
+    if (slideCount <= 1) return;
+    const touch = e.touches[0];
+    heroTouchRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+    heroIsHorizontalRef.current = null;
+    wasHeroDragRef.current = false;
+    setIsHeroDragging(true);
+    setHeroDragOffset(0);
     setIsHeroPaused(true);
   };
 
   const handleHeroTouchMove = (e: React.TouchEvent) => {
-    touchEndXRef.current = e.targetTouches[0].clientX;
+    if (!heroTouchRef.current || slideCount <= 1) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - heroTouchRef.current.x;
+    const deltaY = touch.clientY - heroTouchRef.current.y;
+
+    if (heroIsHorizontalRef.current === null) {
+      if (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6) {
+        heroIsHorizontalRef.current = Math.abs(deltaX) > Math.abs(deltaY);
+      }
+    }
+
+    if (heroIsHorizontalRef.current) {
+      if (Math.abs(deltaX) > 8) wasHeroDragRef.current = true;
+      let offset = deltaX;
+      if ((activeHeroSlide === 0 && deltaX > 0) || (activeHeroSlide === slideCount - 1 && deltaX < 0)) {
+        offset = deltaX * 0.4;
+      }
+      setHeroDragOffset(offset);
+    }
   };
 
   const handleHeroTouchEnd = () => {
+    if (!heroTouchRef.current) return;
+    const currentOffset = heroDragOffset;
+    const isHorizontal = heroIsHorizontalRef.current;
+
+    setIsHeroDragging(false);
+    setHeroDragOffset(0);
+    heroTouchRef.current = null;
+    heroIsHorizontalRef.current = null;
     setIsHeroPaused(false);
-    if (touchStartXRef.current === null || touchEndXRef.current === null) return;
-    const distance = touchStartXRef.current - touchEndXRef.current;
-    if (distance > 45) {
-      setActiveHeroSlide((prev) => (prev + 1) % slideCount);
-    } else if (distance < -45) {
-      setActiveHeroSlide((prev) => (prev - 1 + slideCount) % slideCount);
+
+    if (!isHorizontal) return;
+
+    if (Math.abs(currentOffset) > 40) {
+      if (currentOffset < 0) {
+        // Swipe Left -> Next
+        if ('vibrate' in navigator) navigator.vibrate(8);
+        setActiveHeroSlide((prev) => (prev + 1) % slideCount);
+        setSlideProgress(0);
+      } else {
+        // Swipe Right -> Prev
+        if ('vibrate' in navigator) navigator.vibrate(8);
+        setActiveHeroSlide((prev) => (prev - 1 + slideCount) % slideCount);
+        setSlideProgress(0);
+      }
     }
-    touchStartXRef.current = null;
-    touchEndXRef.current = null;
   };
 
+  // Mouse gestures for desktop
   const handleHeroMouseDown = (e: React.MouseEvent) => {
-    isMouseDownRef.current = true;
-    touchStartXRef.current = e.clientX;
-    touchEndXRef.current = null;
+    if (slideCount <= 1) return;
+    heroTouchRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
+    heroIsHorizontalRef.current = null;
+    wasHeroDragRef.current = false;
+    setIsHeroDragging(true);
+    setHeroDragOffset(0);
     setIsHeroPaused(true);
   };
 
   const handleHeroMouseMove = (e: React.MouseEvent) => {
-    if (!isMouseDownRef.current) return;
-    touchEndXRef.current = e.clientX;
+    if (!heroTouchRef.current || slideCount <= 1 || !isHeroDragging) return;
+    const deltaX = e.clientX - heroTouchRef.current.x;
+    const deltaY = e.clientY - heroTouchRef.current.y;
+
+    if (heroIsHorizontalRef.current === null) {
+      if (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6) {
+        heroIsHorizontalRef.current = Math.abs(deltaX) > Math.abs(deltaY);
+      }
+    }
+
+    if (heroIsHorizontalRef.current) {
+      if (Math.abs(deltaX) > 8) wasHeroDragRef.current = true;
+      let offset = deltaX;
+      if ((activeHeroSlide === 0 && deltaX > 0) || (activeHeroSlide === slideCount - 1 && deltaX < 0)) {
+        offset = deltaX * 0.4;
+      }
+      setHeroDragOffset(offset);
+    }
   };
 
   const handleHeroMouseUp = () => {
-    if (!isMouseDownRef.current) return;
-    isMouseDownRef.current = false;
-    setIsHeroPaused(false);
-    if (touchStartXRef.current === null || touchEndXRef.current === null) return;
-    const distance = touchStartXRef.current - touchEndXRef.current;
-    if (distance > 45) {
-      setActiveHeroSlide((prev) => (prev + 1) % slideCount);
-    } else if (distance < -45) {
-      setActiveHeroSlide((prev) => (prev - 1 + slideCount) % slideCount);
-    }
-    touchStartXRef.current = null;
-    touchEndXRef.current = null;
+    handleHeroTouchEnd();
   };
 
   const handleHeroPrev = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if ('vibrate' in navigator) navigator.vibrate(8);
     setActiveHeroSlide((prev) => (prev - 1 + slideCount) % slideCount);
+    setSlideProgress(0);
   };
 
   const handleHeroNext = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if ('vibrate' in navigator) navigator.vibrate(8);
     setActiveHeroSlide((prev) => (prev + 1) % slideCount);
+    setSlideProgress(0);
   };
 
   // Curated Aisles Subcategories List (Scoped to active visible categories)
@@ -378,10 +451,9 @@ export const HomeView: React.FC = () => {
     }
   };
 
-  // Section 1: Hero Carousel Renderer — Modern, high-converting compact mobile & desktop banner
+  // Section 1: Hero Carousel Renderer — Redesigned with smooth 60fps horizontal slide physics, story progress bars, and hybrid layouts
   const renderHeroSection = () => {
-    const currentSlide = activeSlides[activeHeroSlide] || activeSlides[0];
-    if (!currentSlide) return null;
+    if (activeSlides.length === 0) return null;
 
     return (
       <section className="relative">
@@ -389,213 +461,266 @@ export const HomeView: React.FC = () => {
           onMouseEnter={() => setIsHeroPaused(true)}
           onMouseLeave={() => {
             setIsHeroPaused(false);
-            isMouseDownRef.current = false;
+            if (isHeroDragging) handleHeroMouseUp();
           }}
           onTouchStart={handleHeroTouchStart}
           onTouchMove={handleHeroTouchMove}
           onTouchEnd={handleHeroTouchEnd}
+          onTouchCancel={handleHeroTouchEnd}
           onMouseDown={handleHeroMouseDown}
           onMouseMove={handleHeroMouseMove}
           onMouseUp={handleHeroMouseUp}
-          className="group/hero relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#FFF6EF] via-[#FFF0E6] to-[#FFE8DA] border border-[#FFDEC9] p-3.5 sm:p-5 md:p-8 shadow-subtle min-h-[175px] sm:min-h-[220px] md:min-h-[250px] flex flex-col justify-between select-none cursor-grab active:cursor-grabbing transition-all"
+          className="group/hero relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#FFF6EF] via-[#FFF0E6] to-[#FFE8DA] border border-[#FFDEC9] shadow-subtle min-h-[185px] sm:min-h-[225px] md:min-h-[265px] flex flex-col justify-between select-none cursor-grab active:cursor-grabbing transition-all touch-pan-y"
         >
-          {/* Decorative background glow */}
-          <div className="absolute -right-16 -top-16 w-72 h-72 bg-orange-200/40 rounded-full blur-3xl pointer-events-none" />
+          {/* Subtle Decorative Ambient Glows */}
+          <div className="absolute -right-16 -top-16 w-80 h-80 bg-orange-200/40 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -left-12 -bottom-12 w-60 h-60 bg-amber-200/30 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Previous / Next Controls (Desktop) */}
+          {/* Desktop Hover Floating Glass Arrow Chevrons */}
           {slideCount > 1 && (
             <>
               <button
+                type="button"
                 onClick={handleHeroPrev}
-                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-white/95 hover:bg-white text-gray-800 shadow-md backdrop-blur-xs items-center justify-center opacity-0 group-hover/hero:opacity-100 transition-all active:scale-90"
+                className="hidden sm:flex absolute left-3.5 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-white/95 hover:bg-white text-gray-800 shadow-md backdrop-blur-md items-center justify-center opacity-0 group-hover/hero:opacity-100 transition-all hover:scale-105 active:scale-95 border border-white/70"
                 aria-label="Previous slide"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4.5 h-4.5 stroke-[2.4px]" />
               </button>
               <button
+                type="button"
                 onClick={handleHeroNext}
-                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-white/95 hover:bg-white text-gray-800 shadow-md backdrop-blur-xs items-center justify-center opacity-0 group-hover/hero:opacity-100 transition-all active:scale-90"
+                className="hidden sm:flex absolute right-3.5 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-white/95 hover:bg-white text-gray-800 shadow-md backdrop-blur-md items-center justify-center opacity-0 group-hover/hero:opacity-100 transition-all hover:scale-105 active:scale-95 border border-white/70"
                 aria-label="Next slide"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4.5 h-4.5 stroke-[2.4px]" />
               </button>
             </>
           )}
 
-          {/* Render Active Slide — Balanced Horizontal Layout */}
-          {currentSlide.type === 'flash' ? (
-            /* Flash Deal Slide with Live Countdown */
-            <div 
-              onClick={() => {
-                const targetProd = currentSlide.product || (flashDealConfig?.productId ? products.find(p => p.id === flashDealConfig.productId) : null) || products[0];
-                if (targetProd) setSelectedProductDetail(targetProd);
-              }}
-              className="relative z-10 flex flex-row items-center justify-between gap-3 sm:gap-6 animate-fadeIn cursor-pointer"
-            >
-              <div className="flex-1 min-w-0 pr-1 space-y-1.5 sm:space-y-2">
-                <div className="flex items-center flex-wrap gap-1.5">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] sm:text-xs font-black shadow-2xs animate-pulse">
-                    <Flame className="w-3 h-3" /> {flashDealConfig?.badgeText || 'FLASH DEAL'}
-                  </span>
-                  <span className="text-[10px] sm:text-xs font-black text-[#EA580C] bg-orange-100/80 px-2 py-0.5 rounded-full">
-                    {flashDealConfig?.discountText || 'Up to 55% Off'}
-                  </span>
-                </div>
+          {/* Continuous Sliding Horizontal Track */}
+          <div
+            className="flex w-full"
+            style={{
+              transform: isHeroDragging
+                ? `translate3d(calc(-${activeHeroSlide * 100}% + ${heroDragOffset}px), 0, 0)`
+                : `translate3d(-${activeHeroSlide * 100}%, 0, 0)`,
+              transition: isHeroDragging ? 'none' : 'transform 480ms cubic-bezier(0.16, 1, 0.3, 1)',
+              willChange: 'transform',
+            }}
+          >
+            {activeSlides.map((slide, idx) => {
+              const isFlash = slide.type === 'flash';
+              const targetProd = slide.product || (isFlash && flashDealConfig?.productId ? products.find(p => p.id === flashDealConfig.productId) : null) || products[0];
 
-                <h2 className="text-base sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight leading-tight line-clamp-2">
-                  {flashDealConfig?.title || (currentSlide.product ? currentSlide.product.name : 'Deal of the Day')}
-                </h2>
-
-                {/* Live Countdown Ticker */}
-                <div className="flex items-center gap-1.5 pt-0.5">
-                  <span className="text-[10px] sm:text-xs font-bold text-gray-500 flex items-center gap-1">
-                    <Timer className="w-3.5 h-3.5 text-[#F95721]" /> Ends in:
-                  </span>
-                  <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs font-black text-white">
-                    <span className="bg-gray-900 px-1.5 py-0.5 rounded">
-                      {String(countdown.hours).padStart(2, '0')}h
-                    </span>
-                    <span className="text-gray-700 font-bold">:</span>
-                    <span className="bg-gray-900 px-1.5 py-0.5 rounded">
-                      {String(countdown.minutes).padStart(2, '0')}m
-                    </span>
-                    <span className="text-gray-700 font-bold">:</span>
-                    <span className="bg-[#F95721] px-1.5 py-0.5 rounded">
-                      {String(countdown.seconds).padStart(2, '0')}s
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-1 sm:pt-2 flex items-center gap-2">
-                  <span className="text-base sm:text-xl font-black text-[#F95721]">
-                    ₹{flashDealConfig?.dealPrice || currentSlide.product?.price || products[0]?.price || 99}
-                  </span>
-                  {(currentSlide.product?.originalPrice || flashDealConfig?.originalPrice || (products[0]?.originalPrice ?? 0)) > (flashDealConfig?.dealPrice || currentSlide.product?.price || products[0]?.price || 99) && (
-                    <span className="text-[11px] sm:text-xs text-gray-400 font-medium line-through">
-                      ₹{currentSlide.product ? currentSlide.product.originalPrice : (flashDealConfig?.originalPrice || products[0]?.originalPrice || 199)}
-                    </span>
-                  )}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const targetProd = currentSlide.product || (flashDealConfig?.productId ? products.find(p => p.id === flashDealConfig.productId) : null) || products[0];
-                      if (targetProd) setSelectedProductDetail(targetProd);
-                    }}
-                    className="ml-auto sm:ml-2 inline-flex items-center gap-1 px-3 py-1.5 sm:px-4 sm:py-2 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-xl shadow-xs active:scale-95 transition-all"
-                  >
-                    <span>Claim</span>
-                    <Zap className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Flash Deal Floating Image Stage */}
-              <div className="flex-shrink-0 relative w-28 sm:w-40 md:w-52 h-28 sm:h-40 md:h-52 flex items-center justify-center">
-                <ResolvedImage
-                  src={currentSlide.product ? currentSlide.product.image : (flashDealConfig?.productImage || products[0]?.image || '/icon-192x192.png?v=2')}
-                  alt={currentSlide.product ? currentSlide.product.name : (flashDealConfig?.productName || products[0]?.name || 'Flash Deal')}
-                  priority={true}
-                  className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            </div>
-          ) : (
-            /* Database Configured Hero Banner Slide */
-            <div 
-              onClick={() => {
-                if (currentSlide.product) {
-                  setSelectedProductDetail(currentSlide.product);
-                } else if (currentSlide.banner?.ctaDestination) {
-                  handleCategoryClick(currentSlide.banner.ctaDestination);
-                } else {
-                  setActiveTab('categories');
-                }
-              }}
-              className="relative z-10 flex flex-row items-center justify-between gap-3 sm:gap-6 animate-fadeIn cursor-pointer"
-            >
-              <div className="flex-1 min-w-0 pr-1 space-y-1.5 sm:space-y-2">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/95 text-xs font-bold text-[#F95721] shadow-2xs">
-                  <Sparkles className="w-3 h-3" /> 
-                  {currentSlide.banner?.badgeText || 'Special Collection'}
-                </span>
-                <h2 className="text-base sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight leading-tight line-clamp-2">
-                  {currentSlide.product ? currentSlide.product.name : currentSlide.banner?.heading}
-                </h2>
-                <p className="text-[11px] sm:text-xs md:text-sm text-gray-600 font-medium line-clamp-2">
-                  {currentSlide.banner?.description || (currentSlide.product ? currentSlide.product.description : 'Smart everyday utilities at factory rates.')}
-                </p>
-                <div className="pt-1 sm:pt-2 flex items-center gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (currentSlide.product) {
-                        setSelectedProductDetail(currentSlide.product);
-                      } else if (currentSlide.banner?.ctaDestination) {
-                        handleCategoryClick(currentSlide.banner.ctaDestination);
-                      } else {
-                        setActiveTab('categories');
-                      }
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-xl shadow-xs active:scale-95 transition-all"
-                  >
-                    <span>{currentSlide.banner?.ctaText || 'Shop Now'}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsScratchModalOpen(true);
-                    }}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-white/90 hover:bg-white text-gray-800 text-xs font-bold rounded-xl border border-orange-200 shadow-2xs transition-all tap-active"
-                  >
-                    <Gift className="w-3 h-3 text-[#F95721]" />
-                    <span className="hidden sm:inline">Scratch &amp; Win</span>
-                    <span className="sm:hidden">Rewards</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Floating Product Image Stage */}
-              <div className="flex-shrink-0 relative w-28 sm:w-40 md:w-52 h-28 sm:h-40 md:h-52 flex items-center justify-center">
-                <ResolvedImage
-                  src={currentSlide.product ? currentSlide.product.image : (currentSlide.banner?.image || '/icon-512x512.png?v=2')}
-                  alt={currentSlide.banner?.heading || 'Featured Banner'}
-                  priority={true}
-                  className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
-                />
-                {currentSlide.product && (
-                  <div className="absolute bottom-1 bg-gray-900/90 text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow-xs">
-                    ₹{currentSlide.product.price}
-                    {currentSlide.product.originalPrice && (
-                      <span className="line-through text-gray-400 ml-1 text-[9px]">
-                        ₹{currentSlide.product.originalPrice}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Dots Carousel Navigation */}
-          {slideCount > 1 && (
-            <div className="relative z-10 flex justify-center items-center gap-1 mt-2 sm:mt-3">
-              {activeSlides.map((_, idx) => (
-                <button
+              return (
+                <div
                   key={idx}
-                  onClick={() => setActiveHeroSlide(idx)}
-                  className="w-6 h-6 flex items-center justify-center p-1 cursor-pointer tap-active"
-                  aria-label={`Slide ${idx + 1}`}
+                  className="w-full min-w-full flex-shrink-0 p-3.5 sm:p-5 md:p-8 flex flex-col justify-between"
+                  onClick={() => {
+                    if (wasHeroDragRef.current || Math.abs(heroDragOffset) > 10) return;
+                    if (targetProd) {
+                      setSelectedProductDetail(targetProd);
+                    } else if (slide.banner?.ctaDestination) {
+                      handleCategoryClick(slide.banner.ctaDestination);
+                    } else {
+                      setActiveTab('categories');
+                    }
+                  }}
                 >
-                  <span
-                    className={`h-1.5 rounded-full transition-all duration-300 block ${
-                      activeHeroSlide === idx
-                        ? 'w-5 bg-[#F95721]'
-                        : 'w-2 bg-orange-200/80 hover:bg-orange-300'
-                    }`}
-                  />
-                </button>
-              ))}
+                  <div className="relative z-10 flex flex-row items-center justify-between gap-3 sm:gap-6">
+                    {/* Left Column: Badges, Title, Countdown/Description, CTAs */}
+                    <div className="flex-1 min-w-0 pr-1 space-y-1.5 sm:space-y-2.5">
+                      
+                      {/* Badges Bar */}
+                      <div className="flex items-center flex-wrap gap-1.5">
+                        {isFlash ? (
+                          <>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-red-500 to-rose-600 text-white text-[10px] sm:text-xs font-black shadow-xs animate-pulse">
+                              <Flame className="w-3 h-3" /> {flashDealConfig?.badgeText || 'FLASH DEAL'}
+                            </span>
+                            <span className="text-[10px] sm:text-xs font-black text-[#EA580C] bg-orange-100/90 border border-orange-200/80 px-2 py-0.5 rounded-full">
+                              {flashDealConfig?.discountText || 'Up to 55% Off'}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/95 text-[10px] sm:text-xs font-extrabold text-[#F95721] shadow-2xs border border-orange-200/60">
+                              <Sparkles className="w-3 h-3 text-amber-500" /> 
+                              {slide.banner?.badgeText || 'Special Collection'}
+                            </span>
+                            <span className="text-[10px] sm:text-xs font-bold text-gray-600 bg-white/70 px-2 py-0.5 rounded-full border border-gray-200/60">
+                              Limited Time
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Main Heading */}
+                      <h2 className="text-base sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight leading-tight line-clamp-2">
+                        {isFlash 
+                          ? (flashDealConfig?.title || (targetProd ? targetProd.name : 'Deal of the Day'))
+                          : (targetProd ? targetProd.name : slide.banner?.heading)}
+                      </h2>
+
+                      {/* Subtitle / Countdown */}
+                      {isFlash ? (
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                          <span className="text-[10px] sm:text-xs font-bold text-gray-500 flex items-center gap-1">
+                            <Timer className="w-3.5 h-3.5 text-[#F95721]" /> Ends in:
+                          </span>
+                          <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs font-black text-white">
+                            <span className="bg-gray-900 px-1.5 py-0.5 rounded-md shadow-2xs">
+                              {String(countdown.hours).padStart(2, '0')}h
+                            </span>
+                            <span className="text-gray-700 font-bold">:</span>
+                            <span className="bg-gray-900 px-1.5 py-0.5 rounded-md shadow-2xs">
+                              {String(countdown.minutes).padStart(2, '0')}m
+                            </span>
+                            <span className="text-gray-700 font-bold">:</span>
+                            <span className="bg-[#F95721] px-1.5 py-0.5 rounded-md shadow-2xs">
+                              {String(countdown.seconds).padStart(2, '0')}s
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] sm:text-xs md:text-sm text-gray-600 font-medium line-clamp-2">
+                          {slide.banner?.description || (targetProd ? targetProd.description : 'Smart everyday utilities at factory rates.')}
+                        </p>
+                      )}
+
+                      {/* Pricing & Action Buttons */}
+                      <div className="pt-1 sm:pt-2 flex items-center gap-2 flex-wrap">
+                        {/* Price Tag */}
+                        {isFlash ? (
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-base sm:text-xl font-black text-[#F95721]">
+                              ₹{flashDealConfig?.dealPrice || targetProd?.price || 99}
+                            </span>
+                            {(targetProd?.originalPrice || flashDealConfig?.originalPrice || 199) > (flashDealConfig?.dealPrice || targetProd?.price || 99) && (
+                              <span className="text-[11px] sm:text-xs text-gray-400 font-medium line-through">
+                                ₹{targetProd?.originalPrice || flashDealConfig?.originalPrice || 199}
+                              </span>
+                            )}
+                          </div>
+                        ) : targetProd && (
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-base sm:text-xl font-black text-[#F95721]">
+                              ₹{targetProd.price}
+                            </span>
+                            {targetProd.originalPrice && targetProd.originalPrice > targetProd.price && (
+                              <span className="text-[11px] sm:text-xs text-gray-400 font-medium line-through">
+                                ₹{targetProd.originalPrice}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Primary CTA */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (wasHeroDragRef.current) return;
+                            if (targetProd) {
+                              setSelectedProductDetail(targetProd);
+                            } else if (slide.banner?.ctaDestination) {
+                              handleCategoryClick(slide.banner.ctaDestination);
+                            } else {
+                              setActiveTab('categories');
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-[#FF6600] to-[#E44813] text-white text-xs font-bold rounded-xl shadow-xs shadow-orange-300 hover:shadow-orange-400 active:scale-95 transition-all"
+                        >
+                          <span>{isFlash ? 'Claim Deal' : (slide.banner?.ctaText || 'Shop Now')}</span>
+                          {isFlash ? <Zap className="w-3.5 h-3.5 fill-white/20" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                        </button>
+
+                        {/* Secondary Action */}
+                        {targetProd ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (wasHeroDragRef.current) return;
+                              addToCart(targetProd);
+                              if ('vibrate' in navigator) navigator.vibrate(12);
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-white/95 hover:bg-white text-gray-800 text-xs font-bold rounded-xl border border-orange-200/90 shadow-2xs active:scale-95 transition-all hover:text-[#F95721]"
+                            title="Add to cart"
+                          >
+                            <ShoppingBag className="w-3.5 h-3.5 text-[#F95721]" />
+                            <span>+ Add</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (wasHeroDragRef.current) return;
+                              setIsScratchModalOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-white/95 hover:bg-white text-gray-800 text-xs font-bold rounded-xl border border-orange-200/90 shadow-2xs active:scale-95 transition-all hover:text-[#F95721]"
+                          >
+                            <Gift className="w-3.5 h-3.5 text-[#F95721]" />
+                            <span>Rewards</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Column: Floating Product Stage */}
+                    <div className="flex-shrink-0 relative w-28 sm:w-40 md:w-52 h-28 sm:h-40 md:h-52 flex items-center justify-center">
+                      {/* Ambient circle glow */}
+                      <div className="absolute inset-2 bg-gradient-to-tr from-orange-300/30 to-amber-200/30 rounded-full blur-xl pointer-events-none" />
+                      <ResolvedImage
+                        src={targetProd ? targetProd.image : (slide.banner?.image || '/icon-512x512.png?v=2')}
+                        alt={targetProd ? targetProd.name : (slide.banner?.heading || 'Featured Product')}
+                        priority={idx === 0}
+                        className="w-full h-full object-contain mix-blend-multiply transition-transform duration-300 group-hover/hero:scale-105"
+                      />
+                      {targetProd && targetProd.originalPrice && targetProd.originalPrice > targetProd.price && (
+                        <div className="absolute -top-1 right-1 bg-gradient-to-r from-red-500 to-rose-600 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                          {Math.round(((targetProd.originalPrice - targetProd.price) / targetProd.originalPrice) * 100)}% OFF
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Story-Style Segmented Progress Indicators */}
+          {slideCount > 1 && (
+            <div className="relative z-20 flex items-center justify-center gap-1.5 px-4 sm:px-6 pt-1 pb-2 sm:pb-3">
+              {activeSlides.map((_, idx) => {
+                const isPast = idx < activeHeroSlide;
+                const isCurrent = idx === activeHeroSlide;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveHeroSlide(idx);
+                      setSlideProgress(0);
+                    }}
+                    className="group/bar flex-1 max-w-[60px] sm:max-w-[80px] h-3.5 flex items-center justify-center cursor-pointer tap-active"
+                    aria-label={`Go to slide ${idx + 1}`}
+                  >
+                    <div className="w-full h-1.5 rounded-full overflow-hidden bg-black/10 backdrop-blur-xs relative transition-all group-hover/bar:h-2">
+                      <div
+                        className="h-full rounded-full bg-[#F95721] transition-all"
+                        style={{
+                          width: isCurrent ? `${slideProgress}%` : isPast ? '100%' : '0%',
+                          transition: isCurrent && !isHeroDragging ? 'width 50ms linear' : 'none'
+                        }}
+                      />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

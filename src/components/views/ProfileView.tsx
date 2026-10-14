@@ -96,8 +96,9 @@ export const ProfileView: React.FC = () => {
       {!authUser && (
         <div className="bg-gradient-to-r from-[#FFF5EE] via-[#FFEADB] to-[#FEDDC7] border border-orange-200 rounded-3xl p-4 md:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-3.5 text-center sm:text-left">
-            <div className="w-12 h-12 rounded-2xl bg-[#F95721] text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-200">
-              <Sparkles className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-2xl bg-white border border-orange-200/80 p-2 flex items-center justify-center shrink-0 shadow-md shadow-orange-950/5 ring-2 ring-orange-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/door-logo.png?v=4" alt="SBS Door" style={{ width: '28px', height: '28px', maxWidth: '28px', maxHeight: '28px' }} className="w-7 h-7 object-contain" />
             </div>
             <div>
               <h3 className="text-sm md:text-base font-extrabold text-gray-900">Sign in to your SBS Account</h3>
