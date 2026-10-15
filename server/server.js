@@ -12,6 +12,7 @@ const {
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const crypto = require('crypto');
 const Razorpay = require('razorpay');
+const emailService = require('./services/emailService');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 require('dotenv').config();
 
@@ -531,9 +532,61 @@ app.post('/api/orders', async (req, res) => {
     const orderData = req.body;
     const { data, error } = await supabase.from('orders').insert(orderData).select().single();
     if (error) return res.status(500).json({ error: error.message });
+
+    // If order is Cash on Delivery, trigger order confirmation email immediately
+    const isCOD = data && (data.payment_method === 'cod' || data.payment_method === 'Cash on Delivery');
+    if (isCOD) {
+      emailService.sendOrderConfirmation(data).catch(err => {
+        console.error('[EmailService] Order confirmation send error:', err.message);
+      });
+    }
+
     res.status(201).json(data);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update Order Status endpoint with automated customer email update
+app.patch('/api/orders/:id/status', async (req, res) => {
+  try {
+    const auth = await verifyAdminAuth(req);
+    if (!auth.authorized) {
+      return res.status(403).json({ error: auth.reason || 'Unauthorized' });
+    }
+    if (!supabase) return res.status(503).json({ error: 'Database service not configured' });
+
+    const { id } = req.params;
+    const { status, tracking_number, courier, tracking_url } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ error: 'Status is required' });
+    }
+
+    const updates = { status };
+    if (tracking_number) updates.tracking_number = tracking_number;
+
+    const { data: updatedOrder, error } = await supabase
+      .from('orders')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Send email notification for order status change asynchronously
+    emailService.sendOrderStatusUpdate(updatedOrder, status, {
+      trackingNumber: tracking_number || updatedOrder.tracking_number,
+      courier,
+      trackingUrl: tracking_url
+    }).catch(err => {
+      console.error('[EmailService] Status update email error:', err.message);
+    });
+
+    res.json({ success: true, order: updatedOrder });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error: ' + err.message });
   }
 });
 
@@ -645,16 +698,25 @@ app.post('/api/payment/verify-payment', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Payment verification failed: Invalid signature.' });
     }
 
-    // If SBS Order ID provided, update Supabase order record
+    // If SBS Order ID provided, update Supabase order record and trigger confirmation email
     if (supabase && sbsOrderId) {
       try {
-        await supabase
+        const { data: updatedOrder, error: updateErr } = await supabase
           .from('orders')
           .update({
             payment_status: 'PAYMENT_VERIFIED',
             payment_confirmed_at: new Date().toISOString(),
           })
-          .eq('id', sbsOrderId);
+          .eq('id', sbsOrderId)
+          .select()
+          .single();
+
+        if (!updateErr && updatedOrder) {
+          // Trigger order confirmation email asynchronously
+          emailService.sendOrderConfirmation(updatedOrder).catch(err => {
+            console.error('[EmailService] Order confirmation send error:', err.message);
+          });
+        }
       } catch (dbErr) {
         console.warn('Could not auto-update order status in Supabase:', dbErr.message);
       }
@@ -673,8 +735,74 @@ app.post('/api/payment/verify-payment', async (req, res) => {
   }
 });
 
+// ==========================================
+// Email Automation Endpoints (AWS SES)
+// ==========================================
+
+// 1. Send Welcome Email
+app.post('/api/email/welcome', async (req, res) => {
+  try {
+    const { email, name } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Recipient email is required.' });
+    }
+    const result = await emailService.sendWelcomeEmail(email, name);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 2. Test Email Endpoint (Sends a sample order invoice to verified email)
+app.post('/api/email/test', async (req, res) => {
+  try {
+    const { to } = req.body;
+    if (!to) {
+      return res.status(400).json({ error: 'Recipient email "to" is required.' });
+    }
+
+    const testOrder = {
+      id: 'demo-' + Date.now().toString(36),
+      order_number: 'SBS-DEMO-001',
+      total: 190,
+      subtotal: 190,
+      payment_method: 'Prepaid (Razorpay)',
+      customer_email: to,
+      shipping_address: {
+        fullName: 'Shyam Bombay Sale Customer',
+        email: to,
+        street: 'Main Market Road',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        pincode: '400001',
+        phone: '+91 9876543210'
+      },
+      items: [
+        {
+          name: 'Mr. Safai Toilet Cleaner (500 ml)',
+          price: 70,
+          quantity: 1,
+          volume: '500 ml'
+        },
+        {
+          name: 'Pramukh Dishwash Kitchen Cleaner (5L)',
+          price: 120,
+          quantity: 1,
+          volume: '5L'
+        }
+      ]
+    };
+
+    const result = await emailService.sendOrderConfirmation(testOrder);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`SBS Backend API listening on port ${PORT}`);
   console.log(`AWS S3 Storage module: ${isS3Configured ? 'ENABLED (' + s3Bucket + ' in ' + s3Region + ')' : 'DISABLED'}`);
+  console.log(`AWS SES Email module: ENABLED (${process.env.SES_FROM_EMAIL || 'orders@sbsstore.in'} in ${s3Region})`);
   console.log(`Razorpay Gateway module: ${isRazorpayConfigured ? 'ENABLED (' + razorpayKeyId + ')' : 'DISABLED'}`);
 });
