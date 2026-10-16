@@ -1251,9 +1251,22 @@ export const HomeView: React.FC = () => {
         <div className="p-5 sm:p-7 md:p-8 bg-gradient-to-br from-[#FFF5EE] via-white to-[#FFF0E6] rounded-3xl border border-orange-100/90 shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-orange-100/80 pb-5">
             <div className="space-y-1.5">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/80 text-xs font-extrabold text-[#F95721]">
-                <Store className="w-3.5 h-3.5" /> Official Brand &amp; Retail Store
-              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/80 text-xs font-extrabold text-[#F95721]">
+                  <Store className="w-3.5 h-3.5" /> Official Brand &amp; Retail Store
+                </span>
+                <a
+                  href="https://www.google.com/search?kgmid=/g/11ymlwg3wd&q=Shyam+Bombay+sale"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 hover:bg-amber-100/80 border border-amber-200/80 text-xs font-extrabold text-amber-900 transition-colors shadow-2xs"
+                  title="View reviews on Google Maps"
+                >
+                  <span className="text-amber-500 font-black">★★★★★</span>
+                  <span>4.8 / 5 on Google</span>
+                  <span className="text-amber-700/60 font-medium hidden sm:inline">(Vadodara)</span>
+                </a>
+              </div>
               <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
                 Shyam Bombay Sale (SBS Store)
               </h2>

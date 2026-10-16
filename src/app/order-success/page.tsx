@@ -288,6 +288,27 @@ function OrderSuccessContent() {
               <span>Download / Print Invoice</span>
             </button>
           </div>
+
+          {/* Rate & Share Experience on Google / Support Local Business */}
+          <div className="mt-4 p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <div className="space-y-0.5">
+              <div className="flex items-center justify-center sm:justify-start gap-1 text-amber-500 text-xs font-black">
+                <span>★★★★★</span>
+                <span className="text-gray-900 font-bold ml-1">Support Our Local Store</span>
+              </div>
+              <p className="text-xs text-gray-600">
+                Your feedback helps our Vadodara store grow! Leave a 10-second review on Google Maps.
+              </p>
+            </div>
+            <a
+              href="https://www.google.com/search?kgmid=/g/11ymlwg3wd&q=Shyam+Bombay+sale"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-white hover:bg-amber-100/60 border border-amber-300 text-amber-900 font-bold text-xs rounded-xl shadow-2xs shrink-0 transition-colors"
+            >
+              ⭐ Review on Google
+            </a>
+          </div>
         </div>
 
         {/* Pan-India Delivery Stepper */}

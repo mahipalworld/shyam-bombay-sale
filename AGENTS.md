@@ -1,3 +1,8 @@
+# Project Architecture & Context
+
+- For full architecture breakdown, database models, backend API routes, and deployment details, refer to `README.md`.
+- Next.js uses static export (`output: 'export'`). Dynamic backend routes belong in `server/server.js`, not Next.js API routes.
+
 # AWS Guidance
 
 - Prefer the AWS MCP Server for AWS interactions — it provides sandboxed

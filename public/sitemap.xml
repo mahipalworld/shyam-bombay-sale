@@ -1,44 +1,863 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd
-        http://www.google.com/schemas/sitemap-image/1.1
-        http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
-
-  <!--
-    SBS Store — Shyam Bombay Sale | Sitemap
-    Official pages for Shyam Bombay Sale (SBS Store), Vadodara, Gujarat.
-  -->
-
-  <!-- Homepage — Primary SEO target -->
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Core Store Pages -->
   <url>
     <loc>https://www.sbsstore.in/</loc>
-    <lastmod>2026-09-15T00:00:00+05:30</lastmod>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://www.sbsstore.in/logo.png</image:loc>
       <image:title>SBS Store — Shyam Bombay Sale</image:title>
-      <image:caption>Official logo of SBS Store — Shyam Bombay Sale, Vadodara, Gujarat.</image:caption>
     </image:image>
   </url>
-
-  <!-- About page -->
   <url>
     <loc>https://www.sbsstore.in/about/</loc>
-    <lastmod>2026-09-15T00:00:00+05:30</lastmod>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-
-  <!-- Contact page -->
   <url>
     <loc>https://www.sbsstore.in/contact/</loc>
-    <lastmod>2026-09-15T00:00:00+05:30</lastmod>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://www.sbsstore.in/shipping-policy/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/refund-policy/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/privacy/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/terms/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
 
+  <!-- Department & Category Hubs -->
+  <url>
+    <loc>https://www.sbsstore.in/category/bathroom--laundry/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/category/bucket-and-plastics/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/category/cleaning-products--chemicals/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/category/cleaning-tools/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/category/hardware--utility/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/category/kitchen-utility/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/category/personal-care--grooming/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/category/small-appliances--gadgets/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Product Catalog Items (76 items) -->
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790352619318/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790352520948-51yff89hyal__sl1280_.webp</image:loc>
+      <image:title>2 in 1 Soap Pump Plastic Dispenser with Sponge Holder</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790345410054/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790345359413-chatgpt_image_sep_25__2026__07_38_29_pm.webp</image:loc>
+      <image:title>2-in-1 Battery Operated Eyebrow Trimmer + Shaver — HX-203A</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790353225788/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790353178734-chatgpt_image_sep_25__2026__09_46_49_pm.webp</image:loc>
+      <image:title>2-in-1 Manual Push Vegetable cutter </image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790415500531/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790415445051-107153.webp</image:loc>
+      <image:title>Air oma stain remover </image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790415381255/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790415375626-107151.webp</image:loc>
+      <image:title>All in one pest repellent spray </image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790411153729/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790411140680-107083.webp</image:loc>
+      <image:title>Alu-lite napkin tissue </image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792056833944/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792056787773-144506.webp</image:loc>
+      <image:title>Cotton Pocha</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790315629516/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790315568775-106183.webp</image:loc>
+      <image:title>D-Care Extra Strong Floor cleaner 400 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790411251578/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790411203879-107090.webp</image:loc>
+      <image:title>Drainage cleaner 110g</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790348089242/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790347960661-chatgpt_image_sep_25__2026__08_19_48_pm.webp</image:loc>
+      <image:title>Flawless Brows / Facial Hair Remover</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790318848273/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790318812002-106242.webp</image:loc>
+      <image:title>Floor cleaner limda 200 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792056976383/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792056964893-144507.webp</image:loc>
+      <image:title>Floor cleaning cloth </image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790272074008/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790271871818-71geedlmpql__sx679_.jpg</image:loc>
+      <image:title>Gala Aqua Spin Mop </image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790343423203/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790343448085-106463.webp</image:loc>
+      <image:title>Gevil fresh camphor floor cleaner 200 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792058847447/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792058827360-144526.webp</image:loc>
+      <image:title>Home Premium Cotton Hand Towels</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792057709161/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792057708523-144512.webp</image:loc>
+      <image:title>kitchen cleaning cloth (blue)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792057752440/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792057745251-144513.webp</image:loc>
+      <image:title>kitchen cleaning cloth (red)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792057914950/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792057895132-144514.webp</image:loc>
+      <image:title>Kitchen Duster Cloth Cotton ( navy blue )</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792058088215/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792058085042-144516.webp</image:loc>
+      <image:title>Kitchen Duster Cloth Cotton ( off white)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792058138864/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792058135649-144517.webp</image:loc>
+      <image:title>Kitchen Duster Cloth Cotton ( red)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792058035271/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792058019383-144515.webp</image:loc>
+      <image:title>Kitchen Duster Cloth Cotton ( sky blue )</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1789888719431/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789888674538-103296.webp</image:loc>
+      <image:title>Kleen fresh  floor cleaner lemon 1000ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790343577204/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790343520792-106464.webp</image:loc>
+      <image:title>Kleen fresh all purpose liquid </image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1789889604412/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789889134846-103302.webp</image:loc>
+      <image:title>Kleen fresh bathroom cleaner (500 ml)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790317576842/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790317555251-106192.webp</image:loc>
+      <image:title>Kleen Fresh extra strong Deodorant ( floor cleaner )</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790318429514/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790318293306-106199.webp</image:loc>
+      <image:title>Kleen Fresh extra strong deodorizer ( floor cleaner ) 400ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1789888588352/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789888566670-103294.webp</image:loc>
+      <image:title>Kleen fresh glass cleaner 500ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790343924780/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790343892471-106468.webp</image:loc>
+      <image:title>Kleen fresh glass cleaner 5L</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1789888261467/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789888251001-103290.webp</image:loc>
+      <image:title>Kleen fresh liquid soap ( 1000 ml )</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1789888078167/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789888020237-103251.webp</image:loc>
+      <image:title>Kleen fresh liquid soap ( 1000 ml )</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1789888200156/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789888189327-103288.webp</image:loc>
+      <image:title>Kleen fresh liquid soap ( 1000 ml)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1789888149765/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789888128526-103274.webp</image:loc>
+      <image:title>Kleen fresh liquid soap ( 1000ml)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790317698854/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790317677998-106194.webp</image:loc>
+      <image:title>Kleen fresh metal cleaner 250 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/7574877711992/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789886596331-103203.webp</image:loc>
+      <image:title>Kleen FRESH tiles cleaner 900 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790415694871/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790415666092-107155.webp</image:loc>
+      <image:title>KLIN  CARE copper and brass cleaner 500 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790415763012/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790415744848-107157.webp</image:loc>
+      <image:title>KLIN  CARE kitchen cleaner 500 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792058751059/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792058737579-144525.webp</image:loc>
+      <image:title>microfiber towel mid size </image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792058643817/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792058630416-144523.webp</image:loc>
+      <image:title>microfiber towel( green )</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792058673939/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792058672523-144524.webp</image:loc>
+      <image:title>microfiber towel( yellow )</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790349284341/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790349206484-chatgpt_image_sep_25__2026__08_42_33_pm.webp</image:loc>
+      <image:title>Minijoy Snack Maker / Hot-Air Popcorn Maker.</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1789889804391/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789889750197-103304.webp</image:loc>
+      <image:title>Mitisha chemical floor cleaner 900 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1789886381928/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789886351725-103163.webp</image:loc>
+      <image:title>Mr. Safai toilet cleaner 500 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790411443345/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790411386456-107091.webp</image:loc>
+      <image:title>Mr.bean Kitchen cleaner 500ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790354473602/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790354024173-chatgpt_image_sep_25__2026__10_03_34_pm.webp</image:loc>
+      <image:title>Northern Lights Projector</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790416218638/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790416191843-107162.webp</image:loc>
+      <image:title>Pesto klin 900 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792058317046/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792058306496-144519.webp</image:loc>
+      <image:title>plush microfiber cleaning ( bright yellow)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792058430175/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792058441605-144521.webp</image:loc>
+      <image:title>plush microfiber cleaning ( green )</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792058384509/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792058381619-144520.webp</image:loc>
+      <image:title>plush microfiber cleaning ( red )</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792058507666/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792058497258-144522.webp</image:loc>
+      <image:title>plush microfiber cleaning (purple)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790318616068/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790318554081-106219.webp</image:loc>
+      <image:title>Powerful Rat natural repellent spray </image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790343686906/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790343656495-106466.webp</image:loc>
+      <image:title>Pramukh  dishwash kitchen cleaner  5L</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1789888465482/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789888416927-103292.webp</image:loc>
+      <image:title>Pramukh dishwash green 900 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790410945674/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790410927177-107078.webp</image:loc>
+      <image:title>Pramukh floor and bathroom cleaner 900 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790410775756/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790410755057-107074.webp</image:loc>
+      <image:title>Pramukh Home care liquid detergent 5 Ltr</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1789889022728/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789888974617-103301.webp</image:loc>
+      <image:title>QAX multipurpose kitchen cleaner 500 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790344081140/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790344267004-106475.webp</image:loc>
+      <image:title>Riva Bartan Bar 1250 g</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790344215923/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790344188885-106474.webp</image:loc>
+      <image:title>Riva detergent cake 1250 g</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790344338734/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790344302644-106476.webp</image:loc>
+      <image:title>Riva detergent cake 1250 g</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790317458489/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790317425745-106190.webp</image:loc>
+      <image:title>Riva floor cleaner ( lemon ) 900 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790410862852/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790410836620-107076.webp</image:loc>
+      <image:title>Riva lequid detergent </image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790351279752/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790351259564-chatgpt_image_sep_25__2026__09_16_19_pm.webp</image:loc>
+      <image:title>Solar LED Light / Solar-Powered Portable LED Flood Light</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790411054880/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790411042986-107081.webp</image:loc>
+      <image:title>Stain remover 150 ml for cooler clothes </image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1789888883432/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789888863357-103298.webp</image:loc>
+      <image:title>Star toilet cleaner 900 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792057151480/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792057126466-144508.webp</image:loc>
+      <image:title>striped cleaning cloth (gray)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792057601064/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792057586958-144511.webp</image:loc>
+      <image:title>striped cleaning cloth (red)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790344018683/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790343971852-106471.webp</image:loc>
+      <image:title>Supar power liquid detergent  5 L</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/123456789012345/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789887349389-103205.webp</image:loc>
+      <image:title>Supar toilet cleaner 1000 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790343826241/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790343796351-106467.webp</image:loc>
+      <image:title>Super 2X multipurpose cleaner 5 L</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/RFB1000/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1789886118658-103090.webp</image:loc>
+      <image:title>Swachh cleaning bleach 900 ml</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790399486354/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790398776172-chatgpt_image_sep_26__2026__10_26_51_am.webp</image:loc>
+      <image:title>Travelling Soap Case</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790415599899/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790415550707-107154.webp</image:loc>
+      <image:title>TUWEI  SEN multipurpose form cleaner </image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790317873181/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790317835869-106196.webp</image:loc>
+      <image:title>Walker plus Extra strong 400 ml ( phenyle)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790317343596/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790317313354-106188.webp</image:loc>
+      <image:title>Walker Plus extra strong 900 ml ( phenyle)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790317148253/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790317106006-106088.webp</image:loc>
+      <image:title>Walker Plus White perfume cleaner (900 ml)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1790350372436/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1790350207069-chatgpt_image_sep_25__2026__08_58_56_pm.webp</image:loc>
+      <image:title>Wall-Mounted Bathroom Accessories Shelf / Bath Accessories Organizer.</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.sbsstore.in/product/p_1792058237215/</loc>
+    <lastmod>2026-10-16T07:00:23.257Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sbsstore.inproducts/images/1792058230477-144518.webp</image:loc>
+      <image:title>Yellow Dusters Cotton Cleaning Cloth</image:title>
+    </image:image>
+  </url>
 </urlset>

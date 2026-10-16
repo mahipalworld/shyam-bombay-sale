@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "generate:seo": "node scripts/generateSeoFeeds.mjs",
+    "build": "node scripts/generateSeoFeeds.mjs && next build",
     "start": "next start",
     "start:server": "node server/server.js",
     "lint": "next lint"

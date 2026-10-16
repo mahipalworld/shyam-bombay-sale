@@ -2,31 +2,44 @@
 
 User-agent: *
 Allow: /
-Allow: /about
 Allow: /about/
-Allow: /contact
 Allow: /contact/
+Allow: /category/
+Allow: /product/
+Allow: /shipping-policy/
+Allow: /refund-policy/
+Allow: /privacy/
+Allow: /terms/
 Disallow: /admin
 Disallow: /api/
 
 User-agent: Googlebot
 Allow: /
-Allow: /about
 Allow: /about/
-Allow: /contact
 Allow: /contact/
+Allow: /category/
+Allow: /product/
+Allow: /shipping-policy/
+Allow: /refund-policy/
+Allow: /privacy/
+Allow: /terms/
 Disallow: /admin
 Disallow: /api/
 
 User-agent: Googlebot-Image
 Allow: /
+Allow: /products/
+Allow: /brand/
+Allow: /categories/
 
 User-agent: Bingbot
 Allow: /
-Allow: /about
 Allow: /about/
-Allow: /contact
 Allow: /contact/
+Allow: /category/
+Allow: /product/
+Disallow: /admin
+Disallow: /api/
 
-# XML Sitemap
+# XML Sitemap & Google Merchant Feed
 Sitemap: https://www.sbsstore.in/sitemap.xml

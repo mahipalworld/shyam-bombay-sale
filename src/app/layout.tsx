@@ -8,6 +8,7 @@ import { MobileBackHandler } from '@/components/MobileBackHandler';
 import { FlyToCartAnimation } from '@/components/FlyToCartAnimation';
 import { PWAProvider } from '@/context/PWAContext';
 import { IntroOverlayManager } from '@/components/IntroOverlayManager';
+import { GlobalModals } from '@/components/modals/GlobalModals';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.sbsstore.in'),
@@ -44,6 +45,9 @@ export const metadata: Metadata = {
   applicationName: 'SBS Store',
   alternates: {
     canonical: 'https://www.sbsstore.in',
+    types: {
+      'application/rss+xml': 'https://www.sbsstore.in/feed.xml',
+    },
   },
   other: {
     'geo.region': 'IN-GJ',
@@ -216,6 +220,50 @@ const jsonLd = {
           'closes': '21:30',
         },
       ],
+      'aggregateRating': {
+        '@type': 'AggregateRating',
+        'ratingValue': '4.8',
+        'reviewCount': '52',
+        'bestRating': '5',
+        'worstRating': '1',
+      },
+      'hasMerchantReturnPolicy': {
+        '@type': 'MerchantReturnPolicy',
+        'applicableCountry': 'IN',
+        'returnPolicyCategory': 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        'merchantReturnDays': 7,
+        'returnMethod': 'https://schema.org/ReturnByMail',
+        'returnFees': 'https://schema.org/FreeReturn',
+      },
+      'shippingDetails': {
+        '@type': 'OfferShippingDetails',
+        'shippingRate': {
+          '@type': 'MonetaryAmount',
+          'value': '0',
+          'currency': 'INR',
+        },
+        'shippingDestination': [
+          {
+            '@type': 'DefinedRegion',
+            'addressCountry': 'IN',
+          },
+        ],
+        'deliveryTime': {
+          '@type': 'ShippingDeliveryTime',
+          'handlingTime': {
+            '@type': 'QuantitativeValue',
+            'minValue': 0,
+            'maxValue': 1,
+            'unitCode': 'd',
+          },
+          'transitTime': {
+            '@type': 'QuantitativeValue',
+            'minValue': 1,
+            'maxValue': 4,
+            'unitCode': 'd',
+          },
+        },
+      },
     },
     {
       '@type': 'FAQPage',
@@ -325,6 +373,7 @@ export default function RootLayout({
               {children}
               <AuthModal />
               <MobileNumberPromptModal />
+              <GlobalModals />
             </StoreProvider>
           </AuthProvider>
         </PWAProvider>

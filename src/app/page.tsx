@@ -12,19 +12,7 @@ import { ProfileView } from '@/components/views/ProfileView';
 import { AdminView } from '@/components/views/AdminView';
 import { MyOrdersView } from '@/components/views/MyOrdersView';
 
-// Modals
-import { ProductDetailModal } from '@/components/modals/ProductDetailModal';
-import { CheckoutModal } from '@/components/modals/CheckoutModal';
-import { OrderDetailsModal } from '@/components/modals/OrderDetailsModal';
-import { EditProfileModal } from '@/components/modals/EditProfileModal';
-import { SearchModal } from '@/components/modals/SearchModal';
-import { AddressesModal } from '@/components/modals/AddressesModal';
-import { CouponsModal } from '@/components/modals/CouponsModal';
-import { CustomerNotificationsModal } from '@/components/modals/CustomerNotificationsModal';
-import { NotificationRewardModal } from '@/components/modals/NotificationRewardPrompt';
-import { HelpCenterModal } from '@/components/modals/HelpCenterModal';
-import { RewardsModal } from '@/components/modals/RewardsModal';
-import { CheckCircle2, AlertCircle, Info, Heart, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { Heart, ShoppingBag, ShieldCheck } from 'lucide-react';
 
 export default function App() {
   const { 
@@ -38,8 +26,31 @@ export default function App() {
     setIsHelpCenterOpen,
     isRewardsOpen,
     setIsRewardsOpen,
+    products,
+    setSelectedProductDetail,
     toast 
   } = useStore();
+
+  // Read URL query parameters (?tab=categories&category=...) on mount
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const catParam = urlParams.get('category');
+    const prodParam = urlParams.get('product');
+
+    if (tabParam && ['home', 'categories', 'cart', 'wishlist', 'profile', 'orders', 'admin'].includes(tabParam)) {
+      setActiveTab(tabParam as any);
+    }
+    if (catParam) {
+      setSelectedCategoryFilter(catParam);
+      if (!tabParam) setActiveTab('categories');
+    }
+    if (prodParam && products.length > 0) {
+      const found = products.find((p) => p.id === prodParam);
+      if (found) setSelectedProductDetail(found);
+    }
+  }, [products, setActiveTab, setSelectedCategoryFilter, setSelectedProductDetail]);
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -182,42 +193,6 @@ export default function App() {
           <BottomNav />
         </div>
       )}
-
-
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed top-16 left-1/2 z-50 animate-toast-in pointer-events-none">
-          <div className={`px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 text-xs font-bold text-white ${
-            toast.type === 'error'
-              ? 'bg-red-600'
-              : toast.type === 'info'
-              ? 'bg-blue-600'
-              : 'bg-gray-900/95 backdrop-blur-md'
-          }`}>
-            {toast.type === 'error' ? (
-              <AlertCircle className="w-4 h-4 text-red-200" />
-            ) : toast.type === 'info' ? (
-              <Info className="w-4 h-4 text-blue-200" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4 text-[#00A859]" />
-            )}
-            <span>{toast.message}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Modals */}
-      <ProductDetailModal />
-      <CheckoutModal />
-      <OrderDetailsModal />
-      <EditProfileModal />
-      <SearchModal />
-      <AddressesModal />
-      <CouponsModal />
-      <CustomerNotificationsModal />
-      <NotificationRewardModal />
-      <HelpCenterModal isOpen={isHelpCenterOpen} onClose={() => setIsHelpCenterOpen(false)} />
-      <RewardsModal isOpen={isRewardsOpen} onClose={() => setIsRewardsOpen(false)} />
     </div>
   );
 }
