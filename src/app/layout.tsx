@@ -62,17 +62,18 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon-48x48.png?v=4', sizes: '48x48', type: 'image/png' },
-      { url: '/favicon-32x32.png?v=4', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon-16x16.png?v=4', sizes: '16x16', type: 'image/png' },
-      { url: '/icon-192x192.png?v=4', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512x512.png?v=4', sizes: '512x512', type: 'image/png' },
-      { url: '/favicon.ico?v=4', sizes: 'any' },
+      { url: '/icon.svg?v=5', type: 'image/svg+xml' },
+      { url: '/favicon-48x48.png?v=5', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon-32x32.png?v=5', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png?v=5', sizes: '16x16', type: 'image/png' },
+      { url: '/icon-192x192.png?v=5', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512x512.png?v=5', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon.ico?v=5', sizes: 'any' },
     ],
     apple: [
-      { url: '/apple-touch-icon.png?v=4', sizes: '180x180', type: 'image/png' },
+      { url: '/apple-touch-icon.png?v=5', sizes: '180x180', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico?v=4',
+    shortcut: '/favicon.ico?v=5',
   },
   openGraph: {
     title: 'SBS Store — Shyam Bombay Sale | Official Online Shopping Vadodara',
@@ -84,7 +85,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'https://www.sbsstore.in/logo.png?v=4',
+        url: 'https://www.sbsstore.in/logo.png?v=5',
         width: 512,
         height: 512,
         alt: 'SBS Store — Shyam Bombay Sale Logo',
@@ -96,7 +97,7 @@ export const metadata: Metadata = {
     title: 'SBS Store — Shyam Bombay Sale | Official Online Shopping Vadodara',
     description:
       'Smart everyday essentials for home, kitchen, cleaning, and personal care. Official website of SBS Store — Shyam Bombay Sale.',
-    images: ['https://www.sbsstore.in/logo.png?v=4'],
+    images: ['https://www.sbsstore.in/logo.png?v=5'],
   },
   robots: {
     index: true,
@@ -342,8 +343,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="preload" as="image" href="/door-logo.png?v=4" />
-        <link rel="preload" as="image" href="/sbs-wordmark.png?v=4" />
+        <link rel="preload" as="image" href="/door-logo.png?v=5" />
+        <link rel="preload" as="image" href="/sbs-wordmark.png?v=5" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0'),today=y+'-'+m+'-'+day,last=localStorage.getItem('sbs_intro_last_played'),motionOk=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(last!==today){localStorage.setItem('sbs_intro_last_played',today);if(motionOk){document.documentElement.classList.add('sbs-play-intro');}}}catch(e){}})();`,
@@ -359,9 +360,9 @@ export default function RootLayout({
         <div id="sbs-intro-overlay" aria-hidden="true">
           <div className="sbs-intro-container">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/door-logo.png?v=4" alt="" className="sbs-intro-door" />
+            <img src="/door-logo.png?v=5" alt="" className="sbs-intro-door" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/sbs-wordmark.png?v=4" alt="" className="sbs-intro-wordmark" />
+            <img src="/sbs-wordmark.png?v=5" alt="" className="sbs-intro-wordmark" />
           </div>
         </div>
         <IntroOverlayManager />

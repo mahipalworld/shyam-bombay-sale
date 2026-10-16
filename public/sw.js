@@ -1,14 +1,14 @@
 // SBS Store Service Worker
-const CACHE_NAME = 'sbs-pwa-v12';
+const CACHE_NAME = 'sbs-pwa-v13';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/icon-192x192.png?v=4',
-  '/icon-512x512.png?v=4',
-  '/icon.svg?v=4',
-  '/logo.png?v=4',
-  '/door-logo.png?v=4',
-  '/sbs-wordmark.png?v=4'
+  '/icon-192x192.png?v=5',
+  '/icon-512x512.png?v=5',
+  '/icon.svg?v=5',
+  '/logo.png?v=5',
+  '/door-logo.png?v=5',
+  '/sbs-wordmark.png?v=5'
 ];
 
 self.addEventListener('install', (event) => {
