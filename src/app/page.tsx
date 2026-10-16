@@ -31,12 +31,13 @@ export default function App() {
     toast 
   } = useStore();
 
-  // Read URL query parameters (?tab=categories&category=...) on mount
+  // Read URL query parameters (?tab=categories&category=...&subcategory=...) on mount
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
     const catParam = urlParams.get('category');
+    const subcatParam = urlParams.get('subcategory');
     const prodParam = urlParams.get('product');
 
     if (tabParam && ['home', 'categories', 'cart', 'wishlist', 'profile', 'orders', 'admin'].includes(tabParam)) {
@@ -44,13 +45,16 @@ export default function App() {
     }
     if (catParam) {
       setSelectedCategoryFilter(catParam);
+      if (subcatParam) {
+        setSelectedSubcategoryFilter(subcatParam);
+      }
       if (!tabParam) setActiveTab('categories');
     }
     if (prodParam && products.length > 0) {
       const found = products.find((p) => p.id === prodParam);
       if (found) setSelectedProductDetail(found);
     }
-  }, [products, setActiveTab, setSelectedCategoryFilter, setSelectedProductDetail]);
+  }, [products, setActiveTab, setSelectedCategoryFilter, setSelectedSubcategoryFilter, setSelectedProductDetail]);
 
   const renderActiveView = () => {
     switch (activeTab) {

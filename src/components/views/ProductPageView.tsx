@@ -171,6 +171,14 @@ export const ProductPageView: React.FC<ProductPageViewProps> = ({
     }
   };
 
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) {
+      window.history.back();
+    } else {
+      window.location.href = '/';
+    }
+  };
+
   const categoryName = product.category
     .replace(/--/g, ' & ')
     .replace(/-/g, ' ')
@@ -198,13 +206,13 @@ export const ProductPageView: React.FC<ProductPageViewProps> = ({
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-2xs">
         <div className="max-w-6xl mx-auto px-4 h-14 sm:h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Link 
-              href="/"
-              className="w-9 h-9 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200/80 flex items-center justify-center text-gray-700 transition-colors"
+            <button 
+              onClick={handleBack}
+              className="w-9 h-9 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200/80 flex items-center justify-center text-gray-700 transition-colors cursor-pointer"
               aria-label="Back to store"
             >
               <ArrowLeft className="w-4 h-4" />
-            </Link>
+            </button>
             <Link href="/" className="flex items-center gap-2 group">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

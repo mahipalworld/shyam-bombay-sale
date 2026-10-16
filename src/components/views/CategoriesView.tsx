@@ -22,16 +22,29 @@ export const CategoriesView: React.FC = () => {
     categories, 
     products, 
     selectedCategoryFilter, 
-    setSelectedCategoryFilter 
+    setSelectedCategoryFilter,
+    selectedSubcategoryFilter,
+    setSelectedSubcategoryFilter
   } = useStore();
 
+  // Validate requested category against known categories or special 'offers' category
+  const targetCatExists = categories.some((c) => c.id === selectedCategoryFilter) || selectedCategoryFilter === 'offers';
+  const initialCatId = (selectedCategoryFilter && targetCatExists) ? selectedCategoryFilter : (categories[0]?.id || '');
+
+  // Validate requested subcategory exists for the active category
+  const targetCategoryObj = categories.find((c) => c.id === initialCatId);
+  const targetSubcatExists = Boolean(
+    selectedSubcategoryFilter && 
+    (targetCategoryObj?.subcategories?.some((s) => s.id === selectedSubcategoryFilter) ||
+     products.some((p) => p.category === initialCatId && p.subcategory === selectedSubcategoryFilter))
+  );
+  const initialSubId = targetSubcatExists ? (selectedSubcategoryFilter as string) : 'all';
+
   // Active Category in view (highlighted in Left Rail)
-  const [activeCategoryId, setActiveCategoryId] = useState<string>(() => {
-    return selectedCategoryFilter || categories[0]?.id || '';
-  });
+  const [activeCategoryId, setActiveCategoryId] = useState<string>(initialCatId);
 
   // Active Subcategory in view (for quick-jump chip highlight)
-  const [activeSubcategoryId, setActiveSubcategoryId] = useState<string>('all');
+  const [activeSubcategoryId, setActiveSubcategoryId] = useState<string>(initialSubId);
 
   // Storewide search & filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,13 +57,8 @@ export const CategoriesView: React.FC = () => {
   const leftRailButtonsRef = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const subcatChipsRef = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const isProgrammaticScrollRef = useRef(false);
-
-  // Sync with external selectedCategoryFilter changes (e.g. from banner or quick action)
-  useEffect(() => {
-    if (selectedCategoryFilter && selectedCategoryFilter !== activeCategoryId) {
-      handleCategoryClick(selectedCategoryFilter);
-    }
-  }, [selectedCategoryFilter]);
+  const programmaticTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTargetKeyRef = useRef<string | null>(null);
 
   // Center active category button in the left rail
   const centerLeftRailButton = (catId: string) => {
@@ -67,6 +75,78 @@ export const CategoriesView: React.FC = () => {
       chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
   };
+
+  // Dedicated, lifecycle-aware programmatic scroll handler
+  const scrollToTarget = (catId: string, subId?: string | null, smooth: boolean = false) => {
+    if (!catId) return;
+    lastTargetKeyRef.current = `${catId}__${subId || 'all'}`;
+    isProgrammaticScrollRef.current = true;
+    if (programmaticTimerRef.current) clearTimeout(programmaticTimerRef.current);
+
+    const performScroll = () => {
+      const pane = rightPaneRef.current;
+      if (!pane) return false;
+
+      const subSectionId = (subId && subId !== 'all') ? `subcat-section-${catId}-${subId}` : null;
+      const catSectionId = `category-section-${catId}`;
+      const targetEl = (subSectionId ? document.getElementById(subSectionId) : null) || document.getElementById(catSectionId);
+
+      if (!targetEl) return false;
+
+      const paneRect = pane.getBoundingClientRect();
+      const targetRect = targetEl.getBoundingClientRect();
+      const currentScrollTop = pane.scrollTop;
+      const offsetTop = targetRect.top - paneRect.top + currentScrollTop - (subSectionId ? 48 : 4);
+
+      pane.scrollTo({
+        top: Math.max(0, offsetTop),
+        behavior: smooth ? 'smooth' : 'auto'
+      });
+
+      setActiveCategoryId(catId);
+      centerLeftRailButton(catId);
+
+      if (subId && subId !== 'all' && subSectionId && document.getElementById(subSectionId)) {
+        setActiveSubcategoryId(subId);
+        centerSubcatChip(subId);
+      } else {
+        setActiveSubcategoryId('all');
+      }
+
+      return true;
+    };
+
+    // Coordinate with browser layout passes using double requestAnimationFrame
+    requestAnimationFrame(() => {
+      const firstTry = performScroll();
+      requestAnimationFrame(() => {
+        if (!firstTry) performScroll();
+        programmaticTimerRef.current = setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+        }, smooth ? 650 : 250);
+      });
+    });
+  };
+
+  // Sync with requested category or subcategory on initial mount and when external filter changes
+  useEffect(() => {
+    const targetCat = (selectedCategoryFilter && targetCatExists) ? selectedCategoryFilter : categories[0]?.id;
+    if (!targetCat) return;
+
+    const targetKey = `${targetCat}__${selectedSubcategoryFilter || 'all'}`;
+    if (lastTargetKeyRef.current !== targetKey) {
+      lastTargetKeyRef.current = targetKey;
+      // Use instant scroll on initial mount for zero flicker, or smooth on subsequent updates
+      scrollToTarget(targetCat, selectedSubcategoryFilter, false);
+    }
+  }, [selectedCategoryFilter, selectedSubcategoryFilter, categories, targetCatExists]);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (programmaticTimerRef.current) clearTimeout(programmaticTimerRef.current);
+    };
+  }, []);
 
   // Helper to filter and sort products for a given category
   const getProcessedProductsForCategory = (cat: Category) => {
@@ -120,67 +200,15 @@ export const CategoriesView: React.FC = () => {
 
   // Jump smoothly to a category section when clicked in Left Rail
   const handleCategoryClick = (catId: string) => {
-    setActiveCategoryId(catId);
     setSelectedCategoryFilter(catId);
-    setActiveSubcategoryId('all');
-    centerLeftRailButton(catId);
-
-    const targetEl = document.getElementById(`category-section-${catId}`);
-    if (targetEl && rightPaneRef.current) {
-      isProgrammaticScrollRef.current = true;
-      const paneRect = rightPaneRef.current.getBoundingClientRect();
-      const targetRect = targetEl.getBoundingClientRect();
-      const currentScrollTop = rightPaneRef.current.scrollTop;
-      const offsetTop = targetRect.top - paneRect.top + currentScrollTop - 4;
-
-      rightPaneRef.current.scrollTo({
-        top: Math.max(0, offsetTop),
-        behavior: 'smooth'
-      });
-
-      setTimeout(() => {
-        isProgrammaticScrollRef.current = false;
-      }, 650);
-    }
+    setSelectedSubcategoryFilter(null);
+    scrollToTarget(catId, 'all', true);
   };
 
   // Jump smoothly to a subcategory section when a chip is clicked
   const handleSubcategoryChipClick = (subId: string) => {
-    setActiveSubcategoryId(subId);
-    centerSubcatChip(subId);
-
-    if (!rightPaneRef.current) return;
-
-    if (subId === 'all') {
-      const catEl = document.getElementById(`category-section-${activeCategoryId}`);
-      if (catEl) {
-        isProgrammaticScrollRef.current = true;
-        const paneRect = rightPaneRef.current.getBoundingClientRect();
-        const targetRect = catEl.getBoundingClientRect();
-        const offsetTop = targetRect.top - paneRect.top + rightPaneRef.current.scrollTop - 4;
-        rightPaneRef.current.scrollTo({ top: Math.max(0, offsetTop), behavior: 'smooth' });
-        setTimeout(() => { isProgrammaticScrollRef.current = false; }, 600);
-      }
-      return;
-    }
-
-    const targetSection = document.getElementById(`subcat-section-${activeCategoryId}-${subId}`);
-    if (targetSection) {
-      isProgrammaticScrollRef.current = true;
-      const paneRect = rightPaneRef.current.getBoundingClientRect();
-      const targetRect = targetSection.getBoundingClientRect();
-      const currentScrollTop = rightPaneRef.current.scrollTop;
-      const offsetTop = targetRect.top - paneRect.top + currentScrollTop - 48; // account for sticky header
-
-      rightPaneRef.current.scrollTo({
-        top: Math.max(0, offsetTop),
-        behavior: 'smooth'
-      });
-
-      setTimeout(() => {
-        isProgrammaticScrollRef.current = false;
-      }, 600);
-    }
+    setSelectedSubcategoryFilter(subId === 'all' ? null : subId);
+    scrollToTarget(activeCategoryId, subId, true);
   };
 
   // Live Scroll-Spy: Accurately syncs Left Rail & Top Subcategory Chips as user continuously scrolls through all categories
@@ -195,7 +223,7 @@ export const CategoriesView: React.FC = () => {
 
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          if (!pane) return;
+          if (!pane || isProgrammaticScrollRef.current) return;
           const paneRect = pane.getBoundingClientRect();
           const scrollAnchorY = paneRect.top + 90;
 

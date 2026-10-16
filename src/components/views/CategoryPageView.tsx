@@ -134,19 +134,27 @@ export const CategoryPageView: React.FC<CategoryPageViewProps> = ({
     },
   ];
 
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) {
+      window.history.back();
+    } else {
+      window.location.href = '/';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col selection:bg-[#F95721] selection:text-white">
       {/* Top Header */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-2xs">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <Link 
-              href="/"
-              className="w-9 h-9 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200/80 flex items-center justify-center text-gray-700 transition-colors shrink-0"
+            <button 
+              onClick={handleBack}
+              className="w-9 h-9 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200/80 flex items-center justify-center text-gray-700 transition-colors shrink-0 cursor-pointer"
               aria-label="Back to store"
             >
               <ArrowLeft className="w-4 h-4" />
-            </Link>
+            </button>
             <Link href="/" className="flex items-center gap-2 group shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

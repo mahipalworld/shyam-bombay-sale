@@ -436,8 +436,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('tab') === 'admin' || window.location.hash.includes('admin')) {
+      const tab = params.get('tab');
+      const cat = params.get('category');
+      const subcat = params.get('subcategory');
+
+      if (tab && ['home', 'categories', 'cart', 'wishlist', 'profile', 'orders', 'admin'].includes(tab)) {
+        setActiveTab(tab);
+      } else if (tab === 'admin' || window.location.hash.includes('admin')) {
         setActiveTab('admin');
+      }
+
+      if (cat) {
+        setSelectedCategoryFilterState(cat);
+        if (!tab) setActiveTab('categories');
+      }
+      if (subcat) {
+        setSelectedSubcategoryFilter(subcat);
       }
     }
 
