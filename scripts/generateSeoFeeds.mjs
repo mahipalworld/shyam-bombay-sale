@@ -13,6 +13,8 @@ const BASE_URL = 'https://www.sbsstore.in';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const S3_DIRECT_MEDIA_BASE_URL = 'https://sbs-store-media-748439418595.s3.ap-south-1.amazonaws.com';
+
 function escapeXml(unsafe) {
   if (!unsafe) return '';
   return String(unsafe)
@@ -21,6 +23,16 @@ function escapeXml(unsafe) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
+}
+
+function resolveProductImageUrl(img) {
+  if (!img) return `${BASE_URL}/logo.png`;
+  if (img.startsWith('http://') || img.startsWith('https://')) return img;
+  const clean = img.startsWith('/') ? img.slice(1) : img;
+  if (clean.startsWith('products/') || clean.startsWith('categories/') || clean.startsWith('banners/')) {
+    return `${S3_DIRECT_MEDIA_BASE_URL}/${clean}`;
+  }
+  return `${BASE_URL}/${clean}`;
 }
 
 async function run() {
@@ -109,7 +121,7 @@ async function run() {
 
   for (const p of safeProducts) {
     const prodUrl = `${BASE_URL}/product/${p.id}/`;
-    const imgUrl = (p.image && p.image.startsWith('http')) ? p.image : `${BASE_URL}${p.image || '/logo.png'}`;
+    const imgUrl = resolveProductImageUrl(p.image);
     sitemapXml += `  <url>
     <loc>${prodUrl}</loc>
     <lastmod>${now}</lastmod>
@@ -139,7 +151,7 @@ async function run() {
 
   for (const p of safeProducts) {
     const prodUrl = `${BASE_URL}/product/${p.id}/`;
-    const imgUrl = (p.image && p.image.startsWith('http')) ? p.image : `${BASE_URL}${p.image || '/logo.png'}`;
+    const imgUrl = resolveProductImageUrl(p.image);
     const cleanDesc = (p.description || `${p.name} available at SBS Store (Shyam Bombay Sale) in Vadodara. 100% Quality Inspected.`).replace(/<[^>]*>?/gm, '');
 
     feedXml += `    <item>

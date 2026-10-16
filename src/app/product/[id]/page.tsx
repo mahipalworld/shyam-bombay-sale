@@ -19,6 +19,18 @@ export async function generateStaticParams() {
   }));
 }
 
+const S3_DIRECT_MEDIA_BASE_URL = 'https://sbs-store-media-748439418595.s3.ap-south-1.amazonaws.com';
+
+function resolveProductImageUrl(img?: string): string {
+  if (!img) return 'https://www.sbsstore.in/logo.png';
+  if (img.startsWith('http://') || img.startsWith('https://')) return img;
+  const clean = img.startsWith('/') ? img.slice(1) : img;
+  if (clean.startsWith('products/') || clean.startsWith('categories/') || clean.startsWith('banners/')) {
+    return `${S3_DIRECT_MEDIA_BASE_URL}/${clean}`;
+  }
+  return `https://www.sbsstore.in/${clean}`;
+}
+
 // Dynamic SEO metadata per product
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const product = await getProductById(params.id);
@@ -42,9 +54,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     : `Buy ${product.name} at ₹${product.price} (MRP: ₹${product.originalPrice}). Genuine everyday essential in ${categoryName}. Verified quality by SBS Store Vadodara with fast delivery across India.`;
 
   const canonicalUrl = `https://www.sbsstore.in/product/${product.id}/`;
-  const imageUrl = product.image.startsWith('http') 
-    ? product.image 
-    : `https://www.sbsstore.in${product.image}`;
+  const imageUrl = resolveProductImageUrl(product.image);
 
   return {
     title,
@@ -109,7 +119,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     '@id': `https://www.sbsstore.in/product/${product.id}/#product`,
     'name': product.name,
     'description': product.description || `${product.name} at SBS Store (Shyam Bombay Sale).`,
-    'image': product.images && product.images.length > 0 ? product.images : [product.image],
+    'image': (product.images && product.images.length > 0 ? product.images : [product.image]).map((img) => resolveProductImageUrl(img)),
     'sku': product.id,
     'mpn': product.barcode || product.id,
     'brand': {
