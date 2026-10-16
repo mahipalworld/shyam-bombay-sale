@@ -2587,17 +2587,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, userId: sessionUserId } : o));
           setAdminOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, userId: sessionUserId } : o));
         }
+        const sessionEmail = session?.user?.email || (user as any)?.email || null;
+        const shippingWithEmail = {
+          ...newOrder.shippingAddress,
+          email: (newOrder.shippingAddress as any)?.email || sessionEmail || undefined,
+        };
+
         const orderPayload: any = {
           id: newOrder.id,
           order_number: newOrder.orderNumber,
           user_id: sessionUserId,
+          customer_email: sessionEmail || (newOrder.shippingAddress as any)?.email || null,
           status: newOrder.status,
           items: newOrder.items,
           subtotal: newOrder.subtotal,
           discount: newOrder.discount,
           delivery_charge: newOrder.deliveryCharge,
           total: newOrder.total,
-          shipping_address: newOrder.shippingAddress,
+          shipping_address: shippingWithEmail,
           payment_method: newOrder.paymentMethod,
           payment_status: newOrder.paymentStatus,
           payment_confirmed_at: newOrder.paymentConfirmedAt,

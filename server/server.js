@@ -712,8 +712,20 @@ app.post('/api/payment/verify-payment', async (req, res) => {
           .single();
 
         if (!updateErr && updatedOrder) {
+          let orderToNotify = { ...updatedOrder };
+          if (!orderToNotify.customer_email && !orderToNotify.shipping_address?.email && orderToNotify.user_id && supabaseAdmin) {
+            try {
+              const { data: userData } = await supabaseAdmin.auth.admin.getUserById(orderToNotify.user_id);
+              if (userData?.user?.email) {
+                orderToNotify.customer_email = userData.user.email;
+              }
+            } catch (uErr) {
+              console.warn('[EmailService] User email lookup warning:', uErr.message);
+            }
+          }
+
           // Trigger order confirmation email asynchronously
-          emailService.sendOrderConfirmation(updatedOrder).catch(err => {
+          emailService.sendOrderConfirmation(orderToNotify).catch(err => {
             console.error('[EmailService] Order confirmation send error:', err.message);
           });
         }
