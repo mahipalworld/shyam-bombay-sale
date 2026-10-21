@@ -459,7 +459,7 @@ export const ProductPageView: React.FC<ProductPageViewProps> = ({
               </div>
             </div>
             <a
-              href={`https://wa.me/919226294797?text=Hi%20SBS%20Store%2C%20I%20have%20a%20question%20about%20${encodeURIComponent(product.name)}`}
+              href={`https://wa.me/919829877766?text=Hi%20SBS%20Store%2C%20I%20have%20a%20question%20about%20${encodeURIComponent(product.name)}%20[ref:web_prod_${product.id}]`}
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-1.5 bg-[#00A859] text-white font-bold text-xs rounded-xl shadow-2xs"
@@ -675,7 +675,7 @@ export const ProductPageView: React.FC<ProductPageViewProps> = ({
                 </div>
               </div>
               <a
-                href={`https://wa.me/919226294797?text=Hi%20SBS%20Store%2C%20I%20have%20a%20question%20about%20${encodeURIComponent(product.name)}`}
+                href={`https://wa.me/919829877766?text=Hi%20SBS%20Store%2C%20I%20have%20a%20question%20about%20${encodeURIComponent(product.name)}%20[ref:web_prod_${product.id}]`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-3 py-1.5 bg-[#00A859] hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-2xs transition-colors shrink-0"

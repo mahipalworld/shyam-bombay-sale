@@ -1294,7 +1294,7 @@ export const HomeView: React.FC = () => {
                 <ExternalLink className="w-3 h-3" />
               </a>
               <a
-                href="https://wa.me/919226294797?text=Hi%20Shyam%20Bombay%20Sale%2C%20I%20have%20an%20inquiry%20from%20sbsstore.in"
+                href="https://wa.me/919829877766?text=Hi%20Shyam%20Bombay%20Sale%2C%20I%20have%20an%20inquiry%20from%20sbsstore.in%20[ref:web_home]"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#00A859] hover:bg-[#008f4c] text-white rounded-xl text-xs font-bold shadow-xs transition-all"

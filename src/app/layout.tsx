@@ -9,6 +9,7 @@ import { FlyToCartAnimation } from '@/components/FlyToCartAnimation';
 import { PWAProvider } from '@/context/PWAContext';
 import { IntroOverlayManager } from '@/components/IntroOverlayManager';
 import { GlobalModals } from '@/components/modals/GlobalModals';
+import { FloatingWhatsAppWidget } from '@/components/FloatingWhatsAppWidget';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.sbsstore.in'),
@@ -375,6 +376,7 @@ export default function RootLayout({
               <AuthModal />
               <MobileNumberPromptModal />
               <GlobalModals />
+              <FloatingWhatsAppWidget />
             </StoreProvider>
           </AuthProvider>
         </PWAProvider>

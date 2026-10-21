@@ -465,7 +465,7 @@ export const CategoryPageView: React.FC<CategoryPageViewProps> = ({
                   href="tel:+919226294797"
                   className="text-[11px] font-bold text-[#00A859] hover:underline inline-block mt-1"
                 >
-                  +91 92262 94797 (10:00 AM – 9:30 PM)
+                  +91 98298 77766 (10:00 AM – 9:30 PM)
                 </a>
               </div>
             </div>

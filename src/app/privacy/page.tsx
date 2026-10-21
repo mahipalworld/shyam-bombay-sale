@@ -100,7 +100,7 @@ export default function PrivacyPolicyPage() {
               <div className="bg-gray-50 rounded-2xl p-4 space-y-1 text-xs">
                 <p><strong>Entity:</strong> Shyam Bombay Sale (SBS Store)</p>
                 <p><strong>Email:</strong> shyambombaysale@gmail.com</p>
-                <p><strong>Phone:</strong> +91 92262 94797</p>
+                <p><strong>Phone:</strong> +91 98298 77766</p>
                 <p><strong>Address:</strong> Subhanpura, Vadodara, Gujarat 390023</p>
               </div>
             </section>

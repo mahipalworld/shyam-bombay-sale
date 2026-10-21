@@ -13,6 +13,7 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const crypto = require('crypto');
 const Razorpay = require('razorpay');
 const emailService = require('./services/emailService');
+const whatsappService = require('./services/whatsappService');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 require('dotenv').config();
 
@@ -539,6 +540,9 @@ app.post('/api/orders', async (req, res) => {
       emailService.sendOrderConfirmation(data).catch(err => {
         console.error('[EmailService] Order confirmation send error:', err.message);
       });
+      whatsappService.sendOrderStatusNotification(data, 'Confirmed').catch(err => {
+        console.error('[WhatsAppService] Order confirmation send error:', err.message);
+      });
     }
 
     res.status(201).json(data);
@@ -582,6 +586,15 @@ app.patch('/api/orders/:id/status', async (req, res) => {
       trackingUrl: tracking_url
     }).catch(err => {
       console.error('[EmailService] Status update email error:', err.message);
+    });
+
+    // Send WhatsApp notification asynchronously
+    whatsappService.sendOrderStatusNotification(updatedOrder, status, {
+      trackingNumber: tracking_number || updatedOrder.tracking_number,
+      courier,
+      trackingUrl: tracking_url
+    }).catch(err => {
+      console.error('[WhatsAppService] Status update WhatsApp error:', err.message);
     });
 
     res.json({ success: true, order: updatedOrder });

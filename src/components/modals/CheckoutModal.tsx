@@ -545,9 +545,9 @@ export const CheckoutModal: React.FC = () => {
 
     setIsWhatsAppOpened(true);
 
-    const message = `Hi SBS 👋\n\nI've completed the payment for my order.\n\nOrder ID: ${activeOrder.orderNumber}\nAmount: ₹${activeOrder.total.toLocaleString('en-IN')}\nPayment confirmation time: ${currentConfirmedTime}\n\nPlease verify my payment and confirm my order. Thank you!`;
+    const message = `Hi SBS 👋\n\nI've completed the payment for my order.\n\nOrder ID: ${activeOrder.orderNumber}\nAmount: ₹${activeOrder.total.toLocaleString('en-IN')}\nPayment confirmation time: ${currentConfirmedTime}\n\nPlease verify my payment and confirm my order. Thank you!\n\n[ref:web_order_${activeOrder.orderNumber}]`;
 
-    const rawPhone = (storeSettings?.contactPhone && !storeSettings.contactPhone.includes('99887')) ? storeSettings.contactPhone : '9226294797';
+    const rawPhone = (storeSettings?.contactPhone && !storeSettings.contactPhone.includes('99887')) ? storeSettings.contactPhone : '9829877766';
     let cleanPhone = rawPhone.replace(/\D/g, '');
     if (cleanPhone.length === 10) {
       cleanPhone = `91${cleanPhone}`;

@@ -49,7 +49,7 @@ export default function RefundPolicyPage() {
                 Customers may cancel an order anytime <strong>before it is dispatched</strong> for shipping.
               </p>
               <ul className="list-disc pl-5 space-y-1 text-xs">
-                <li>To cancel an order before dispatch, navigate to your <strong>Profile &gt; My Orders</strong> on the website or message us on WhatsApp with your Order ID at <strong>+91 92262 94797</strong>.</li>
+                <li>To cancel an order before dispatch, navigate to your <strong>Profile &gt; My Orders</strong> on the website or message us on WhatsApp with your Order ID at <strong>+91 98298 77766</strong>.</li>
                 <li>If the order was prepaid (via Razorpay UPI, card, or netbanking), a full 100% refund will be initiated immediately upon cancellation.</li>
                 <li>Orders that have already been dispatched cannot be cancelled in transit but can be returned or rejected upon delivery.</li>
               </ul>
@@ -99,7 +99,7 @@ export default function RefundPolicyPage() {
               <ol className="list-decimal pl-5 space-y-1 text-xs">
                 <li>Open <strong>My Orders</strong> on <strong>sbsstore.in</strong> and select the order you wish to return.</li>
                 <li>Click <strong>Request Return / Replacement</strong> and attach photos or a short video of the issue.</li>
-                <li>Alternatively, contact us directly via WhatsApp or Phone at <strong>+91 92262 94797</strong> or email <strong>shyambombaysale@gmail.com</strong> with your Order ID. Our customer support team will assist you with pickup arrangements within 24 hours.</li>
+                <li>Alternatively, contact us directly via WhatsApp or Phone at <strong>+91 98298 77766</strong> or email <strong>shyambombaysale@gmail.com</strong> with your Order ID. Our customer support team will assist you with pickup arrangements within 24 hours.</li>
               </ol>
             </section>
 
@@ -109,7 +109,7 @@ export default function RefundPolicyPage() {
               <div className="bg-gray-50 rounded-2xl p-4 space-y-1 text-xs">
                 <p><strong>Entity:</strong> Shyam Bombay Sale (SBS Store)</p>
                 <p><strong>Support Email:</strong> shyambombaysale@gmail.com</p>
-                <p><strong>Helpline:</strong> +91 92262 94797</p>
+                <p><strong>Helpline:</strong> +91 98298 77766</p>
                 <p><strong>Operating Hours:</strong> 10:00 AM – 9:30 PM (All 7 Days)</p>
               </div>
             </section>

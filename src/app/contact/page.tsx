@@ -39,8 +39,8 @@ const contactJsonLd = {
 
 // Contact constants
 const STORE_NAME = 'Shyam Bombay Sale (SBS Store)';
-const STORE_PHONE = '+91 92262 94797';
-const WHATSAPP_LINK = 'https://wa.me/919226294797?text=Hi%20Shyam%20Bombay%20Sale%2C%20I%20need%20assistance.';
+const STORE_PHONE = '+91 98298 77766';
+const WHATSAPP_LINK = 'https://wa.me/919829877766?text=Hi%20SBS%2C%20I%20have%20an%20inquiry%20from%20sbsstore.in%20[ref:web_contact]?text=Hi%20Shyam%20Bombay%20Sale%2C%20I%20need%20assistance.';
 const STORE_EMAIL = 'shyambombaysale@gmail.com';
 const STORE_HOURS = 'Monday – Sunday, 10:00 AM – 9:30 PM';
 const STORE_ADDRESS = 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023';

@@ -693,7 +693,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       result.storeName = 'Shyam Bombay Sale';
     }
     if (!result.contactPhone || result.contactPhone === '+91 99887 76655' || result.contactPhone === '9988776655') {
-      result.contactPhone = '+91 92262 94797';
+      result.contactPhone = '+91 98298 77766';
     }
     if (!result.contactEmail || result.contactEmail === 'support@sbsstore.com') {
       result.contactEmail = 'shyambombaysale@gmail.com';
@@ -713,7 +713,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     storeName: 'Shyam Bombay Sale',
     logo: 'SBS',
     contactEmail: 'shyambombaysale@gmail.com',
-    contactPhone: '+91 92262 94797',
+    contactPhone: '+91 98298 77766',
     address: 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023',
     businessHours: '10:00 AM - 09:30 PM',
     deliveryCharge: 40,
@@ -1020,7 +1020,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             parsed.upiId = 'suhanarajpurohit3@oksbi';
           }
           if (parsed.contactPhone === '+91 99887 76655' || parsed.contactPhone === '9988776655' || !parsed.contactPhone) {
-            parsed.contactPhone = '+91 92262 94797';
+            parsed.contactPhone = '+91 98298 77766';
           }
           if (!parsed.address || parsed.address.includes('Jaipur') || parsed.address.includes('Shyam Bazaar') || parsed.address.includes('302001')) {
             parsed.address = 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023';

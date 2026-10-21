@@ -155,3 +155,116 @@ create policy "Users can view their own profile" on public.profiles
 create policy "Users can view their own orders" on public.orders 
   for all using (auth.uid() = user_id or user_id is null);
 
+
+
+-- 8. WhatsApp Identity & Customer Lookup RPC Function
+-- Enables fast, secure customer lookup by phone digits for WhatsApp CRM automations
+CREATE OR REPLACE FUNCTION public.lookup_customer_by_phone(p_phone_suffix text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_clean_suffix text;
+  v_profile record;
+  v_order record;
+  v_order_count integer := 0;
+BEGIN
+  -- Strip non-digit characters from the input suffix
+  v_clean_suffix := regexp_replace(p_phone_suffix, '\D', '', 'g');
+  
+  -- If length > 10, take last 10 digits (Indian standard mobile)
+  IF length(v_clean_suffix) > 10 THEN
+    v_clean_suffix := right(v_clean_suffix, 10);
+  END IF;
+
+  IF length(v_clean_suffix) < 7 THEN
+    RETURN jsonb_build_object('found', false, 'reason', 'phone_too_short');
+  END IF;
+
+  -- 1. Try finding in profiles by clean digits
+  SELECT id, name, email, phone, reward_points, created_at
+  INTO v_profile
+  FROM public.profiles
+  WHERE regexp_replace(COALESCE(phone, ''), '\D', '', 'g') LIKE '%' || v_clean_suffix
+  LIMIT 1;
+
+  IF v_profile.id IS NOT NULL THEN
+    -- Count total orders
+    SELECT count(*), max(created_at)
+    INTO v_order_count
+    FROM public.orders
+    WHERE user_id = v_profile.id
+       OR regexp_replace(COALESCE(shipping_address->>'phone', ''), '\D', '', 'g') LIKE '%' || v_clean_suffix;
+
+    -- Fetch most recent order
+    SELECT order_number, total, status, items, created_at
+    INTO v_order
+    FROM public.orders
+    WHERE user_id = v_profile.id
+       OR regexp_replace(COALESCE(shipping_address->>'phone', ''), '\D', '', 'g') LIKE '%' || v_clean_suffix
+    ORDER BY created_at DESC
+    LIMIT 1;
+
+    RETURN jsonb_build_object(
+      'found', true,
+      'source', 'profile',
+      'customer', jsonb_build_object(
+        'id', v_profile.id,
+        'name', v_profile.name,
+        'email', v_profile.email,
+        'phone', v_profile.phone,
+        'reward_points', COALESCE(v_profile.reward_points, 0),
+        'created_at', v_profile.created_at
+      ),
+      'order_summary', jsonb_build_object(
+        'total_orders', COALESCE(v_order_count, 0),
+        'recent_order', CASE WHEN v_order.order_number IS NOT NULL THEN
+          jsonb_build_object(
+            'order_number', v_order.order_number,
+            'total', v_order.total,
+            'status', v_order.status,
+            'created_at', v_order.created_at
+          ) ELSE NULL END
+      )
+    );
+  END IF;
+
+  -- 2. Try finding guest orders by phone
+  SELECT count(*) INTO v_order_count
+  FROM public.orders
+  WHERE regexp_replace(COALESCE(shipping_address->>'phone', ''), '\D', '', 'g') LIKE '%' || v_clean_suffix;
+
+  IF v_order_count > 0 THEN
+    SELECT order_number, total, status, shipping_address, created_at
+    INTO v_order
+    FROM public.orders
+    WHERE regexp_replace(COALESCE(shipping_address->>'phone', ''), '\D', '', 'g') LIKE '%' || v_clean_suffix
+    ORDER BY created_at DESC
+    LIMIT 1;
+
+    RETURN jsonb_build_object(
+      'found', true,
+      'source', 'guest_order',
+      'customer', jsonb_build_object(
+        'name', COALESCE(v_order.shipping_address->>'name', 'Valued Customer'),
+        'phone', v_order.shipping_address->>'phone'
+      ),
+      'order_summary', jsonb_build_object(
+        'total_orders', v_order_count,
+        'recent_order', jsonb_build_object(
+          'order_number', v_order.order_number,
+          'total', v_order.total,
+          'status', v_order.status,
+          'created_at', v_order.created_at
+        )
+      )
+    );
+  END IF;
+
+  RETURN jsonb_build_object('found', false);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.lookup_customer_by_phone(text) TO anon, authenticated, service_role;
