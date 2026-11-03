@@ -23,6 +23,14 @@ export const ProductStories: React.FC = () => {
   const [videoLoadError, setVideoLoadError] = useState(false);
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const storiesScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollStories = (direction: 'left' | 'right') => {
+    if (storiesScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -280 : 280;
+      storiesScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     setVideoLoadError(false);
@@ -163,9 +171,32 @@ export const ProductStories: React.FC = () => {
 
   return (
     <>
-      {/* Horizontal Story Bubble Strip with subtle right gradient fade */}
-      <div className="relative">
-        <div className="flex items-center gap-3 sm:gap-4 overflow-x-auto no-scrollbar pt-0.5 pb-2 -mx-1 px-1 pr-8 select-none">
+      {/* Horizontal Story Bubble Strip with subtle right gradient fade and desktop navigation */}
+      <div className="relative group/stories">
+        {/* Desktop Left Navigation Arrow */}
+        <button
+          type="button"
+          onClick={() => scrollStories('left')}
+          className="hidden md:flex absolute -left-3.5 top-10 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-200/90 items-center justify-center hover:bg-[#F95721] hover:text-white hover:border-[#F95721] hover:scale-105 active:scale-95 transition-all opacity-0 group-hover/stories:opacity-100"
+          aria-label="Scroll stories left"
+        >
+          <ChevronLeft className="w-4 h-4 stroke-[2.5px]" />
+        </button>
+
+        {/* Desktop Right Navigation Arrow */}
+        <button
+          type="button"
+          onClick={() => scrollStories('right')}
+          className="hidden md:flex absolute -right-3.5 top-10 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-200/90 items-center justify-center hover:bg-[#F95721] hover:text-white hover:border-[#F95721] hover:scale-105 active:scale-95 transition-all opacity-0 group-hover/stories:opacity-100"
+          aria-label="Scroll stories right"
+        >
+          <ChevronRight className="w-4 h-4 stroke-[2.5px]" />
+        </button>
+
+        <div 
+          ref={storiesScrollRef}
+          className="flex items-center gap-3 sm:gap-4 overflow-x-auto no-scrollbar pt-0.5 pb-2 -mx-1 px-1 pr-8 md:pr-1 select-none scroll-smooth"
+        >
           {activeStories.map((story, idx) => (
             <button
               key={story.id}

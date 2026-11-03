@@ -63,16 +63,16 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icon.svg?v=5', type: 'image/svg+xml' },
-      { url: '/favicon-48x48.png?v=5', sizes: '48x48', type: 'image/png' },
-      { url: '/favicon-32x32.png?v=5', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon-16x16.png?v=5', sizes: '16x16', type: 'image/png' },
-      { url: '/icon-192x192.png?v=5', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512x512.png?v=5', sizes: '512x512', type: 'image/png' },
-      { url: '/favicon.ico?v=5', sizes: 'any' },
+      { url: '/icon.svg?v=6', type: 'image/svg+xml' },
+      { url: '/favicon-48x48.png?v=6', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon-32x32.png?v=6', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png?v=6', sizes: '16x16', type: 'image/png' },
+      { url: '/icon-192x192.png?v=6', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512x512.png?v=6', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon.ico?v=6', sizes: 'any' },
     ],
     apple: [
-      { url: '/apple-touch-icon.png?v=5', sizes: '180x180', type: 'image/png' },
+      { url: '/apple-touch-icon.png?v=6', sizes: '180x180', type: 'image/png' },
     ],
     shortcut: '/favicon.ico?v=5',
   },
@@ -118,7 +118,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#F95721',
+  themeColor: '#FF6600',
 };
 
 // Structured data linking online brand with offline Google Business Profile & Justdial listing
@@ -177,7 +177,7 @@ const jsonLd = {
       ],
       'description':
         'Shyam Bombay Sale (SBS Store) offers quality everyday essentials for home, kitchen, cleaning, and personal care with genuine products and fair wholesale & retail prices in Subhanpura, Vadodara, Gujarat.',
-      'telephone': '+91-9226294797',
+      'telephone': '+91 98298 77766',
       'email': 'shyambombaysale@gmail.com',
       'hasMap': 'https://share.google/Pa5CkR6pMiRD0MMZm',
       'sameAs': [

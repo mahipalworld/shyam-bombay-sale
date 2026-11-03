@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { triggerConfetti } from '@/utils/confetti';
 import { Order } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { isDeprecatedStorePhone, OFFICIAL_WABA_PHONE_DIGITS } from '@/lib/phoneUtils';
 import { ResolvedImage } from '@/components/common/ResolvedMedia';
 import {
   CheckCircle2,
@@ -36,8 +37,8 @@ import {
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const orderId = searchParams.get('orderId');
-  const orderNumber = searchParams.get('orderNumber');
+  const orderId = searchParams ? searchParams.get('orderId') : null;
+  const orderNumber = searchParams ? searchParams.get('orderNumber') : null;
 
   const { orders, storeSettings, setActiveTab } = useStore();
   const { authUser, supabaseUser } = useAuth();
@@ -125,14 +126,16 @@ function OrderSuccessContent() {
     window.print();
   };
 
-  // WhatsApp update deep link
-  const rawPhone = (storeSettings?.contactPhone && !storeSettings.contactPhone.includes('99887')) ? storeSettings.contactPhone : '9226294797';
+  // WhatsApp update deep link — always route to official WABA number
+  const rawPhone = (storeSettings?.contactPhone && !isDeprecatedStorePhone(storeSettings.contactPhone))
+    ? storeSettings.contactPhone
+    : OFFICIAL_WABA_PHONE_DIGITS;
   let cleanPhone = rawPhone.replace(/\D/g, '');
   if (cleanPhone.length === 10) cleanPhone = `91${cleanPhone}`;
 
   const whatsappMessage = order 
-    ? `Hi SBS Team! 👋\n\nI have placed an order on sbsstore.in.\n\nOrder Number: ${order.orderNumber}\nAmount Paid: ₹${order.total.toLocaleString('en-IN')}\nPayment: ${order.paymentMethod}\n\nPlease share dispatch updates and courier tracking for my order. Thank you!`
-    : `Hi SBS Team! 👋 I would like tracking updates for my recent order.`;
+    ? `Hi SBS Team! 👋\n\nI have placed an order on sbsstore.in.\n\nOrder Number: ${order.orderNumber}\nAmount Paid: ₹${order.total.toLocaleString('en-IN')}\nPayment: ${order.paymentMethod}\n\nPlease share dispatch updates and courier tracking for my order. Thank you! [ref:web_order_${order.orderNumber}]`
+    : `Hi SBS Team! 👋 I would like tracking updates for my recent order. [ref:web_order]`;
 
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(whatsappMessage)}`;
 
@@ -429,12 +432,16 @@ function OrderSuccessContent() {
               </div>
             </div>
 
-            {isPrepaid && (
+            {isPrepaid ? (
               <div className="bg-emerald-50 rounded-2xl p-2.5 flex items-center gap-2 text-emerald-800 text-xs font-bold border border-emerald-100">
                 <Zap className="w-4 h-4 text-[#00A859] fill-[#00A859] flex-shrink-0" />
-                <span>You saved an extra ₹20 with Instant Online Prepayment!</span>
+                <span>Instant Online Payment Verified — Fast Dispatched!</span>
               </div>
-            )}
+            ) : order.codCharge && order.codCharge > 0 ? (
+              <div className="bg-amber-50 rounded-2xl p-2.5 flex items-center gap-2 text-amber-800 text-xs font-bold border border-amber-100">
+                <span>Cash on delivery handling fee of ₹{order.codCharge} included in total.</span>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -497,6 +504,13 @@ function OrderSuccessContent() {
               </span>
             </div>
 
+            {order.codCharge && order.codCharge > 0 && (
+              <div className="flex justify-between text-amber-800 font-semibold">
+                <span>COD Handling Fee</span>
+                <span>+₹{order.codCharge}</span>
+              </div>
+            )}
+
             <div className="flex justify-between items-baseline pt-2 border-t border-gray-200 text-sm font-black text-gray-900">
               <span>Grand Total</span>
               <span className="text-lg text-[#F95721]">₹{order.total?.toLocaleString('en-IN')}</span>
@@ -531,7 +545,7 @@ function OrderSuccessContent() {
             <div className="bg-white/80 p-3 rounded-2xl border border-orange-100 space-y-1">
               <span className="font-black text-gray-900 block">Need Quick Help?</span>
               <p className="text-gray-500 text-[11px] leading-relaxed">
-                Call/WhatsApp: <strong className="text-gray-900 font-bold">+91 9226294797</strong>
+                Call/WhatsApp: <strong className="text-gray-900 font-bold">+91 98298 77766</strong>
               </p>
             </div>
           </div>
@@ -574,7 +588,7 @@ function OrderSuccessContent() {
           <div>
             <h1 className="text-2xl font-black tracking-tight">SHYAM BOMBAY SALE (SBS STORE)</h1>
             <p className="text-xs text-gray-600 mt-1">Subhanpura, Vadodara, Gujarat - 390023</p>
-            <p className="text-xs text-gray-600">GSTIN / Official Portal: sbsstore.in | Contact: +91 9226294797</p>
+            <p className="text-xs text-gray-600">GSTIN / Official Portal: sbsstore.in | Contact: +91 98298 77766</p>
           </div>
           <div className="text-right">
             <span className="text-xs font-bold uppercase tracking-wider bg-gray-100 px-2.5 py-1 rounded">TAX INVOICE</span>
@@ -651,7 +665,7 @@ function OrderSuccessContent() {
         <div className="border-t border-gray-200 pt-4 text-[10px] text-gray-500 flex justify-between items-center">
           <div>
             <p>This is a computer-generated invoice and requires no physical signature.</p>
-            <p>For support or returns, visit https://www.sbsstore.in or WhatsApp +91 9226294797.</p>
+            <p>For support or returns, visit https://www.sbsstore.in or WhatsApp +91 98298 77766.</p>
           </div>
           <div className="text-right font-bold text-gray-700">
             <p>Authorized Signatory</p>

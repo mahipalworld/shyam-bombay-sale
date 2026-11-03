@@ -534,14 +534,14 @@ app.post('/api/orders', async (req, res) => {
     const { data, error } = await supabase.from('orders').insert(orderData).select().single();
     if (error) return res.status(500).json({ error: error.message });
 
-    // If order is Cash on Delivery, trigger order confirmation email immediately
-    const isCOD = data && (data.payment_method === 'cod' || data.payment_method === 'Cash on Delivery');
+    // If order is Cash on Delivery, trigger order confirmation email & WhatsApp template immediately
+    const isCOD = data && (data.payment_method === 'cod' || data.payment_method === 'Cash on Delivery' || String(data.payment_method).toUpperCase().includes('COD'));
     if (isCOD) {
       emailService.sendOrderConfirmation(data).catch(err => {
         console.error('[EmailService] Order confirmation send error:', err.message);
       });
-      whatsappService.sendOrderStatusNotification(data, 'Confirmed').catch(err => {
-        console.error('[WhatsAppService] Order confirmation send error:', err.message);
+      whatsappService.sendOrderConfirmationWhatsApp(data).catch(err => {
+        console.error('[WhatsAppService] Order confirmation WhatsApp error:', err.message);
       });
     }
 
@@ -600,6 +600,53 @@ app.patch('/api/orders/:id/status', async (req, res) => {
     res.json({ success: true, order: updatedOrder });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error: ' + err.message });
+  }
+});
+
+// Manual/Test notification trigger endpoint for an order
+app.post('/api/orders/:id/notify', async (req, res) => {
+  try {
+    const auth = await verifyAdminAuth(req);
+    if (!auth.authorized) {
+      return res.status(403).json({ error: auth.reason || 'Unauthorized' });
+    }
+    if (!supabase) return res.status(503).json({ error: 'Database service not configured' });
+
+    const { id } = req.params;
+    const { channel = 'all', status, courier, tracking_number, tracking_url } = req.body;
+
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const currentStatus = status || order.status || 'Confirmed';
+    const results = {};
+
+    if (channel === 'all' || channel === 'email') {
+      results.email = await emailService.sendOrderStatusUpdate(order, currentStatus, {
+        trackingNumber: tracking_number || order.tracking_number,
+        courier: courier || 'Delhivery',
+        trackingUrl: tracking_url || (order.tracking_number ? `https://www.delhivery.com/track/package/${order.tracking_number}` : null)
+      });
+    }
+
+    if (channel === 'all' || channel === 'whatsapp') {
+      results.whatsapp = await whatsappService.sendOrderStatusNotification(order, currentStatus, {
+        trackingNumber: tracking_number || order.tracking_number,
+        courier: courier || 'Delhivery',
+        trackingUrl: tracking_url || (order.tracking_number ? `https://www.delhivery.com/track/package/${order.tracking_number}` : null)
+      });
+    }
+
+    res.json({ success: true, results });
+  } catch (err) {
+    res.status(500).json({ error: 'Notification trigger failed: ' + err.message });
   }
 });
 
@@ -740,6 +787,11 @@ app.post('/api/payment/verify-payment', async (req, res) => {
           // Trigger order confirmation email asynchronously
           emailService.sendOrderConfirmation(orderToNotify).catch(err => {
             console.error('[EmailService] Order confirmation send error:', err.message);
+          });
+
+          // Trigger order confirmation WhatsApp template asynchronously
+          whatsappService.sendOrderConfirmationWhatsApp(orderToNotify).catch(err => {
+            console.error('[WhatsAppService] Prepaid order WhatsApp notification error:', err.message);
           });
         }
       } catch (dbErr) {

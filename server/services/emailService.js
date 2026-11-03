@@ -221,9 +221,9 @@ function emailLayout({ title, previewText, content }) {
  * 1. Order Confirmation Email
  */
 async function sendOrderConfirmation(order) {
-  const customerEmail = order.shipping_address?.email || order.customer_email;
-  const customerName = order.shipping_address?.fullName || order.shipping_address?.name || 'Valued Customer';
-  const orderNumber = order.order_number || `#${(order.id || '').substring(0, 8).toUpperCase()}`;
+  const customerEmail = order.shipping_address?.email || order.customer_email || order.email || order.shippingAddress?.email;
+  const customerName = order.shipping_address?.fullName || order.shipping_address?.name || order.shippingAddress?.name || 'Valued Customer';
+  const orderNumber = order.order_number || order.orderNumber || `#${(order.id || '').substring(0, 8).toUpperCase()}`;
 
   const items = Array.isArray(order.items) ? order.items : [];
   const itemsHtml = items.map(item => {
@@ -303,10 +303,15 @@ async function sendOrderConfirmation(order) {
         <span>Discount</span>
         <span>-₹${order.discount}</span>
       </div>` : ''}
-      <div style="display: flex; justify-content: space-between; font-size: 13px; color: #9ca3af; margin-bottom: 10px;">
+      <div style="display: flex; justify-content: space-between; font-size: 13px; color: #9ca3af; margin-bottom: 6px;">
         <span>Delivery</span>
-        <span>${order.delivery_charge ? `₹${order.delivery_charge}` : 'FREE'}</span>
+        <span>${order.delivery_charge || order.deliveryCharge ? `₹${order.delivery_charge || order.deliveryCharge}` : 'FREE'}</span>
       </div>
+      ${order.cod_charge || order.codCharge ? `
+      <div style="display: flex; justify-content: space-between; font-size: 13px; color: #f59e0b; margin-bottom: 10px;">
+        <span>COD Handling Fee</span>
+        <span>+₹${order.cod_charge || order.codCharge}</span>
+      </div>` : ''}
       <div style="display: flex; justify-content: space-between; font-size: 17px; font-weight: 700; color: #ffffff; padding-top: 10px; border-top: 1px dashed #374151;">
         <span>Total Paid</span>
         <span style="color: #f59e0b;">₹${order.total}</span>
@@ -345,9 +350,9 @@ async function sendOrderConfirmation(order) {
  * 2. Order Status Update Email (Shipped, Out for Delivery, Delivered)
  */
 async function sendOrderStatusUpdate(order, newStatus, trackingInfo = {}) {
-  const customerEmail = order.shipping_address?.email || order.customer_email;
-  const customerName = order.shipping_address?.fullName || order.shipping_address?.name || 'Valued Customer';
-  const orderNumber = order.order_number || `#${(order.id || '').substring(0, 8).toUpperCase()}`;
+  const customerEmail = order.shipping_address?.email || order.customer_email || order.email || order.shippingAddress?.email;
+  const customerName = order.shipping_address?.fullName || order.shipping_address?.name || order.shippingAddress?.name || 'Valued Customer';
+  const orderNumber = order.order_number || order.orderNumber || `#${(order.id || '').substring(0, 8).toUpperCase()}`;
 
   let statusBadge = '';
   let statusMessage = '';

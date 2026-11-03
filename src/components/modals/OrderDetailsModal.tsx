@@ -231,6 +231,12 @@ export const OrderDetailsModal: React.FC = () => {
               <span>Delivery Charges</span>
               <span>{order.deliveryCharge === 0 ? <span className="text-[#00A859] font-bold">FREE</span> : `₹${order.deliveryCharge}`}</span>
             </div>
+            {order.codCharge && order.codCharge > 0 && (
+              <div className="flex justify-between text-amber-800 font-medium">
+                <span>COD Handling Fee</span>
+                <span>+₹{order.codCharge.toLocaleString('en-IN')}</span>
+              </div>
+            )}
             <div className="border-t border-gray-100 pt-2 flex justify-between font-bold text-sm text-gray-900">
               <span>Total Payable</span>
               <span className="text-[#F95721]">₹{order.total.toLocaleString('en-IN')}</span>

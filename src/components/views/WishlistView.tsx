@@ -70,7 +70,7 @@ export const WishlistView: React.FC = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {recommendedItems.map((prod) => (
                 <div
                   key={prod.id}
@@ -145,8 +145,8 @@ export const WishlistView: React.FC = () => {
         </button>
       </div>
 
-      {/* Grid: 2 columns on mobile, 4 columns on desktop */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 md:gap-5">
+      {/* Grid: 2 columns on mobile, 3-5 columns on desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 md:gap-5">
         {wishlist.map((item) => {
           const product = item.product;
           return (

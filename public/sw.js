@@ -1,11 +1,11 @@
 // SBS Store Service Worker
-const CACHE_NAME = 'sbs-pwa-v13';
+const CACHE_NAME = 'sbs-pwa-v14';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/icon-192x192.png?v=5',
-  '/icon-512x512.png?v=5',
-  '/icon.svg?v=5',
+  '/icon-192x192.png?v=6',
+  '/icon-512x512.png?v=6',
+  '/icon.svg?v=6',
   '/logo.png?v=5',
   '/door-logo.png?v=5',
   '/sbs-wordmark.png?v=5'

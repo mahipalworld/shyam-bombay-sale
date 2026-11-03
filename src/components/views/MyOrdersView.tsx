@@ -26,6 +26,7 @@ import { Order, OrderStatus } from '@/types';
 import { ResolvedImage } from '@/components/common/ResolvedMedia';
 import { InvoiceModal } from '@/components/modals/InvoiceModal';
 import { ReturnRequestModal } from '@/components/modals/ReturnRequestModal';
+import { isDeprecatedStorePhone, OFFICIAL_WABA_PHONE_DIGITS } from '@/lib/phoneUtils';
 
 export const MyOrdersView: React.FC = () => {
   const { 
@@ -102,13 +103,13 @@ export const MyOrdersView: React.FC = () => {
 
   // WhatsApp Support Helper
   const openWhatsAppSupport = (order: Order) => {
-    const rawPhone = (storeSettings?.contactPhone && !storeSettings.contactPhone.includes('99887')) 
+    const rawPhone = (storeSettings?.contactPhone && !isDeprecatedStorePhone(storeSettings.contactPhone)) 
       ? storeSettings.contactPhone 
-      : '9226294797';
+      : OFFICIAL_WABA_PHONE_DIGITS;
     const cleanPhone = rawPhone.replace(/\D/g, '');
     const phoneWithCountry = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
 
-    const message = `Hello SBS Support! 👋\nI need assistance with my Order *#${order.orderNumber}* (Status: ${order.status}, Total: ₹${order.total}). Could you please help?`;
+    const message = `Hello SBS Support! 👋\nI need assistance with my Order *#${order.orderNumber}* (Status: ${order.status}, Total: ₹${order.total}). Could you please help? [ref:web_order_${order.orderNumber}]`;
     window.open(`https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(message)}`, '_blank');
   };
 

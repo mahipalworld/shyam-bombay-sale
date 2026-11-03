@@ -31,7 +31,7 @@ export const FloatingWhatsAppWidget: React.FC = () => {
 
   // Casual pre-filled inquiry message
   const casualMessage =
-    'Hey SBS! 👋 I was browsing your website and had a quick question, can you help me out?';
+    'Hey SBS! 👋 I was browsing your website and had a quick question, can you help me out? [ref:web_floating]';
 
   const whatsappUrl = `https://wa.me/919829877766?text=${encodeURIComponent(casualMessage)}`;
 

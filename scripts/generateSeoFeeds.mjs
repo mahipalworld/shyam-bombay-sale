@@ -141,6 +141,20 @@ async function run() {
   console.log(`Saved public/sitemap.xml with ${7 + safeCategories.length + safeProducts.length} URLs.`);
 
   // 2. GENERATE public/feed.xml (Google Merchant Center RSS 2.0 Feed)
+  const GOOGLE_PRODUCT_CATEGORIES = {
+    'cleaning-products--chemicals': 'Home & Garden > Household Supplies > Household Cleaning Supplies',
+    'cleaning-tools': 'Home & Garden > Household Supplies > Household Cleaning Supplies > Mops & Brooms',
+    'kitchen-utility': 'Home & Garden > Kitchen & Dining > Kitchen Tools & Utensils',
+    'bathroom--laundry': 'Home & Garden > Bathroom Accessories',
+    'bucket-and-plastics': 'Home & Garden > Household Supplies > Storage & Organization',
+    'small-appliances--gadgets': 'Home & Garden > Kitchen & Dining > Kitchen Appliances',
+    'personal-care--grooming': 'Health & Beauty > Personal Care',
+    'hardware--utility': 'Hardware',
+    'toys': 'Toys & Games > Toys',
+  };
+
+  const categoryMap = new Map(safeCategories.map(c => [c.id, c.name]));
+
   let feedXml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
@@ -153,17 +167,42 @@ async function run() {
     const prodUrl = `${BASE_URL}/product/${p.id}/`;
     const imgUrl = resolveProductImageUrl(p.image);
     const cleanDesc = (p.description || `${p.name} available at SBS Store (Shyam Bombay Sale) in Vadodara. 100% Quality Inspected.`).replace(/<[^>]*>?/gm, '');
+    const gpc = GOOGLE_PRODUCT_CATEGORIES[p.category] || 'Home & Garden > Household Supplies';
+    const categoryName = categoryMap.get(p.category) || 'Everyday Essentials';
+
+    // Extract brand from specifications if available, otherwise SBS Store
+    let brandName = 'SBS Store';
+    if (Array.isArray(p.specifications)) {
+      const brandSpec = p.specifications.find(s => s && s.label && s.label.toLowerCase() === 'brand');
+      if (brandSpec && brandSpec.value && brandSpec.value.trim()) {
+        brandName = brandSpec.value.trim();
+      }
+    }
+
+    // Additional images if available
+    let additionalImagesXml = '';
+    if (Array.isArray(p.images) && p.images.length > 1) {
+      for (const extraImg of p.images.slice(1, 6)) {
+        if (extraImg && extraImg !== p.image) {
+          const extraUrl = resolveProductImageUrl(extraImg);
+          additionalImagesXml += `\n      <g:additional_image_link>${escapeXml(extraUrl)}</g:additional_image_link>`;
+        }
+      }
+    }
 
     feedXml += `    <item>
       <g:id>${escapeXml(p.id)}</g:id>
       <g:title>${escapeXml(p.name)}</g:title>
       <g:description>${escapeXml(cleanDesc.slice(0, 990))}</g:description>
       <g:link>${prodUrl}</g:link>
-      <g:image_link>${escapeXml(imgUrl)}</g:image_link>
+      <g:canonical_link>${prodUrl}</g:canonical_link>
+      <g:image_link>${escapeXml(imgUrl)}</g:image_link>${additionalImagesXml}
       <g:condition>new</g:condition>
       <g:availability>${p.in_stock !== false ? 'in_stock' : 'out_of_stock'}</g:availability>
       <g:price>${Number(p.price || 0).toFixed(2)} INR</g:price>
-      <g:brand>SBS Store</g:brand>
+      <g:brand>${escapeXml(brandName)}</g:brand>
+      <g:product_type>${escapeXml('SBS Store > ' + categoryName)}</g:product_type>
+      <g:google_product_category>${escapeXml(gpc)}</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
       <g:shipping>
         <g:country>IN</g:country>

@@ -257,6 +257,12 @@ If you have any questions, feel free to reply directly to this message.
                 <span>Delivery Charges</span>
                 <span>{order.deliveryCharge === 0 ? 'FREE' : `₹${order.deliveryCharge}`}</span>
               </div>
+              {order.codCharge && order.codCharge > 0 && (
+                <div className="flex justify-between text-amber-800 font-medium">
+                  <span>COD Handling Fee</span>
+                  <span>+₹{order.codCharge}</span>
+                </div>
+              )}
               <div className="pt-2 border-t border-gray-100 flex justify-between font-black text-sm text-gray-900">
                 <span>Total Collected</span>
                 <span className="text-[#F95721]">₹{order.total}</span>

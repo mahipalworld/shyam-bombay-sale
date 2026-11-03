@@ -31,12 +31,15 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
     activeTab, 
     setActiveTab, 
     setIsSearchOpen, 
+    selectedCategoryFilter,
     setSelectedCategoryFilter,
+    setSelectedSubcategoryFilter,
     cartTotal,
     storeSettings,
     userNotifications,
     setIsUserNotificationsModalOpen,
-    isEmailAuthorizedAdmin
+    isEmailAuthorizedAdmin,
+    categories
   } = useStore();
   const { authUser, supabaseUser, isGoogleAuth, openAuthModal, signOut } = useAuth();
 
@@ -72,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
         <span>✨ Free delivery on orders above ₹{storeSettings?.freeDeliveryThreshold?.toLocaleString('en-IN') ?? '499'} | Use code <strong className="text-[#F95721] font-bold">SBS100</strong> for Flat ₹100 Off</span>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
+      <div className="max-w-7xl xl:max-w-[1360px] mx-auto px-4 md:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3 sm:gap-4 lg:gap-6">
         {/* Left Side: Logo */}
         <div className="flex items-center gap-3 flex-shrink-0">
           {showBack && (
@@ -104,93 +107,36 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
           </div>
         </div>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-4 xl:gap-5 text-xs font-bold text-gray-700">
-          <button
-            onClick={() => {
-              setSelectedCategoryFilter(null);
-              setActiveTab('home');
-            }}
-            className={`hover:text-[#F95721] transition-colors ${activeTab === 'home' ? 'text-[#F95721]' : ''}`}
-          >
-            Home
-          </button>
-          <button
-            onClick={() => {
-              setSelectedCategoryFilter(null);
-              setActiveTab('categories');
-            }}
-            className={`flex items-center gap-1 hover:text-[#F95721] transition-colors ${activeTab === 'categories' ? 'text-[#F95721]' : ''}`}
-          >
-            <LayoutGrid className="w-3.5 h-3.5" />
-            <span>Categories</span>
-          </button>
-          <button
-            onClick={() => {
-              setSelectedCategoryFilter('offers');
-              setActiveTab('categories');
-            }}
-            className="flex items-center gap-1 text-[#EA580C] hover:text-[#c44604] transition-colors"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Today&apos;s Deals</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('orders')}
-            className={`transition-colors ${
-              activeTab === 'orders' ? 'text-[#F95721] font-black' : 'hover:text-[#F95721]'
-            }`}
-          >
-            My Orders
-          </button>
-          <a
-            href="/about"
-            className="hover:text-[#F95721] transition-colors"
-          >
-            About
-          </a>
-          <a
-            href="/contact"
-            className="hover:text-[#F95721] transition-colors"
-          >
-            Store & Contact
-          </a>
+        {/* Desktop Prominent Search Bar (Tier 1 Center) */}
+        <div 
+          onClick={() => setIsSearchOpen(true)}
+          className="hidden md:flex flex-1 max-w-xl xl:max-w-2xl items-center justify-between bg-gray-100 hover:bg-gray-100/90 rounded-2xl px-4 py-2 cursor-pointer border border-transparent hover:border-gray-200/80 transition-all text-gray-700 shadow-2xs group"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Search className="w-4 h-4 text-gray-500 group-hover:text-[#F95721] transition-colors" />
+            <span className="text-xs font-semibold text-gray-600 truncate">Search essentials, trimmers, storage, kitchenware...</span>
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-wider text-gray-500 bg-white px-2 py-0.5 rounded-lg border border-gray-200/80 shadow-2xs">
+            Search
+          </span>
+        </div>
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Admin shortcut for authorized admins */}
           {isAuthorizedAdmin && (
             <button
               onClick={() => setActiveTab('admin')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-black text-xs transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl font-black text-xs transition-all ${
                 activeTab === 'admin'
                   ? 'bg-[#F95721] text-white shadow-xs'
                   : 'bg-orange-50 hover:bg-orange-100 text-[#F95721] border border-orange-200/70'
               }`}
               title="Open Admin Dashboard"
-            >
-              <Shield className="w-3.5 h-3.5" />
-              <span>Admin</span>
-            </button>
-          )}
-        </nav>
-
-        {/* Desktop Search Bar */}
-        <div 
-          onClick={() => setIsSearchOpen(true)}
-          className="hidden md:flex flex-1 max-w-sm items-center gap-2 bg-gray-100 hover:bg-gray-100/90 rounded-2xl px-3.5 py-2 cursor-pointer border border-transparent hover:border-gray-200 transition-all text-gray-700"
-        >
-          <Search className="w-4 h-4 text-gray-500" />
-          <span className="text-xs font-semibold text-gray-600">Search essentials, trimmers, sealers...</span>
-        </div>
-
-        {/* Right Actions */}
-        <div className="flex items-center gap-1 sm:gap-2">
-          {/* Admin shortcut on mobile header for authorized admins */}
-          {isAuthorizedAdmin && (
-            <button
-              onClick={() => setActiveTab('admin')}
-              className="md:hidden p-2 text-[#F95721] bg-orange-50 hover:bg-orange-100 rounded-2xl transition-colors flex items-center border border-orange-200/70 tap-active"
-              title="Admin Panel"
               aria-label="Admin Panel"
             >
-              <Shield className="w-4 h-4 stroke-[2.4px]" />
+              <Shield className="w-3.5 h-3.5 stroke-[2.4px]" />
+              <span className="hidden md:inline">Admin</span>
             </button>
           )}
 
@@ -300,6 +246,87 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
               Sign In
             </button>
           )}
+        </div>
+      </div>
+
+      {/* Desktop Secondary Department Navigation Strip (Tier 2) */}
+      <div className="hidden md:block border-t border-gray-100 bg-[#FAFAFA]/95 backdrop-blur-xs">
+        <div className="max-w-7xl xl:max-w-[1360px] mx-auto px-4 md:px-6 lg:px-8 py-1.5 flex items-center justify-between gap-4 text-xs font-bold text-gray-700">
+          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            {/* All Categories Button */}
+            <button
+              onClick={() => {
+                setSelectedCategoryFilter(null);
+                setSelectedSubcategoryFilter(null);
+                setActiveTab('categories');
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
+                activeTab === 'categories' && !selectedCategoryFilter
+                  ? 'bg-[#F95721] text-white shadow-2xs font-black'
+                  : 'hover:bg-gray-200/70 text-gray-800'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>All Categories</span>
+            </button>
+
+            {/* Today's Deals */}
+            <button
+              onClick={() => {
+                setSelectedCategoryFilter('offers');
+                setActiveTab('categories');
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
+                activeTab === 'categories' && selectedCategoryFilter === 'offers'
+                  ? 'bg-orange-500 text-white shadow-2xs font-black'
+                  : 'text-[#EA580C] hover:bg-orange-100/60'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Today&apos;s Deals</span>
+            </button>
+
+            {/* Top Categories from Catalog */}
+            {categories
+              .filter((c) => c.showOnHome !== false && c.id !== 'offers')
+              .slice(0, 7)
+              .map((cat) => {
+                const isActive = activeTab === 'categories' && selectedCategoryFilter === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategoryFilter(cat.id);
+                      setSelectedSubcategoryFilter(null);
+                      setActiveTab('categories');
+                    }}
+                    className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all ${
+                      isActive
+                        ? 'bg-orange-100 text-[#F95721] font-black shadow-2xs'
+                        : 'hover:bg-gray-200/70 text-gray-700'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                );
+              })}
+          </div>
+
+          {/* Quick Info & Store Links */}
+          <div className="flex items-center gap-4 text-gray-600 font-semibold shrink-0 text-xs">
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`hover:text-[#F95721] transition-colors ${activeTab === 'orders' ? 'text-[#F95721] font-black' : ''}`}
+            >
+              My Orders
+            </button>
+            <a href="/about" className="hover:text-[#F95721] transition-colors">
+              About SBS
+            </a>
+            <a href="/contact" className="hover:text-[#F95721] transition-colors">
+              Store &amp; Contact
+            </a>
+          </div>
         </div>
       </div>
 

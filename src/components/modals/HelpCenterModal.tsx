@@ -28,7 +28,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
   const STORE_MAPS_URL = 'https://www.google.com/maps/search/?api=1&query=Shyam+Bombay+sale+Subhanpura+Vadodara';
   const MAPS_EMBED_URL = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3690.660732280276!2d73.13937197529334!3d22.328667179666244!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395fc90072a2b239%3A0x3ef27da67a38a5ca!2sShyam%20Bombay%20sale!5e0!3m2!1sen!2sin!4v1791880692195!5m2!1sen!2sin';
   const STORE_PHONE = '+91 98298 77766';
-  const WHATSAPP_LINK = 'https://wa.me/919829877766?text=Hi%20SBS%20Support%2C%20I%20need%20help%20[ref:web_support]?text=Hi%20SBS%20Store%2C%20I%20need%20assistance%20with%20my%20order.';
+  const WHATSAPP_LINK = 'https://wa.me/919829877766?text=' + encodeURIComponent('Hi SBS Support, I need help [ref:web_help]');
 
   return (
     <div 

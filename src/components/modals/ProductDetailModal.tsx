@@ -460,7 +460,7 @@ export const ProductDetailModal: React.FC = () => {
         <div 
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="bg-white w-full h-full h-dvh sm:h-auto sm:max-h-[92vh] sm:max-w-lg rounded-none sm:rounded-3xl shadow-2xl flex flex-col relative overflow-y-auto overflow-x-hidden no-scrollbar"
+          className="bg-white w-full h-full h-dvh md:h-auto md:max-h-[90vh] md:max-w-5xl lg:max-w-6xl rounded-none md:rounded-3xl shadow-2xl flex flex-col relative overflow-y-auto overflow-x-hidden no-scrollbar"
           onClick={(e) => e.stopPropagation()}
         >
           {/* ======================================================== */}
@@ -515,13 +515,15 @@ export const ProductDetailModal: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-4 space-y-5 pb-28">
-            {/* ======================================================== */}
-            {/* 2. PRODUCT GALLERY (Seamless Pure White Canvas)         */}
-            {/* Pure white background with mix-blend-multiply eliminates */}
-            {/* any 'box inside a box' white border artifact!          */}
-            {/* ======================================================== */}
-            <div className="space-y-3">
+          <div className="p-4 space-y-5 pb-28 md:p-6 lg:p-8 md:pb-8 md:space-y-0 md:flex md:flex-row md:items-start md:gap-8 lg:gap-10">
+            {/* Left Column on Desktop: Sticky Media Gallery */}
+            <div className="md:w-1/2 lg:w-5/12 md:sticky md:top-2 md:self-start space-y-3">
+              {/* ======================================================== */}
+              {/* 2. PRODUCT GALLERY (Seamless Pure White Canvas)         */}
+              {/* Pure white background with mix-blend-multiply eliminates */}
+              {/* any 'box inside a box' white border artifact!          */}
+              {/* ======================================================== */}
+              <div className="space-y-3">
               <div 
                 className="relative aspect-square w-full bg-white rounded-2xl overflow-hidden select-none group cursor-grab active:cursor-grabbing touch-pan-y"
                 onTouchStart={handleTouchStart}
@@ -693,11 +695,14 @@ export const ProductDetailModal: React.FC = () => {
                 </div>
               )}
             </div>
+            </div>
 
-            {/* ======================================================== */}
-            {/* 3. PRODUCT TITLE, SUBTITLE & RATINGS                     */}
-            {/* ======================================================== */}
-            <div className="space-y-2">
+            {/* Right Column on Desktop: Product Details, Specifications & Purchase CTAs */}
+            <div className="md:w-1/2 lg:w-7/12 space-y-5">
+              {/* ======================================================== */}
+              {/* 3. PRODUCT TITLE, SUBTITLE & RATINGS                     */}
+              {/* ======================================================== */}
+              <div className="space-y-2">
               <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                 <span className="text-[#F95721]">{p.category.replace(/--/g, ' & ').replace(/-/g, ' ')}</span>
                 {p.subcategory && (
@@ -1334,16 +1339,17 @@ export const ProductDetailModal: React.FC = () => {
                 </div>
               </div>
             )}
+            </div>
           </div>
 
           {/* ======================================================== */}
           {/* 17. STICKY BOTTOM ACTION BAR (Price Stack + 2 CTAs)      */}
-          {/* Appears once user scrolls past main product image        */}
+          {/* Appears once user scrolls past main product image on Mobile */}
           {/* ======================================================== */}
-          <div className={`sticky bottom-0 z-30 bg-white/95 backdrop-blur-md px-4 py-3 border-t border-gray-100 flex items-center justify-between gap-3 shadow-lg sticky-gpu safe-bottom transition-all duration-300 ${
+          <div className={`sticky bottom-0 z-30 bg-white/95 backdrop-blur-md px-4 py-3 border-t border-gray-100 flex md:hidden items-center justify-between gap-3 shadow-lg sticky-gpu safe-bottom transition-all duration-300 ${
             isScrolledPastImage 
               ? 'translate-y-0 opacity-100 pointer-events-auto' 
-              : 'translate-y-full opacity-0 pointer-events-none md:translate-y-0 md:opacity-100 md:pointer-events-auto'
+              : 'translate-y-full opacity-0 pointer-events-none'
           }`}>
             {/* Price Column */}
             <div className="flex flex-col min-w-0">

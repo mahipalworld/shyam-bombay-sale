@@ -121,6 +121,7 @@ export interface Order {
   subtotal: number;
   discount: number;
   deliveryCharge: number;
+  codCharge?: number;
   total: number;
   shippingAddress: Address;
   paymentMethod: string;
@@ -133,11 +134,29 @@ export interface Order {
   prepaidDiscount?: number;
 }
 
+export type CouponChannelApplicability = 'PHYSICAL_STORE_ONLY' | 'ONLINE_ONLY' | 'ALL_CHANNELS';
+export type CouponCustomerEligibility = 'ALL' | 'NEW_CUSTOMERS_ONLY' | 'RETURNING_CUSTOMERS_ONLY';
+
+export type CouponJourney = 
+  | 'IN_STORE_QR' 
+  | 'WEBSITE' 
+  | 'PROMO' 
+  | 'WEBSITE_FLOATING' 
+  | 'PRODUCT_PAGE' 
+  | 'ORDER_SUCCESS' 
+  | 'BROADCAST_CAMPAIGN';
+
+export type CouponIssuanceStatus = 
+  | 'ISSUED' 
+  | 'REDEEMED' 
+  | 'EXPIRED' 
+  | 'CANCELLED';
+
 export interface Coupon {
   id: string;
   code: string;
   title: string;
-  discountType: 'PERCENT' | 'FLAT';
+  discountType: 'PERCENT' | 'FLAT' | 'fixed';
   value: number;
   minOrderValue: number;
   expiresAt: string;
@@ -146,7 +165,92 @@ export interface Coupon {
   eligibleCategory?: string;
   eligibleProduct?: string;
   isActive?: boolean;
+  channel?: CouponChannelApplicability;
+  channelApplicability?: CouponChannelApplicability;
+  customerEligibility?: CouponCustomerEligibility;
+  usageLimitPerCustomer?: number;
+  termsAndConditions?: string;
+  totalIssued?: number;
+  totalRedeemed?: number;
+  redemptionRate?: number;
 }
+
+export interface CouponIssuance {
+  id: string;
+  coupon_code: string;
+  phone: string;
+  phone_normalized: string;
+  customer_name?: string;
+  discount_type: 'PERCENT' | 'FLAT' | 'PERCENTAGE' | 'fixed';
+  discount_value: number;
+  journey: CouponJourney | string;
+  touchpoint_ref: string;
+  status: CouponIssuanceStatus | string;
+  discount_applied?: number;
+  issued_at: string;
+  redeemed_at?: string;
+  redeemed_by_cashier?: string;
+  attributed_order_number?: string;
+  metadata?: Record<string, any>;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CustomerLookupResult {
+  found: boolean;
+  source?: 'profile' | 'guest_order';
+  reason?: string;
+  customer?: {
+    id?: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    reward_points?: number;
+    created_at?: string;
+  };
+  order_summary?: {
+    total_orders: number;
+    recent_order?: {
+      order_number: string;
+      total: number;
+      status: string;
+      created_at: string;
+    } | null;
+  };
+}
+
+export interface RedeemCouponSuccess {
+  success: true;
+  coupon_code: string;
+  phone: string;
+  discount_value: number;
+  discount_type: 'PERCENT' | 'FLAT' | 'PERCENTAGE' | 'fixed';
+  min_order_value?: number;
+  customer_name?: string;
+  redeemed_at: string;
+  redeemed_by_cashier: string;
+  message: string;
+}
+
+export interface RedeemCouponFailure {
+  success: false;
+  error: 
+    | 'invalid_phone' 
+    | 'missing_coupon_code' 
+    | 'missing_cashier_id' 
+    | 'coupon_not_found' 
+    | 'coupon_expired' 
+    | 'channel_not_applicable' 
+    | 'already_redeemed' 
+    | 'no_issuance_found' 
+    | string;
+  reason?: string;
+  redeemed_at?: string;
+  redeemed_by_cashier?: string;
+  message: string;
+}
+
+export type RedeemCouponResult = RedeemCouponSuccess | RedeemCouponFailure;
 
 export type AdminRole = 'OWNER' | 'MANAGER' | 'MARKETING' | 'STAFF';
 
@@ -345,6 +449,7 @@ export interface StoreSettings {
   freeDeliveryThreshold: number;
   deliveryZones: string[];
   codEnabled: boolean;
+  codCharge?: number;
   upiId: string;
   lowStockThreshold: number;
   orderNotification: boolean;

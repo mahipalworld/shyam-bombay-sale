@@ -347,6 +347,19 @@ export const SettingsView: React.FC = () => {
                 className="w-4 h-4 text-[#F95721] accent-[#F95721]"
               />
             </label>
+
+            {formData.codEnabled && (
+              <div>
+                <label className="block font-bold text-gray-800 mb-1">COD Handling Fee (₹)</label>
+                <input
+                  type="number"
+                  value={formData.codCharge ?? 15}
+                  onChange={(e) => setFormData({ ...formData, codCharge: parseInt(e.target.value) || 0 })}
+                  className="w-full border rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F95721] font-bold text-gray-800"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Extra charge added when customer selects Cash on Delivery</p>
+              </div>
+            )}
           </div>
         )}
 

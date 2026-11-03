@@ -34,6 +34,7 @@ export type AdminActiveTab =
   | 'categories'
   | 'homepage'
   | 'offers'
+  | 'cashier'
   | 'inventory'
   | 'orders'
   | 'returns'
@@ -100,11 +101,11 @@ export const AdminMobileNav: React.FC<AdminMobileNavProps> = ({
       case 'OWNER':
         return true;
       case 'MANAGER':
-        return ['dashboard', 'products', 'categories', 'storage', 'inventory', 'orders', 'returns', 'customers', 'payments', 'notifications'].includes(tab);
+        return ['dashboard', 'products', 'categories', 'storage', 'inventory', 'orders', 'returns', 'customers', 'payments', 'notifications', 'cashier'].includes(tab);
       case 'MARKETING':
         return ['dashboard', 'products', 'categories', 'storage', 'homepage', 'offers', 'analytics', 'notifications'].includes(tab);
       case 'STAFF':
-        return ['dashboard', 'orders', 'inventory', 'notifications'].includes(tab);
+        return ['dashboard', 'orders', 'inventory', 'notifications', 'cashier'].includes(tab);
       default:
         return true;
     }
@@ -157,6 +158,7 @@ export const AdminMobileNav: React.FC<AdminMobileNavProps> = ({
     {
       group: 'Operations & CRM',
       items: [
+        { tab: 'cashier', label: 'Cashier Redemption', desc: 'In-store coupon redemption desk', icon: Store },
         { tab: 'inventory', label: 'Stock & Inventory', desc: 'Stock replenishment alerts', icon: Boxes, badge: lowStockCount > 0 ? lowStockCount : undefined, badgeColor: 'bg-amber-500' },
         { tab: 'offers', label: 'Offers & Coupons', desc: 'Discount vouchers & rules', icon: Tag },
         { tab: 'customers', label: 'Customer Directory', desc: 'Buyer profiles & CRM', icon: Users },

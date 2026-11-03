@@ -51,6 +51,7 @@ import {
   requestNotificationPermission, 
   playNotificationChime 
 } from '@/utils/pushNotifications';
+import { isDeprecatedStorePhone, OFFICIAL_WABA_PHONE } from '@/lib/phoneUtils';
 
 
 interface StoreContextType {
@@ -164,6 +165,7 @@ interface StoreContextType {
       pointsRedeemed?: number;
       pointsDiscount?: number;
       prepaidDiscount?: number;
+      codCharge?: number;
       orderNumber?: string;
     }
   ) => Order;
@@ -692,8 +694,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!result.storeName || result.storeName === 'Shyam Business Store') {
       result.storeName = 'Shyam Bombay Sale';
     }
-    if (!result.contactPhone || result.contactPhone === '+91 99887 76655' || result.contactPhone === '9988776655') {
-      result.contactPhone = '+91 98298 77766';
+    if (!result.contactPhone || isDeprecatedStorePhone(result.contactPhone)) {
+      result.contactPhone = OFFICIAL_WABA_PHONE;
     }
     if (!result.contactEmail || result.contactEmail === 'support@sbsstore.com') {
       result.contactEmail = 'shyambombaysale@gmail.com';
@@ -703,6 +705,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     if (!result.deliveryZones || result.deliveryZones.includes('Jaipur')) {
       result.deliveryZones = ['Vadodara', 'Subhanpura', 'Gujarat', 'All India'];
+    }
+    if (result.codCharge === undefined) {
+      result.codCharge = 15;
     }
     return result;
   };
@@ -720,6 +725,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     freeDeliveryThreshold: 499,
     deliveryZones: ['Vadodara', 'Subhanpura', 'Gujarat', 'All India'],
     codEnabled: true,
+    codCharge: 15,
     upiId: 'suhanarajpurohit3@oksbi',
     lowStockThreshold: 5,
     orderNotification: true,
@@ -1019,8 +1025,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           if (parsed.upiId === 'fam@7387467108' || parsed.upiId === 'sbsstore@upi' || !parsed.upiId) {
             parsed.upiId = 'suhanarajpurohit3@oksbi';
           }
-          if (parsed.contactPhone === '+91 99887 76655' || parsed.contactPhone === '9988776655' || !parsed.contactPhone) {
-            parsed.contactPhone = '+91 98298 77766';
+          if (!parsed.contactPhone || isDeprecatedStorePhone(parsed.contactPhone)) {
+            parsed.contactPhone = OFFICIAL_WABA_PHONE;
           }
           if (!parsed.address || parsed.address.includes('Jaipur') || parsed.address.includes('Shyam Bazaar') || parsed.address.includes('302001')) {
             parsed.address = 'Shop 1, Vrundvilla, Ambedkar Nagar Housing Society, Laxmipura Road, Near Rami School, Subhanpura, Vadodara, Gujarat 390023';
@@ -1185,6 +1191,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             expiresAt: c.expires_at,
             description: c.description,
             isActive: c.is_active !== undefined ? Boolean(c.is_active) : true,
+            channel: c.channel_applicability || 'ALL_CHANNELS',
+            channelApplicability: c.channel_applicability || 'ALL_CHANNELS',
+            customerEligibility: c.customer_eligibility || 'ALL',
+            usageLimitPerCustomer: c.usage_limit_per_customer !== undefined ? Number(c.usage_limit_per_customer) : 1,
+            termsAndConditions: c.terms_and_conditions,
           }));
           setCoupons(mappedCoupons);
         }
@@ -1704,6 +1715,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           expiresAt: c.expires_at,
           description: c.description,
           isActive: c.is_active !== undefined ? Boolean(c.is_active) : true,
+          channel: c.channel_applicability || 'ALL_CHANNELS',
+          channelApplicability: c.channel_applicability || 'ALL_CHANNELS',
+          customerEligibility: c.customer_eligibility || 'ALL',
+          usageLimitPerCustomer: c.usage_limit_per_customer !== undefined ? Number(c.usage_limit_per_customer) : 1,
+          termsAndConditions: c.terms_and_conditions,
         };
         setCoupons((prev) => (prev.some((x) => x.id === newCoup.id) ? prev : [newCoup, ...prev]));
       })
@@ -1724,6 +1740,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   expiresAt: c.expires_at ?? item.expiresAt,
                   description: c.description ?? item.description,
                   isActive: c.is_active !== undefined ? Boolean(c.is_active) : item.isActive,
+                  channel: c.channel_applicability ?? item.channel,
+                  channelApplicability: c.channel_applicability ?? item.channelApplicability,
+                  customerEligibility: c.customer_eligibility ?? item.customerEligibility,
+                  usageLimitPerCustomer: c.usage_limit_per_customer !== undefined ? Number(c.usage_limit_per_customer) : item.usageLimitPerCustomer,
+                  termsAndConditions: c.terms_and_conditions ?? item.termsAndConditions,
                 }
               : item
           )
@@ -2413,8 +2434,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const cartDiscountMRP = Math.max(0, cartOriginalMRP - cartSubtotal);
 
   let couponDiscount = 0;
-  if (appliedCoupon && cartSubtotal >= (appliedCoupon.minOrderValue || 0)) {
-    if (appliedCoupon.discountType === 'FLAT') {
+  const appliedChannel = appliedCoupon ? (appliedCoupon.channelApplicability || appliedCoupon.channel) : undefined;
+  if (appliedCoupon && appliedChannel !== 'PHYSICAL_STORE_ONLY' && cartSubtotal >= (appliedCoupon.minOrderValue || 0)) {
+    if (appliedCoupon.discountType === 'FLAT' || (appliedCoupon.discountType as any) === 'fixed') {
       couponDiscount = appliedCoupon.value || 0;
     } else {
       couponDiscount = Math.round((cartSubtotal * (appliedCoupon.value || 0)) / 100);
@@ -2436,37 +2458,56 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return false;
     }
     const cleanCode = code.trim().toUpperCase();
-    const existingCoupon = coupons.find((c) => c && c.code && c.code.toUpperCase() === cleanCode);
+    const candidate = coupons.find((c) => c && c.code && c.code.toUpperCase() === cleanCode)
+      || INITIAL_COUPONS.find((c) => c && c.code && c.code.toUpperCase() === cleanCode);
 
-    if (existingCoupon) {
-      if (existingCoupon.isActive === false) {
-        showToast(`Coupon "${cleanCode}" is currently inactive or disabled.`, 'error');
-        return false;
-      }
-      if (cartSubtotal < (existingCoupon.minOrderValue || 0)) {
-        showToast(`Cart subtotal of at least ₹${existingCoupon.minOrderValue} required for coupon "${cleanCode}" (current: ₹${cartSubtotal})`, 'error');
-        return false;
-      }
-      setAppliedCoupon(existingCoupon);
-      showToast(`Coupon "${existingCoupon.code}" applied! 🎉`);
-      return true;
-    }
-
-    // Check INITIAL_COUPONS only if not registered yet
-    const fallback = INITIAL_COUPONS.find((c) => c && c.code && c.code.toUpperCase() === cleanCode);
-    if (!fallback) {
+    if (!candidate) {
       showToast(`Invalid coupon code "${cleanCode}". Try SBS150, SBS100 or SAVE10!`, 'error');
       return false;
     }
 
-    if (cartSubtotal < (fallback.minOrderValue || 0)) {
-      showToast(`Cart subtotal of at least ₹${fallback.minOrderValue} required for coupon "${cleanCode}" (current: ₹${cartSubtotal})`, 'error');
+    if (candidate.isActive === false) {
+      showToast(`Coupon "${cleanCode}" is currently inactive or disabled.`, 'error');
       return false;
     }
 
-    setCoupons((prev) => (prev.some((c) => c && c.code && c.code.toUpperCase() === cleanCode) ? prev : [...prev, fallback]));
-    setAppliedCoupon(fallback);
-    showToast(`Coupon "${fallback.code}" applied! 🎉`);
+    // 1. Channel Applicability check: Physical store coupons strictly blocked online
+    const channel = candidate.channelApplicability || candidate.channel;
+    if (channel === 'PHYSICAL_STORE_ONLY') {
+      showToast(
+        'This coupon is valid only for in-store purchases at our Vadodara store. Visit Shyam Bombay Sale, Subhanpura to redeem.',
+        'error'
+      );
+      return false;
+    }
+
+    // 2. Minimum Order Value Check with Shortfall
+    const minVal = candidate.minOrderValue || 0;
+    if (cartSubtotal < minVal) {
+      const shortfall = minVal - cartSubtotal;
+      showToast(`Add items worth ₹${shortfall} more to use this coupon`, 'error');
+      return false;
+    }
+
+    // 3. Customer Eligibility Check
+    const eligibility = candidate.customerEligibility || 'ALL';
+    const orderCount = (user?.ordersCount || 0) + (orders?.length || 0);
+    if (eligibility === 'NEW_CUSTOMERS_ONLY' && orderCount > 0) {
+      showToast('This coupon is valid only for new customers on their first purchase', 'error');
+      return false;
+    }
+    if (eligibility === 'RETURNING_CUSTOMERS_ONLY' && orderCount === 0) {
+      showToast('This coupon is valid only for returning customers with previous orders', 'error');
+      return false;
+    }
+
+    // Ensure coupon is in state list if loaded from initial fallbacks
+    if (!coupons.some((c) => c && c.code && c.code.toUpperCase() === cleanCode)) {
+      setCoupons((prev) => [...prev, candidate]);
+    }
+
+    setAppliedCoupon(candidate);
+    showToast(`Coupon "${candidate.code}" applied! 🎉`);
     return true;
   };
 
@@ -2519,14 +2560,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       pointsRedeemed?: number;
       pointsDiscount?: number;
       prepaidDiscount?: number;
+      codCharge?: number;
       orderNumber?: string;
     }
   ) => {
     const orderNum = options?.orderNumber || `SBS-${Math.floor(1000 + Math.random() * 9000)}`;
     const isUpi = paymentMethod.includes('UPI') || paymentMethod === 'UPI';
     const initialPaymentStatus: PaymentStatus = options?.paymentStatus || (isUpi ? 'PENDING' : 'PAYMENT_VERIFIED');
+    const codCharge = options?.codCharge || 0;
     const finalDiscount = couponDiscount + (options?.pointsDiscount || 0) + (options?.prepaidDiscount || 0);
-    const finalTotal = Math.max(0, cartTotal - (options?.pointsDiscount || 0) - (options?.prepaidDiscount || 0));
+    const finalTotal = Math.max(0, cartTotal - (options?.pointsDiscount || 0) - (options?.prepaidDiscount || 0) + codCharge);
 
     // Auto-save address permanently if provided
     if (address && address.street) {
@@ -2553,6 +2596,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       subtotal: cartSubtotal,
       discount: finalDiscount,
       deliveryCharge: cartDeliveryCharge,
+      codCharge: codCharge > 0 ? codCharge : undefined,
       total: finalTotal,
       shippingAddress: address,
       paymentMethod,
@@ -2657,7 +2701,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       id: `pay_${Date.now()}`,
       orderId: newOrder.id,
       customerName: user.name,
-      amount: cartTotal,
+      amount: finalTotal,
       method: mappedMethod,
       status: mappedMethod === 'COD' ? 'Pending' : mappedMethod === 'UPI' ? 'Pending' : 'Success',
       timestamp: new Date().toISOString()
@@ -3911,6 +3955,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...coup,
       id: `coup_${Date.now()}`,
       isActive: coup.isActive !== false,
+      channel: coup.channel || coup.channelApplicability || 'ALL_CHANNELS',
+      channelApplicability: coup.channelApplicability || coup.channel || 'ALL_CHANNELS',
+      customerEligibility: coup.customerEligibility || 'ALL',
+      usageLimitPerCustomer: coup.usageLimitPerCustomer || 1,
     };
     setCoupons((prev) => [newCoupon, ...prev]);
     showToast(`Coupon code ${newCoupon.code} created`);
@@ -3927,6 +3975,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         expires_at: newCoupon.expiresAt,
         description: newCoupon.description,
         is_active: newCoupon.isActive !== false,
+        channel_applicability: newCoupon.channelApplicability || newCoupon.channel || 'ALL_CHANNELS',
+        customer_eligibility: newCoupon.customerEligibility || 'ALL',
+        usage_limit_per_customer: newCoupon.usageLimitPerCustomer || 1,
+        terms_and_conditions: newCoupon.termsAndConditions || null,
       }).then(({ error }) => {
         if (error) console.error('Supabase add coupon error:', error);
       });
@@ -3950,6 +4002,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (updates.expiresAt !== undefined) dbUpdates.expires_at = updates.expiresAt;
       if (updates.description !== undefined) dbUpdates.description = updates.description;
       if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+      if (updates.channelApplicability !== undefined || updates.channel !== undefined) {
+        dbUpdates.channel_applicability = updates.channelApplicability || updates.channel;
+      }
+      if (updates.customerEligibility !== undefined) {
+        dbUpdates.customer_eligibility = updates.customerEligibility;
+      }
+      if (updates.usageLimitPerCustomer !== undefined) {
+        dbUpdates.usage_limit_per_customer = updates.usageLimitPerCustomer;
+      }
+      if (updates.termsAndConditions !== undefined) {
+        dbUpdates.terms_and_conditions = updates.termsAndConditions;
+      }
 
       supabase.from('coupons').update(dbUpdates).eq('id', id).then(({ error }) => {
         if (error) console.error('Supabase update coupon error:', error);

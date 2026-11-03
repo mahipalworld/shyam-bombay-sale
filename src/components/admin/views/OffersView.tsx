@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '@/context/StoreContext';
 import { 
   Tag, 
@@ -16,11 +16,18 @@ import {
   Sparkles,
   ShoppingBag,
   Gift,
-  Save
+  Save,
+  Store,
+  ArrowRight
 } from 'lucide-react';
-import { Coupon } from '@/types';
+import { Coupon, CouponChannelApplicability, CouponCustomerEligibility } from '@/types';
+import { supabase } from '@/lib/supabase';
 
-export const OffersView: React.FC = () => {
+interface OffersViewProps {
+  onNavigateToTab?: (tab: any) => void;
+}
+
+export const OffersView: React.FC<OffersViewProps> = ({ onNavigateToTab }) => {
   const { 
     coupons, 
     addCoupon, 
@@ -36,6 +43,43 @@ export const OffersView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'coupons' | 'scratch'>('coupons');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
+
+  // Performance metrics map: code -> { totalIssued, totalRedeemed, redemptionRate }
+  const [couponMetrics, setCouponMetrics] = useState<Record<string, { totalIssued: number; totalRedeemed: number; redemptionRate: number }>>({});
+
+  useEffect(() => {
+    fetchMetrics();
+  }, []);
+
+  const fetchMetrics = async () => {
+    try {
+      if (!supabase) return;
+      const { data, error } = await supabase
+        .from('coupon_issuances')
+        .select('coupon_code, status');
+
+      if (!error && data) {
+        const metrics: Record<string, { totalIssued: number; totalRedeemed: number; redemptionRate: number }> = {};
+        data.forEach((row: any) => {
+          const code = (row.coupon_code || '').toUpperCase();
+          if (!metrics[code]) {
+            metrics[code] = { totalIssued: 0, totalRedeemed: 0, redemptionRate: 0 };
+          }
+          metrics[code].totalIssued += 1;
+          if (row.status === 'REDEEMED') {
+            metrics[code].totalRedeemed += 1;
+          }
+        });
+        Object.keys(metrics).forEach(k => {
+          const item = metrics[k];
+          item.redemptionRate = item.totalIssued > 0 ? Math.round((item.totalRedeemed / item.totalIssued) * 100) : 0;
+        });
+        setCouponMetrics(metrics);
+      }
+    } catch (e) {
+      console.error('Error fetching coupon metrics:', e);
+    }
+  };
 
   // Scratch config local form
   const [scratchForm, setScratchForm] = useState({
@@ -66,6 +110,10 @@ export const OffersView: React.FC = () => {
     description: '',
     eligibleCategory: 'ALL',
     isActive: true,
+    channelApplicability: 'ALL_CHANNELS' as CouponChannelApplicability,
+    customerEligibility: 'ALL' as CouponCustomerEligibility,
+    usageLimitPerCustomer: '1',
+    termsAndConditions: '',
   });
 
   const handleOpenAdd = () => {
@@ -81,6 +129,10 @@ export const OffersView: React.FC = () => {
       description: 'Get 20% discount on everyday essentials.',
       eligibleCategory: 'ALL',
       isActive: true,
+      channelApplicability: 'ALL_CHANNELS',
+      customerEligibility: 'ALL',
+      usageLimitPerCustomer: '1',
+      termsAndConditions: '',
     });
     setIsModalOpen(true);
   };
@@ -90,7 +142,7 @@ export const OffersView: React.FC = () => {
     setFormData({
       code: c.code,
       title: c.title,
-      discountType: c.discountType,
+      discountType: c.discountType === 'fixed' ? 'FLAT' : (c.discountType || 'PERCENT'),
       value: c.value.toString(),
       minOrderValue: c.minOrderValue.toString(),
       maxDiscount: (c.maxDiscount || 500).toString(),
@@ -98,6 +150,10 @@ export const OffersView: React.FC = () => {
       description: c.description,
       eligibleCategory: c.eligibleCategory || 'ALL',
       isActive: c.isActive !== false,
+      channelApplicability: c.channelApplicability || c.channel || 'ALL_CHANNELS',
+      customerEligibility: c.customerEligibility || 'ALL',
+      usageLimitPerCustomer: (c.usageLimitPerCustomer || 1).toString(),
+      termsAndConditions: c.termsAndConditions || '',
     });
     setIsModalOpen(true);
   };
@@ -120,6 +176,11 @@ export const OffersView: React.FC = () => {
       description: formData.description,
       eligibleCategory: formData.eligibleCategory === 'ALL' ? undefined : formData.eligibleCategory,
       isActive: formData.isActive,
+      channel: formData.channelApplicability,
+      channelApplicability: formData.channelApplicability,
+      customerEligibility: formData.customerEligibility,
+      usageLimitPerCustomer: parseInt(formData.usageLimitPerCustomer) || 1,
+      termsAndConditions: formData.termsAndConditions || undefined,
     };
 
     if (editingCoupon) {
@@ -129,6 +190,7 @@ export const OffersView: React.FC = () => {
       addCoupon(payload);
       showToast(`Coupon "${payload.code}" created!`);
     }
+    fetchMetrics();
     setIsModalOpen(false);
   };
 
@@ -146,7 +208,7 @@ export const OffersView: React.FC = () => {
   return (
     <div className="space-y-4 pb-28 animate-fadeIn">
       {/* Top Bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-black text-gray-900 leading-tight">Offers & Discounts</h1>
           <p className="text-[11px] text-gray-500">
@@ -154,15 +216,27 @@ export const OffersView: React.FC = () => {
           </p>
         </div>
 
-        {activeTab === 'coupons' && (
-          <button
-            onClick={handleOpenAdd}
-            className="px-3.5 py-2 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-2xl flex items-center gap-1.5 shadow-sm shadow-orange-500/20"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Coupon</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {onNavigateToTab && (
+            <button
+              onClick={() => onNavigateToTab('cashier')}
+              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-2xl flex items-center gap-1.5 shadow-sm shadow-emerald-500/20"
+            >
+              <Store className="w-4 h-4" />
+              <span>Cashier Desk</span>
+            </button>
+          )}
+
+          {activeTab === 'coupons' && (
+            <button
+              onClick={handleOpenAdd}
+              className="px-3.5 py-2 bg-[#F95721] hover:bg-[#E44813] text-white text-xs font-bold rounded-2xl flex items-center gap-1.5 shadow-sm shadow-orange-500/20"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New Coupon</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabs Switcher */}
@@ -193,6 +267,10 @@ export const OffersView: React.FC = () => {
         {coupons.map((c) => {
           const isExpired = new Date(c.expiresAt).getTime() < new Date().getTime();
           const isActive = c.isActive !== false && !isExpired;
+          const cleanCode = (c.code || '').toUpperCase();
+          const metric = couponMetrics[cleanCode];
+          const channel = c.channelApplicability || c.channel || 'ALL_CHANNELS';
+          const eligibility = c.customerEligibility || 'ALL';
 
           return (
             <div
@@ -204,9 +282,9 @@ export const OffersView: React.FC = () => {
               {/* Top Row: Discount Pill & Code */}
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-base font-black text-[#F95721]">
-                      {c.discountType === 'FLAT' ? `₹${c.value} FLAT OFF` : `${c.value}% OFF`}
+                      {c.discountType === 'FLAT' || (c.discountType as any) === 'fixed' ? `₹${c.value} FLAT OFF` : `${c.value}% OFF`}
                     </span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                       !c.isActive 
@@ -217,6 +295,26 @@ export const OffersView: React.FC = () => {
                     }`}>
                       {!c.isActive ? 'Disabled' : isExpired ? 'Expired' : 'Active'}
                     </span>
+                    {/* Channel Badge */}
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                      channel === 'PHYSICAL_STORE_ONLY'
+                        ? 'bg-purple-100 text-purple-800'
+                        : channel === 'ONLINE_ONLY'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {channel === 'PHYSICAL_STORE_ONLY'
+                        ? 'In-Store Only (Vadodara)'
+                        : channel === 'ONLINE_ONLY'
+                        ? 'Online Only'
+                        : 'All Channels'}
+                    </span>
+                    {/* Eligibility Badge */}
+                    {eligibility !== 'ALL' && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                        {eligibility === 'NEW_CUSTOMERS_ONLY' ? 'New Customers' : 'Returning'}
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-xs font-bold text-gray-800">{c.title}</h3>
                 </div>
@@ -234,11 +332,22 @@ export const OffersView: React.FC = () => {
 
               <p className="text-[11px] text-gray-500 leading-relaxed">{c.description}</p>
 
-              {/* Conditions List */}
-              <div className="bg-gray-50 rounded-2xl p-2.5 flex items-center justify-between text-[10px] font-bold text-gray-600">
-                <span>Min Order: ₹{c.minOrderValue}</span>
-                {c.maxDiscount && <span>Max Cap: ₹{c.maxDiscount}</span>}
-                <span>Expires: {c.expiresAt}</span>
+              {/* Conditions & Performance Metrics Grid */}
+              <div className="bg-gray-50 rounded-2xl p-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between text-[10px] font-bold text-gray-600 gap-2">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span>Min Order: ₹{c.minOrderValue}</span>
+                  {c.maxDiscount && <span>Max Cap: ₹{c.maxDiscount}</span>}
+                  <span>Expires: {c.expiresAt}</span>
+                </div>
+                {metric && (
+                  <div className="flex items-center gap-2 font-mono text-[10px] bg-white px-2 py-1 rounded-xl border border-gray-200/80">
+                    <span className="text-slate-500">Issued: <strong className="text-slate-800">{metric.totalIssued}</strong></span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-slate-500">Redeemed: <strong className="text-emerald-700">{metric.totalRedeemed}</strong></span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-orange-600 font-bold">{metric.redemptionRate}% Conv</span>
+                  </div>
+                )}
               </div>
 
               {/* Bottom Actions */}
@@ -509,6 +618,66 @@ export const OffersView: React.FC = () => {
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-800 mb-1">Channel Applicability *</label>
+                <select
+                  value={formData.channelApplicability}
+                  onChange={(e) => setFormData({ ...formData, channelApplicability: e.target.value as any })}
+                  className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721] font-bold"
+                >
+                  <option value="ALL_CHANNELS">All Channels (Web & Store)</option>
+                  <option value="PHYSICAL_STORE_ONLY">Physical Store Only (Vadodara Counter)</option>
+                  <option value="ONLINE_ONLY">Online Only (sbsstore.in)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-800 mb-1">Customer Eligibility *</label>
+                <select
+                  value={formData.customerEligibility}
+                  onChange={(e) => setFormData({ ...formData, customerEligibility: e.target.value as any })}
+                  className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721] font-bold"
+                >
+                  <option value="ALL">All Customers</option>
+                  <option value="NEW_CUSTOMERS_ONLY">New Customers Only (1st Order)</option>
+                  <option value="RETURNING_CUSTOMERS_ONLY">Returning Customers Only</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold text-gray-800 mb-1">Max Discount Cap (₹)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 500"
+                    value={formData.maxDiscount}
+                    onChange={(e) => setFormData({ ...formData, maxDiscount: e.target.value })}
+                    className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-800 mb-1">Usage Limit / Customer</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.usageLimitPerCustomer}
+                    onChange={(e) => setFormData({ ...formData, usageLimitPerCustomer: e.target.value })}
+                    className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-800 mb-1">Terms & Conditions</label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Valid only on billing above ₹999 at Subhanpura store."
+                  value={formData.termsAndConditions}
+                  onChange={(e) => setFormData({ ...formData, termsAndConditions: e.target.value })}
+                  className="w-full border rounded-xl px-3 py-2 outline-none focus:border-[#F95721]"
+                />
               </div>
 
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">

@@ -51,7 +51,8 @@ export const HomeView: React.FC = () => {
     setSelectedSubcategoryFilter,
     setSelectedProductDetail,
     recentlyViewedIds,
-    addToCart
+    addToCart,
+    setIsSearchOpen
   } = useStore();
 
   const [activeCategoryPill, setActiveCategoryPill] = React.useState<string>('all');
@@ -1453,6 +1454,105 @@ export const HomeView: React.FC = () => {
               </span>
             </div>
           </a>
+        </div>
+
+        {/* Quick Navigation Links Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 max-w-2xl mx-auto py-4 px-2 text-left">
+          <div className="space-y-2">
+            <p className="text-xs font-black uppercase tracking-wider text-gray-900">Shop &amp; Explore</p>
+            <ul className="space-y-1.5 text-xs text-gray-600 font-medium">
+              <li>
+                <button
+                  onClick={() => {
+                    setSelectedCategoryFilter(null);
+                    setSelectedSubcategoryFilter(null);
+                    setActiveTab('categories');
+                  }}
+                  className="hover:text-[#F95721] transition-colors text-left"
+                >
+                  All Categories
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    setSelectedCategoryFilter('offers');
+                    setActiveTab('categories');
+                  }}
+                  className="hover:text-[#F95721] transition-colors flex items-center gap-1 text-[#EA580C] font-bold text-left"
+                >
+                  <Sparkles className="w-3 h-3" /> Today&apos;s Deals
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    setSelectedCategoryFilter(null);
+                    setActiveTab('home');
+                  }}
+                  className="hover:text-[#F95721] transition-colors text-left"
+                >
+                  Trending &amp; Best Sellers
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setIsSearchOpen(true)}
+                  className="hover:text-[#F95721] transition-colors text-left"
+                >
+                  Search Products
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-black uppercase tracking-wider text-gray-900">Orders &amp; Policy</p>
+            <ul className="space-y-1.5 text-xs text-gray-600 font-medium">
+              <li>
+                <button
+                  onClick={() => setActiveTab('orders')}
+                  className="hover:text-[#F95721] transition-colors font-bold text-gray-900 text-left"
+                >
+                  Track Order / My Orders
+                </button>
+              </li>
+              <li>
+                <a href="/shipping-policy" className="hover:text-[#F95721] transition-colors block">
+                  Shipping &amp; Delivery
+                </a>
+              </li>
+              <li>
+                <a href="/refund-policy" className="hover:text-[#F95721] transition-colors block">
+                  7-Day Returns &amp; Refunds
+                </a>
+              </li>
+              <li>
+                <a href="/contact" className="hover:text-[#F95721] transition-colors block">
+                  Contact &amp; Store Location
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-2 col-span-2 sm:col-span-1">
+            <p className="text-xs font-black uppercase tracking-wider text-gray-900">Visit SBS Store</p>
+            <div className="space-y-1 text-xs text-gray-500">
+              <p className="font-semibold text-gray-700">📍 Subhanpura, Vadodara</p>
+              <p>Shop 1, Vrundvilla, Laxmipura Rd, Near Rami School, 390023</p>
+              <p className="text-[11px] text-gray-500 font-medium">Open 9:00 AM – 9:00 PM (All 7 Days)</p>
+              <p className="pt-1">
+                <a
+                  href="https://wa.me/919226294797?text=Hi%20SBS!%20I%20have%20a%20question%20about%20your%20products."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 font-bold text-emerald-700 hover:text-emerald-800"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" /> WhatsApp Support
+                </a>
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Trust Badges Row */}

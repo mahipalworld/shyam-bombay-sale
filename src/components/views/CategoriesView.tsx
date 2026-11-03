@@ -594,8 +594,8 @@ export const CategoriesView: React.FC = () => {
                                     </span>
                                   </div>
 
-                                  {/* Responsive Product Grid: 2 columns mobile, 3-4 desktop */}
-                                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3.5">
+                                  {/* Responsive Product Grid: 2 columns mobile, 3-5 desktop */}
+                                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3.5">
                                     {subItems.map((product) => (
                                       <ProductCard key={product.id} product={product} />
                                     ))}
@@ -622,7 +622,7 @@ export const CategoriesView: React.FC = () => {
                                   </span>
                                 </div>
 
-                                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3.5">
+                                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3.5">
                                   {unassignedItems.map((product) => (
                                     <ProductCard key={product.id} product={product} />
                                   ))}
@@ -632,7 +632,7 @@ export const CategoriesView: React.FC = () => {
                           </div>
                         ) : (
                           /* Flat Category Products Grid (e.g. Offers) */
-                          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3.5 pt-1">
+                          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3.5 pt-1">
                             {catProducts.map((product) => (
                               <ProductCard key={product.id} product={product} />
                             ))}

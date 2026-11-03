@@ -48,6 +48,7 @@ import { CategoriesView } from '../admin/views/CategoriesView';
 import { HomepageManagerView } from '../admin/views/HomepageManagerView';
 import { MediaStorageView } from '../admin/views/MediaStorageView';
 import { OffersView } from '../admin/views/OffersView';
+import { CashierRedeemView } from '../admin/views/CashierRedeemView';
 import { InventoryView } from '../admin/views/InventoryView';
 import { OrdersView } from '../admin/views/OrdersView';
 import { ReturnsView } from '../admin/views/ReturnsView';
@@ -244,11 +245,11 @@ export const AdminView: React.FC = () => {
       case 'OWNER':
         return true;
       case 'MANAGER':
-        return ['dashboard', 'products', 'categories', 'storage', 'inventory', 'orders', 'returns', 'customers', 'payments', 'notifications'].includes(tab);
+        return ['dashboard', 'products', 'categories', 'storage', 'inventory', 'orders', 'returns', 'customers', 'payments', 'notifications', 'cashier'].includes(tab);
       case 'MARKETING':
         return ['dashboard', 'products', 'categories', 'storage', 'homepage', 'offers', 'analytics', 'notifications'].includes(tab);
       case 'STAFF':
-        return ['dashboard', 'orders', 'inventory', 'notifications'].includes(tab);
+        return ['dashboard', 'orders', 'inventory', 'notifications', 'cashier'].includes(tab);
       default:
         return true;
     }
@@ -285,6 +286,7 @@ export const AdminView: React.FC = () => {
     {
       group: 'Operations & CRM',
       items: [
+        { tab: 'cashier', label: 'Cashier Redemption', icon: Store },
         { tab: 'inventory', label: 'Stock & Inventory', icon: Boxes, badge: lowStockCount > 0 ? lowStockCount : undefined, badgeColor: 'bg-amber-500' },
         { tab: 'offers', label: 'Offers & Coupons', icon: Tag },
         { tab: 'customers', label: 'Customer Directory', icon: Users },
@@ -350,7 +352,9 @@ export const AdminView: React.FC = () => {
           />
         );
       case 'offers':
-        return <OffersView />;
+        return <OffersView onNavigateToTab={(t) => setCurrentTab(t)} />;
+      case 'cashier':
+        return <CashierRedeemView />;
       case 'inventory':
         return <InventoryView />;
       case 'orders':

@@ -77,7 +77,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ order, onClose }) =>
                 GSTIN: <span className="font-mono font-bold text-gray-700">24AAACS8765F1Z5</span>
               </p>
               <p className="text-[11px] text-gray-500">
-                Phone: +91 92262 94797 | Email: shyambombaysale@gmail.com
+                Phone: +91 98298 77766 | Email: shyambombaysale@gmail.com
               </p>
             </div>
 
@@ -175,6 +175,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ order, onClose }) =>
                 <span>Delivery Charges</span>
                 <span>{order.deliveryCharge === 0 ? <span className="text-[#00A859] font-bold">FREE</span> : `₹${order.deliveryCharge}`}</span>
               </div>
+              {order.codCharge && order.codCharge > 0 && (
+                <div className="flex justify-between text-gray-700">
+                  <span>COD Handling Fee</span>
+                  <span>₹{order.codCharge}</span>
+                </div>
+              )}
               <div className="border-t border-gray-200 pt-2 flex justify-between font-black text-sm text-gray-900">
                 <span>Grand Total</span>
                 <span className="text-[#F95721] font-black">₹{order.total.toLocaleString('en-IN')}</span>
@@ -184,7 +190,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ order, onClose }) =>
 
           {/* Footer note */}
           <div className="border-t border-dashed border-gray-200 pt-4 text-center text-[10px] text-gray-400">
-            Thank you for shopping with Shyam Bombay Sale! For customer support, visit <span className="font-bold text-gray-600">sbsstore.in</span> or WhatsApp us at <span className="font-bold text-gray-600">+91 92262 94797</span>.
+            Thank you for shopping with Shyam Bombay Sale! For customer support, visit <span className="font-bold text-gray-600">sbsstore.in</span> or WhatsApp us at <span className="font-bold text-gray-600">+91 98298 77766</span>.
           </div>
         </div>
       </div>

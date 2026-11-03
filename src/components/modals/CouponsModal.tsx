@@ -2,19 +2,27 @@
 
 import React from 'react';
 import { useStore } from '@/context/StoreContext';
-import { X, Ticket, Copy, Check } from 'lucide-react';
+import { X, Ticket, Copy, Check, Store, MapPin } from 'lucide-react';
 
 export const CouponsModal: React.FC = () => {
-  const { coupons, isCouponsOpen, setIsCouponsOpen, applyCoupon, setActiveTab, showToast } = useStore();
+  const { coupons, isCouponsOpen, setIsCouponsOpen, applyCoupon, showToast } = useStore();
   const [copiedCode, setCopiedCode] = React.useState<string | null>(null);
 
   if (!isCouponsOpen) return null;
 
-  const handleCopy = (code: string) => {
+  const handleApplyOnline = (code: string) => {
     navigator.clipboard?.writeText(code);
     setCopiedCode(code);
-    applyCoupon(code);
-    showToast(`Coupon ${code} copied & applied! 🏷️`);
+    if (applyCoupon(code)) {
+      showToast(`Coupon ${code} applied! 🏷️`);
+    }
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const handleInStoreCopy = (code: string) => {
+    navigator.clipboard?.writeText(code);
+    setCopiedCode(code);
+    showToast(`In-Store voucher ${code} copied! Present at Shyam Bombay Sale, Subhanpura to redeem.`);
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
@@ -36,48 +44,94 @@ export const CouponsModal: React.FC = () => {
         </div>
 
         <div className="p-4 space-y-3">
-          {coupons.map((coupon) => (
-            <div
-              key={coupon.id}
-              className="bg-gradient-to-r from-[#F2FBF6] to-[#EAF8F1] border border-[#A7E3BC] rounded-2xl p-4 space-y-2 relative overflow-hidden shadow-subtle"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-sm font-extrabold text-[#00A859] tracking-wider font-mono">
-                    {coupon.code}
-                  </span>
-                  <h3 className="text-xs font-bold text-gray-900 mt-0.5">
-                    {coupon.title}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => handleCopy(coupon.code)}
-                  className="px-3 py-1.5 bg-[#00A859] hover:bg-[#00914c] text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-xs transition-colors"
-                >
-                  {copiedCode === coupon.code ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Applied</span>
-                    </>
+          {coupons.map((coupon) => {
+            const isStoreOnly = (coupon.channelApplicability || coupon.channel) === 'PHYSICAL_STORE_ONLY';
+
+            return (
+              <div
+                key={coupon.id}
+                className={`border rounded-2xl p-4 space-y-2 relative overflow-hidden shadow-subtle ${
+                  isStoreOnly
+                    ? 'bg-gradient-to-r from-purple-50/70 to-indigo-50/60 border-purple-200'
+                    : 'bg-gradient-to-r from-[#F2FBF6] to-[#EAF8F1] border-[#A7E3BC]'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-sm font-extrabold tracking-wider font-mono ${
+                        isStoreOnly ? 'text-purple-700' : 'text-[#00A859]'
+                      }`}>
+                        {coupon.code}
+                      </span>
+                      {isStoreOnly && (
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                          In-Store Only • Subhanpura
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-xs font-bold text-gray-900 mt-1">
+                      {coupon.title}
+                    </h3>
+                  </div>
+
+                  {isStoreOnly ? (
+                    <button
+                      onClick={() => handleInStoreCopy(coupon.code)}
+                      className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-xs transition-colors shrink-0"
+                    >
+                      {copiedCode === coupon.code ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Store className="w-3.5 h-3.5" />
+                          <span>Save Code</span>
+                        </>
+                      )}
+                    </button>
                   ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Apply</span>
-                    </>
+                    <button
+                      onClick={() => handleApplyOnline(coupon.code)}
+                      className="px-3 py-1.5 bg-[#00A859] hover:bg-[#00914c] text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-xs transition-colors shrink-0"
+                    >
+                      {copiedCode === coupon.code ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Applied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Apply</span>
+                        </>
+                      )}
+                    </button>
                   )}
-                </button>
-              </div>
+                </div>
 
-              <p className="text-[11px] text-gray-600">
-                {coupon.description}
-              </p>
+                <p className="text-[11px] text-gray-600 leading-relaxed">
+                  {coupon.description}
+                </p>
 
-              <div className="pt-2 border-t border-green-200/60 flex justify-between text-[10px] text-gray-500 font-medium">
-                <span>Min. order ₹{coupon.minOrderValue}</span>
-                <span>Valid till {coupon.expiresAt}</span>
+                {isStoreOnly && (
+                  <div className="flex items-center gap-1.5 text-[10px] text-purple-800 bg-white/80 p-2 rounded-xl border border-purple-200/60 font-medium">
+                    <MapPin className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <span>Redeem at Shyam Bombay Sale, Subhanpura, Vadodara cash counter</span>
+                  </div>
+                )}
+
+                <div className={`pt-2 border-t flex justify-between text-[10px] font-medium ${
+                  isStoreOnly ? 'border-purple-200/60 text-purple-900/70' : 'border-green-200/60 text-gray-500'
+                }`}>
+                  <span>Min. order ₹{coupon.minOrderValue}</span>
+                  <span>Valid till {coupon.expiresAt}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

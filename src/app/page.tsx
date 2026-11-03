@@ -107,7 +107,7 @@ export default function App() {
       )}
 
       {/* Main Content Area - Expands comfortably on Desktop and Mobile */}
-      <main className={`flex-1 w-full ${activeTab === 'admin' ? 'w-full max-w-none px-0 py-0' : activeTab === 'categories' ? 'w-full max-w-7xl mx-auto px-0 sm:px-4 md:px-6 py-0 sm:py-2 pb-0 md:pb-6 overflow-hidden' : activeTab === 'home' ? 'max-w-6xl mx-auto px-2 sm:px-4 md:px-8 pt-0.5 sm:pt-1.5 pb-36 sm:pb-40 md:pb-8' : 'max-w-6xl mx-auto px-2 sm:px-4 md:px-8 py-3 pb-36 sm:pb-40 md:pb-8'}`}>
+      <main className={`flex-1 w-full ${activeTab === 'admin' ? 'w-full max-w-none px-0 py-0' : activeTab === 'categories' ? 'w-full max-w-7xl xl:max-w-[1360px] mx-auto px-0 sm:px-4 md:px-6 py-0 sm:py-2 pb-0 md:pb-6 overflow-hidden' : activeTab === 'home' ? 'max-w-6xl md:max-w-7xl xl:max-w-[1360px] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 pt-0.5 sm:pt-1.5 pb-36 sm:pb-40 md:pb-8' : 'max-w-6xl md:max-w-7xl xl:max-w-[1360px] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 pb-36 sm:pb-40 md:pb-8'}`}>
         {activeTab === 'admin' ? (
           renderActiveView()
         ) : (
@@ -120,7 +120,7 @@ export default function App() {
       {/* Desktop Footer - Shown on home, cart, wishlist, profile */}
       {activeTab !== 'admin' && activeTab !== 'categories' && (
         <footer className="hidden md:block bg-[#111827] text-white pt-12 pb-8 mt-16 border-t border-gray-800">
-          <div className="max-w-6xl mx-auto px-4 md:px-8 space-y-8">
+          <div className="max-w-6xl md:max-w-7xl xl:max-w-[1360px] mx-auto px-4 md:px-6 lg:px-8 space-y-8">
             <div className="grid grid-cols-4 gap-8">
               <div className="space-y-3">
                 <div className="flex items-center gap-2.5">

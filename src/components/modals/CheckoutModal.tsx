@@ -326,7 +326,8 @@ export const CheckoutModal: React.FC = () => {
       const checkoutOptions = {
         pointsRedeemed: pointsDiscount > 0 ? pointsThreshold : undefined,
         pointsDiscount: pointsDiscount > 0 ? pointsDiscount : undefined,
-        prepaidDiscount: prepaidDiscount > 0 ? prepaidDiscount : undefined,
+        prepaidDiscount: 0,
+        codCharge: codExtraCharge > 0 ? codExtraCharge : undefined,
       };
 
       if (selectedPayment === 'RAZORPAY') {
@@ -621,8 +622,10 @@ export const CheckoutModal: React.FC = () => {
   const availablePoints = user?.rewardPoints || 0;
   const canRedeemPoints = availablePoints >= pointsThreshold;
   const pointsDiscount = (redeemPointsChecked && canRedeemPoints) ? pointsDiscountAmount : 0;
-  const prepaidDiscount = selectedPayment === 'RAZORPAY' ? 20 : 0;
-  const payableTotal = Math.max(0, cartTotal - pointsDiscount - prepaidDiscount);
+  const codExtraFee = storeSettings?.codCharge ?? 15;
+  const codExtraCharge = selectedPayment === 'COD' ? codExtraFee : 0;
+  const prepaidDiscount = 0;
+  const payableTotal = Math.max(0, cartTotal - pointsDiscount + codExtraCharge);
 
   const storeUpiId = (storeSettings?.upiId && !storeSettings.upiId.includes('fam@') && !storeSettings.upiId.includes('sbsstore@')) ? storeSettings.upiId : 'suhanarajpurohit3@oksbi';
   const orderAmount = activeOrder ? activeOrder.total : payableTotal;
@@ -938,7 +941,7 @@ export const CheckoutModal: React.FC = () => {
                     </div>
                     Payment Method
                   </span>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Zero Extra Fees</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Select Payment</span>
                 </div>
 
                 <div className="space-y-2">
@@ -967,9 +970,6 @@ export const CheckoutModal: React.FC = () => {
                             <span className="text-sm font-extrabold text-gray-900 block leading-tight">
                               Online Payment (Razorpay / UPI)
                             </span>
-                            <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white px-1.5 py-0.5 rounded-md animate-pulse">
-                              ⚡ Extra ₹20 OFF
-                            </span>
                           </div>
                           <span className="text-xs text-gray-500 font-medium">
                             Google Pay, PhonePe, Paytm, RuPay, Cards &amp; NetBanking
@@ -977,8 +977,8 @@ export const CheckoutModal: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <span className="text-[10px] font-black text-[#00A859] bg-[#EBF7F0] border border-[#00A859]/30 px-2.5 py-1 rounded-full whitespace-nowrap ml-2">
-                      Save ₹20
+                    <span className="text-[10px] font-extrabold text-[#00A859] bg-[#EBF7F0] border border-[#00A859]/30 px-2.5 py-1 rounded-full whitespace-nowrap ml-2">
+                      No Extra Fee
                     </span>
                   </label>
 
@@ -1007,13 +1007,13 @@ export const CheckoutModal: React.FC = () => {
                             Cash on Delivery (COD)
                           </span>
                           <span className="text-xs text-gray-500 font-medium">
-                            Pay cash at doorstep • Standard MRP (No ₹20 prepaid savings)
+                            Pay cash at doorstep • ₹{codExtraFee} COD handling fee applies
                           </span>
                         </div>
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full whitespace-nowrap ml-2">
-                      Standard Price
+                    <span className="text-[10px] font-extrabold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-full whitespace-nowrap ml-2">
+                      +₹{codExtraFee} COD Fee
                     </span>
                   </label>
                 </div>
@@ -1117,15 +1117,15 @@ export const CheckoutModal: React.FC = () => {
                     </div>
                   )}
 
-                  {prepaidDiscount > 0 && (
-                    <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-200">
+                  {codExtraCharge > 0 && (
+                    <div className="flex justify-between items-center text-amber-900 bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-200">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-emerald-600 text-white rounded-md">
-                          ⚡ PREPAID SAVER
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-amber-600 text-white rounded-md">
+                          COD FEE
                         </span>
-                        <span className="font-bold text-emerald-950">Online Payment Discount</span>
+                        <span className="font-bold text-amber-950">Cash on Delivery Handling Fee</span>
                       </div>
-                      <span className="font-black text-[#00A859]">-₹{prepaidDiscount.toLocaleString('en-IN')}</span>
+                      <span className="font-black text-amber-900">+₹{codExtraCharge.toLocaleString('en-IN')}</span>
                     </div>
                   )}
 
@@ -1171,9 +1171,13 @@ export const CheckoutModal: React.FC = () => {
                 <p className="text-2xl font-black text-gray-900 tracking-tight leading-tight">
                   ₹{payableTotal.toLocaleString('en-IN')}
                 </p>
-                {prepaidDiscount > 0 && (
-                  <span className="text-[10px] font-black text-[#00A859] block -mt-0.5">
-                    ✓ ₹20 Online Discount Included
+                {codExtraCharge > 0 ? (
+                  <span className="text-[10px] font-bold text-amber-700 block -mt-0.5">
+                    Includes ₹{codExtraFee} COD handling fee
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold text-emerald-700 block -mt-0.5">
+                    Zero extra payment fees
                   </span>
                 )}
               </div>
@@ -1194,7 +1198,7 @@ export const CheckoutModal: React.FC = () => {
                   <>
                     <span>
                       {selectedPayment === 'RAZORPAY' 
-                        ? `Pay ₹${payableTotal.toLocaleString('en-IN')} (Saved ₹20)` 
+                        ? `Pay ₹${payableTotal.toLocaleString('en-IN')}` 
                         : `Place COD Order (₹${payableTotal.toLocaleString('en-IN')})`}
                     </span>
                     <ArrowRight className="w-4 h-4" />

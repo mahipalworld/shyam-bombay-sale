@@ -847,6 +847,21 @@ export const INITIAL_ADDRESSES: Address[] = [];
 
 export const INITIAL_COUPONS: Coupon[] = [
   {
+    id: 'coup_in_store_sbs20',
+    code: 'SBS20',
+    title: 'Flat ₹200 OFF In-Store Walk-in Voucher',
+    discountType: 'fixed',
+    value: 200,
+    minOrderValue: 999,
+    channel: 'PHYSICAL_STORE_ONLY',
+    channelApplicability: 'PHYSICAL_STORE_ONLY',
+    customerEligibility: 'ALL',
+    isActive: true,
+    expiresAt: '2026-12-31',
+    description: 'Exclusive in-store walk-in discount of Flat ₹200 OFF on billing above ₹999 at Shyam Bombay Sale, Subhanpura.',
+    usageLimitPerCustomer: 1,
+  },
+  {
     id: 'coup_sbs150',
     code: 'SBS150',
     title: 'Surprise ₹150 OFF',
@@ -855,6 +870,10 @@ export const INITIAL_COUPONS: Coupon[] = [
     minOrderValue: 499,
     expiresAt: '2026-12-31',
     description: 'Special surprise discount unlocked from Scratch & Win.',
+    channel: 'ONLINE_ONLY',
+    channelApplicability: 'ONLINE_ONLY',
+    customerEligibility: 'ALL',
+    isActive: true,
   },
   {
     id: 'coup_sbs100',
@@ -865,6 +884,10 @@ export const INITIAL_COUPONS: Coupon[] = [
     minOrderValue: 499,
     expiresAt: '2026-12-31',
     description: 'Get ₹100 instant discount on orders above ₹499.',
+    channel: 'ONLINE_ONLY',
+    channelApplicability: 'ONLINE_ONLY',
+    customerEligibility: 'ALL',
+    isActive: true,
   },
   {
     id: 'coup_sbs50',
@@ -875,6 +898,10 @@ export const INITIAL_COUPONS: Coupon[] = [
     minOrderValue: 299,
     expiresAt: '2026-12-31',
     description: 'Get ₹50 instant discount on orders above ₹299.',
+    channel: 'ONLINE_ONLY',
+    channelApplicability: 'ONLINE_ONLY',
+    customerEligibility: 'ALL',
+    isActive: true,
   },
   {
     id: 'coup_save10',
@@ -885,6 +912,10 @@ export const INITIAL_COUPONS: Coupon[] = [
     minOrderValue: 499,
     expiresAt: '2026-12-31',
     description: 'Save 10% up to ₹300 on orders above ₹499.',
+    channel: 'ALL_CHANNELS',
+    channelApplicability: 'ALL_CHANNELS',
+    customerEligibility: 'ALL',
+    isActive: true,
   },
   {
     id: 'coup_save20',
@@ -895,6 +926,10 @@ export const INITIAL_COUPONS: Coupon[] = [
     minOrderValue: 999,
     expiresAt: '2026-12-31',
     description: 'Save 20% on orders above ₹999.',
+    channel: 'ALL_CHANNELS',
+    channelApplicability: 'ALL_CHANNELS',
+    customerEligibility: 'ALL',
+    isActive: true,
   },
   {
     id: 'coup_welcome',
@@ -905,6 +940,10 @@ export const INITIAL_COUPONS: Coupon[] = [
     minOrderValue: 299,
     expiresAt: '2026-12-31',
     description: 'Welcome perk for your next essential order.',
+    channel: 'ONLINE_ONLY',
+    channelApplicability: 'ONLINE_ONLY',
+    customerEligibility: 'NEW_CUSTOMERS_ONLY',
+    isActive: true,
   },
   {
     id: 'coup_flash',
@@ -915,6 +954,10 @@ export const INITIAL_COUPONS: Coupon[] = [
     minOrderValue: 399,
     expiresAt: '2026-12-31',
     description: 'Special flash sale discount on everyday favorites.',
+    channel: 'ONLINE_ONLY',
+    channelApplicability: 'ONLINE_ONLY',
+    customerEligibility: 'ALL',
+    isActive: true,
   },
 ];
 
