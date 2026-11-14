@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useStore } from '@/context/StoreContext';
 import { ProductCard } from '@/components/ProductCard';
 import { 
@@ -560,10 +561,20 @@ export const CategoriesView: React.FC = () => {
                           </div>
                         </div>
 
-                        {cat.id === 'offers' && (
+                        {cat.id === 'offers' ? (
                           <span className="text-[9px] uppercase font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 bg-orange-100 text-[#F95721] shrink-0">
                             <Flame className="w-2.5 h-2.5 fill-current" /> Up to 75% OFF
                           </span>
+                        ) : (
+                          <Link
+                            href={`/category/${cat.id}/`}
+                            className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl bg-orange-50 hover:bg-orange-100/90 text-[#F95721] border border-orange-200/70 text-[10px] sm:text-xs font-bold transition-all shadow-2xs group shrink-0"
+                            title={`Open dedicated ${cat.name} page`}
+                          >
+                            <span className="hidden xs:inline">View Full Page</span>
+                            <span className="xs:hidden">Full Page</span>
+                            <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                          </Link>
                         )}
                       </div>
 
@@ -650,6 +661,19 @@ export const CategoriesView: React.FC = () => {
                           <p className="text-[11px] text-gray-400 max-w-xs mx-auto">
                             New stock arriving soon! Browse other essentials above or below.
                           </p>
+                        </div>
+                      )}
+
+                      {/* Deep Link to Dedicated SEO / Standalone Category Hub */}
+                      {cat.id !== 'offers' && catProducts.length > 0 && (
+                        <div className="pt-2 pb-1 text-center border-t border-gray-100/70">
+                          <Link
+                            href={`/category/${cat.id}/`}
+                            className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-[#F95721] hover:text-[#E44813] hover:underline transition-colors py-1 px-3 rounded-xl hover:bg-orange-50/70"
+                          >
+                            <span>Explore all {cat.name} essentials, guides &amp; FAQs</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </Link>
                         </div>
                       )}
                     </div>

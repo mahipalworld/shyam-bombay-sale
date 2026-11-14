@@ -1457,7 +1457,25 @@ export const HomeView: React.FC = () => {
         </div>
 
         {/* Quick Navigation Links Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 max-w-2xl mx-auto py-4 px-2 text-left">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-4xl mx-auto py-4 px-2 text-left">
+          {/* Column 1: Direct Category Hubs (Internal Crawl Links for SEO) */}
+          <div className="space-y-2">
+            <p className="text-xs font-black uppercase tracking-wider text-gray-900">Departments</p>
+            <ul className="space-y-1.5 text-xs text-gray-600 font-medium">
+              {categories.slice(0, 6).map((cat) => (
+                <li key={cat.id}>
+                  <a
+                    href={`/category/${cat.id}/`}
+                    className="hover:text-[#F95721] transition-colors block truncate"
+                    title={`Shop ${cat.name}`}
+                  >
+                    {cat.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <div className="space-y-2">
             <p className="text-xs font-black uppercase tracking-wider text-gray-900">Shop &amp; Explore</p>
             <ul className="space-y-1.5 text-xs text-gray-600 font-medium">
@@ -1470,7 +1488,7 @@ export const HomeView: React.FC = () => {
                   }}
                   className="hover:text-[#F95721] transition-colors text-left"
                 >
-                  All Categories
+                  All Categories (Split View)
                 </button>
               </li>
               <li>

@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "generate:seo": "node scripts/generateSeoFeeds.mjs",
-    "build": "node scripts/generateSeoFeeds.mjs && next build",
+    "build": "node scripts/generateSeoFeeds.mjs && next build && node -e \"require('fs').copyFileSync('public/sitemap.xml', 'out/sitemap.xml')\"",
     "start": "next start",
     "start:server": "node server/server.js",
     "lint": "next lint"
