@@ -1223,7 +1223,7 @@ export const HomeView: React.FC = () => {
 
       {/* Recently Viewed Products Strip */}
       {recentlyViewedProducts.length > 0 && (
-        <section className="pt-2">
+        <section className="lazy-section pt-2">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="text-lg">👁️</span>

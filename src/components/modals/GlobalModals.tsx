@@ -1,19 +1,55 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { useStore } from '@/context/StoreContext';
-import { ProductDetailModal } from '@/components/modals/ProductDetailModal';
-import { CheckoutModal } from '@/components/modals/CheckoutModal';
-import { OrderDetailsModal } from '@/components/modals/OrderDetailsModal';
-import { EditProfileModal } from '@/components/modals/EditProfileModal';
-import { SearchModal } from '@/components/modals/SearchModal';
-import { AddressesModal } from '@/components/modals/AddressesModal';
-import { CouponsModal } from '@/components/modals/CouponsModal';
-import { CustomerNotificationsModal } from '@/components/modals/CustomerNotificationsModal';
-import { NotificationRewardModal } from '@/components/modals/NotificationRewardPrompt';
-import { HelpCenterModal } from '@/components/modals/HelpCenterModal';
-import { RewardsModal } from '@/components/modals/RewardsModal';
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
+
+// Lazy-load all modals dynamically so zero modal JS is loaded on initial page visit
+const ProductDetailModal = dynamic(
+  () => import('@/components/modals/ProductDetailModal').then((m) => m.ProductDetailModal),
+  { ssr: false }
+);
+const CheckoutModal = dynamic(
+  () => import('@/components/modals/CheckoutModal').then((m) => m.CheckoutModal),
+  { ssr: false }
+);
+const OrderDetailsModal = dynamic(
+  () => import('@/components/modals/OrderDetailsModal').then((m) => m.OrderDetailsModal),
+  { ssr: false }
+);
+const EditProfileModal = dynamic(
+  () => import('@/components/modals/EditProfileModal').then((m) => m.EditProfileModal),
+  { ssr: false }
+);
+const SearchModal = dynamic(
+  () => import('@/components/modals/SearchModal').then((m) => m.SearchModal),
+  { ssr: false }
+);
+const AddressesModal = dynamic(
+  () => import('@/components/modals/AddressesModal').then((m) => m.AddressesModal),
+  { ssr: false }
+);
+const CouponsModal = dynamic(
+  () => import('@/components/modals/CouponsModal').then((m) => m.CouponsModal),
+  { ssr: false }
+);
+const CustomerNotificationsModal = dynamic(
+  () => import('@/components/modals/CustomerNotificationsModal').then((m) => m.CustomerNotificationsModal),
+  { ssr: false }
+);
+const NotificationRewardModal = dynamic(
+  () => import('@/components/modals/NotificationRewardPrompt').then((m) => m.NotificationRewardModal),
+  { ssr: false }
+);
+const HelpCenterModal = dynamic(
+  () => import('@/components/modals/HelpCenterModal').then((m) => m.HelpCenterModal),
+  { ssr: false }
+);
+const RewardsModal = dynamic(
+  () => import('@/components/modals/RewardsModal').then((m) => m.RewardsModal),
+  { ssr: false }
+);
 
 export const GlobalModals: React.FC = () => {
   const {
@@ -21,6 +57,15 @@ export const GlobalModals: React.FC = () => {
     setIsHelpCenterOpen,
     isRewardsOpen,
     setIsRewardsOpen,
+    selectedProductDetail,
+    isCheckoutOpen,
+    selectedOrderForModal,
+    isEditProfileOpen,
+    isSearchOpen,
+    isAddressesOpen,
+    isCouponsOpen,
+    isUserNotificationsModalOpen,
+    isNotificationPromptOpen,
     toast,
   } = useStore();
 
@@ -32,10 +77,10 @@ export const GlobalModals: React.FC = () => {
           <div
             className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl shadow-xl text-white text-xs font-bold ${
               toast.type === 'error'
-                ? 'bg-red-600/95 backdrop-blur-md'
+                ? 'bg-red-600/95 shadow-red-900/20'
                 : toast.type === 'info'
-                ? 'bg-blue-600/95 backdrop-blur-md'
-                : 'bg-gray-900/95 backdrop-blur-md'
+                ? 'bg-blue-600/95 shadow-blue-900/20'
+                : 'bg-gray-900/95 shadow-gray-900/20'
             }`}
           >
             {toast.type === 'error' ? (
@@ -50,18 +95,18 @@ export const GlobalModals: React.FC = () => {
         </div>
       )}
 
-      {/* Global Application Modals */}
-      <ProductDetailModal />
-      <CheckoutModal />
-      <OrderDetailsModal />
-      <EditProfileModal />
-      <SearchModal />
-      <AddressesModal />
-      <CouponsModal />
-      <CustomerNotificationsModal />
-      <NotificationRewardModal />
-      <HelpCenterModal isOpen={isHelpCenterOpen} onClose={() => setIsHelpCenterOpen(false)} />
-      <RewardsModal isOpen={isRewardsOpen} onClose={() => setIsRewardsOpen(false)} />
+      {/* On-Demand Dynamic Application Modals */}
+      {selectedProductDetail && <ProductDetailModal />}
+      {isCheckoutOpen && <CheckoutModal />}
+      {selectedOrderForModal && <OrderDetailsModal />}
+      {isEditProfileOpen && <EditProfileModal />}
+      {isSearchOpen && <SearchModal />}
+      {isAddressesOpen && <AddressesModal />}
+      {isCouponsOpen && <CouponsModal />}
+      {isUserNotificationsModalOpen && <CustomerNotificationsModal />}
+      {isNotificationPromptOpen && <NotificationRewardModal />}
+      {isHelpCenterOpen && <HelpCenterModal isOpen={isHelpCenterOpen} onClose={() => setIsHelpCenterOpen(false)} />}
+      {isRewardsOpen && <RewardsModal isOpen={isRewardsOpen} onClose={() => setIsRewardsOpen(false)} />}
     </>
   );
 };

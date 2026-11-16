@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { useStore } from '@/context/StoreContext';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
@@ -9,8 +10,21 @@ import { CategoriesView } from '@/components/views/CategoriesView';
 import { CartView } from '@/components/views/CartView';
 import { WishlistView } from '@/components/views/WishlistView';
 import { ProfileView } from '@/components/views/ProfileView';
-import { AdminView } from '@/components/views/AdminView';
 import { MyOrdersView } from '@/components/views/MyOrdersView';
+
+// Lazily load AdminView to ensure zero admin code or dependencies are sent to customer bundles
+const AdminView = dynamic(
+  () => import('@/components/views/AdminView').then((m) => m.AdminView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 space-y-4">
+        <div className="w-10 h-10 border-4 border-[#F95721] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Loading Admin Portal...</p>
+      </div>
+    ),
+  }
+);
 
 import { Heart, ShoppingBag, ShieldCheck } from 'lucide-react';
 

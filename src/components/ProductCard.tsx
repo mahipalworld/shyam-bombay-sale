@@ -12,7 +12,7 @@ interface ProductCardProps {
   priority?: boolean;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, priority = false }) => {
+const ProductCardComponent: React.FC<ProductCardProps> = ({ product, onSelect, priority = false }) => {
   const { 
     cart,
     addToCart, 
@@ -294,3 +294,5 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, pri
     </div>
   );
 };
+
+export const ProductCard = React.memo(ProductCardComponent);

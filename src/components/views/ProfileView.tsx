@@ -62,7 +62,7 @@ export const ProfileView: React.FC = () => {
 
   // Check Google Admin authorization (also enable on localhost for local testing)
   const currentEmail = authUser?.email || supabaseUser?.email;
-  const isDevOrLocal = isMounted && (window.location.hostname === 'localhost' || window.location.hash.includes('admin'));
+  const isDevOrLocal = isMounted && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
   const isAuthorizedAdmin = isMounted && (isDevOrLocal || (isGoogleAuth && isEmailAuthorizedAdmin(currentEmail)));
   const activeAdminRole = isAuthorizedAdmin ? (getEffectiveAdminRole(currentEmail) || 'OWNER') : null;
 

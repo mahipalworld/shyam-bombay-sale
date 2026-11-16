@@ -444,8 +444,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (tab && ['home', 'categories', 'cart', 'wishlist', 'profile', 'orders', 'admin'].includes(tab)) {
         setActiveTab(tab);
-      } else if (tab === 'admin' || window.location.hash.includes('admin')) {
-        setActiveTab('admin');
       }
 
       if (cat) {
@@ -456,14 +454,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setSelectedSubcategoryFilter(subcat);
       }
     }
-
-    const handleHash = () => {
-      if (typeof window !== 'undefined' && window.location.hash.includes('admin')) {
-        setActiveTab('admin');
-      }
-    };
-    window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
   // Deep-link direct product landing (?product=ID or #product-ID)
@@ -1517,8 +1507,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const isAdminUser = typeof window !== 'undefined' && Boolean(
             localStorage.getItem('sbs_admin_role') ||
             localStorage.getItem('sbs_admin_auth') ||
-            window.location.search.includes('tab=admin') ||
-            window.location.hash.includes('admin')
+            window.location.search.includes('tab=admin')
           );
           if (isAdminUser) {
             const custName = newOrd.shippingAddress?.name || 'Customer';
@@ -1615,8 +1604,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const isAdminUser = typeof window !== 'undefined' && Boolean(
             localStorage.getItem('sbs_admin_role') ||
             localStorage.getItem('sbs_admin_auth') ||
-            window.location.search.includes('tab=admin') ||
-            window.location.hash.includes('admin')
+            window.location.search.includes('tab=admin')
           );
           if (isAdminUser) {
             const custName = o.shippingAddress?.name || 'Customer';
@@ -1994,8 +1982,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // If user is Admin or in local development, load all store orders for Admin management views
         const isDevMode = typeof window !== 'undefined' && (
           window.location.hostname === 'localhost' || 
-          window.location.hostname === '127.0.0.1' || 
-          window.location.hash.includes('admin')
+          window.location.hostname === '127.0.0.1'
         );
 
         if (isUserAdmin || isDevMode) {
@@ -2034,8 +2021,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setOrders((prev) => prev.filter(o => !o.userId));
         const isDevMode = typeof window !== 'undefined' && (
           window.location.hostname === 'localhost' || 
-          window.location.hostname === '127.0.0.1' || 
-          window.location.hash.includes('admin')
+          window.location.hostname === '127.0.0.1'
         );
         if (isDevMode) {
           // In local dev, fetch orders for admin testing even without session
@@ -2881,8 +2867,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const isUserAdmin = userEmail === 'mahipalstudent71@gmail.com' || adminTeamMembers.some(m => m.email.toLowerCase() === userEmail && m.status === 'ACTIVE');
       const isDevMode = typeof window !== 'undefined' && (
         window.location.hostname === 'localhost' || 
-        window.location.hostname === '127.0.0.1' || 
-        window.location.hash.includes('admin')
+        window.location.hostname === '127.0.0.1'
       );
 
       // 1. Fetch full store orders for admin management

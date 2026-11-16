@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Manrope, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { StoreProvider } from '@/context/StoreContext';
 import { AuthProvider } from '@/context/AuthContext';
@@ -10,6 +11,20 @@ import { PWAProvider } from '@/context/PWAContext';
 import { IntroOverlayManager } from '@/components/IntroOverlayManager';
 import { GlobalModals } from '@/components/modals/GlobalModals';
 import { FloatingWhatsAppWidget } from '@/components/FloatingWhatsAppWidget';
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-manrope',
+  weight: ['400', '500', '600', '700', '800'],
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-plus-jakarta-sans',
+  weight: ['400', '500', '600', '700', '800'],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.sbsstore.in'),
@@ -342,7 +357,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${manrope.variable} ${plusJakartaSans.variable}`} suppressHydrationWarning>
       <head>
         <link rel="preload" as="image" href="/door-logo.png?v=5" />
         <link rel="preload" as="image" href="/sbs-wordmark.png?v=5" />

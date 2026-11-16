@@ -56,8 +56,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack, onBack }) => {
   const currentEmail = authUser?.email || supabaseUser?.email;
   const isDevOrLocal = isMounted && (
     window.location.hostname === 'localhost' || 
-    window.location.hostname === '127.0.0.1' || 
-    window.location.hash.includes('admin')
+    window.location.hostname === '127.0.0.1'
   );
   const isAuthorizedAdmin = isMounted && (isDevOrLocal || (isGoogleAuth && isEmailAuthorizedAdmin(currentEmail)));
 
