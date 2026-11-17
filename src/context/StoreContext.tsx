@@ -168,7 +168,7 @@ interface StoreContextType {
       codCharge?: number;
       orderNumber?: string;
     }
-  ) => Order;
+  ) => Promise<Order>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   updateOrderPaymentStatus: (
     orderId: string, 
@@ -288,6 +288,14 @@ export const DEFAULT_HOMEPAGE_SECTIONS: HomepageSection[] = [
   { id: 'trending', name: 'Trending Now', enabled: true },
   { id: 'deals', name: 'Today\'s Deals', enabled: true },
   { id: 'bestsellers', name: 'Best Sellers', enabled: true }
+];
+
+// Permanent Store Super Admin Whitelist
+export const PRIMARY_STORE_ADMINS = [
+  'mahipalstudent71@gmail.com',
+  'shyambombaysale@gmail.com',
+  'mahipalworld71@gmail.com',
+  'devanshipatel564@gmail.com'
 ];
 
 // Persistent Deletion Tracking Helpers
@@ -1943,7 +1951,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         // Load strictly this customer's own orders
         const userEmail = session?.user?.email?.toLowerCase();
-        const isUserAdmin = userEmail === 'mahipalstudent71@gmail.com' || adminTeamMembers.some(m => m.email.toLowerCase() === userEmail && m.status === 'ACTIVE');
+        const isUserAdmin = Boolean(
+          userEmail && (
+            PRIMARY_STORE_ADMINS.includes(userEmail) ||
+            adminTeamMembers.some(m => m.email.toLowerCase() === userEmail && m.status === 'ACTIVE')
+          )
+        );
 
         const { data: dbOrders } = await supabase
           .from('orders')
@@ -1972,11 +1985,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             userId: o.user_id,
           })));
         } else {
-          // Zero orders for new user or clean account
-          setOrders([]);
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('sbs_orders');
-          }
+          // Zero orders in DB: keep recently placed orders to avoid race conditions upon immediate refresh
+          setOrders((prev) => {
+            const recent = prev.filter(o => 
+              o.userId === userId || 
+              (!o.userId && (Date.now() - new Date(o.createdAt).getTime()) < 300000)
+            );
+            return recent;
+          });
         }
 
         // If user is Admin or in local development, load all store orders for Admin management views
@@ -2535,7 +2551,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch { }
   };
 
-  const placeOrder = (
+  const placeOrder = async (
     paymentMethod: string, 
     address: Address, 
     options?: {
@@ -2549,7 +2565,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       codCharge?: number;
       orderNumber?: string;
     }
-  ) => {
+  ): Promise<Order> => {
     const orderNum = options?.orderNumber || `SBS-${Math.floor(1000 + Math.random() * 9000)}`;
     const isUpi = paymentMethod.includes('UPI') || paymentMethod === 'UPI';
     const initialPaymentStatus: PaymentStatus = options?.paymentStatus || (isUpi ? 'PENDING' : 'PAYMENT_VERIFIED');
@@ -2610,7 +2626,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     // Persist order to Supabase
     if (isSupabaseConfigured && supabase) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         const sessionUserId = session?.user?.id || null;
         if (sessionUserId && !newOrder.userId) {
           newOrder.userId = sessionUserId;
@@ -2643,16 +2660,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           estimated_delivery: newOrder.estimatedDelivery,
         };
 
-        supabase.from('orders').insert(orderPayload).then(({ error }) => {
-          if (error) {
-            console.error('Supabase order insert error (attempting fallback):', error);
-            const fallback = { ...orderPayload };
-            delete fallback.payment_status;
-            delete fallback.payment_confirmed_at;
-            delete fallback.whatsapp_confirmed_at;
-            supabase.from('orders').insert(fallback).then();
+        const { error: insertErr } = await supabase.from('orders').insert(orderPayload);
+        if (insertErr) {
+          console.error('Supabase order insert error (attempting baseline fallback):', insertErr);
+          const fallback = {
+            id: newOrder.id,
+            order_number: newOrder.orderNumber,
+            user_id: sessionUserId,
+            status: newOrder.status,
+            items: newOrder.items,
+            subtotal: newOrder.subtotal,
+            discount: newOrder.discount,
+            delivery_charge: newOrder.deliveryCharge,
+            total: newOrder.total,
+            shipping_address: shippingWithEmail,
+            payment_method: newOrder.paymentMethod,
+            tracking_number: newOrder.trackingNumber,
+            estimated_delivery: newOrder.estimatedDelivery,
+          };
+          const { error: fbErr } = await supabase.from('orders').insert(fallback);
+          if (fbErr) {
+            console.error('Supabase baseline fallback order insert also failed:', fbErr);
           }
-        });
+        }
 
         // Broadcast to all active open screens (including admin laptop dashboard) in real time
         try {
@@ -2667,7 +2697,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
           });
         } catch (e) { }
-      });
+      } catch (persistErr) {
+        console.error('Error during order persistence to Supabase:', persistErr);
+      }
     }
 
     // Create payment ledger record
@@ -2864,7 +2896,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
       const userEmail = session?.user?.email?.toLowerCase();
-      const isUserAdmin = userEmail === 'mahipalstudent71@gmail.com' || adminTeamMembers.some(m => m.email.toLowerCase() === userEmail && m.status === 'ACTIVE');
+      const isUserAdmin = Boolean(
+        userEmail && (
+          PRIMARY_STORE_ADMINS.includes(userEmail) ||
+          adminTeamMembers.some(m => m.email.toLowerCase() === userEmail && m.status === 'ACTIVE')
+        )
+      );
       const isDevMode = typeof window !== 'undefined' && (
         window.location.hostname === 'localhost' || 
         window.location.hostname === '127.0.0.1'
@@ -3563,12 +3600,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Admin Team & Role Authorization Methods
-  const PRIMARY_STORE_ADMINS = [
-    'mahipalstudent71@gmail.com',
-    'shyambombaysale@gmail.com',
-    'mahipalworld71@gmail.com'
-  ];
-
   const isEmailAuthorizedAdmin = (email?: string | null): boolean => {
     if (!email) return false;
     const cleanEmail = email.trim().toLowerCase();

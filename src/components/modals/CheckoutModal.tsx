@@ -430,7 +430,7 @@ export const CheckoutModal: React.FC = () => {
           },
           handler: async function (response: any) {
             // Payment verified and succeeded! Now officially place the order in SBS store
-            const order = placeOrder('Online (Razorpay)', targetAddress, {
+            const order = await placeOrder('Online (Razorpay)', targetAddress, {
               orderNumber: allocatedOrderNum,
               paymentStatus: 'PAYMENT_VERIFIED',
               paymentConfirmedAt: new Date().toISOString(),
@@ -438,7 +438,7 @@ export const CheckoutModal: React.FC = () => {
               ...checkoutOptions,
             });
 
-            // Report verification to backend
+            // Report verification to backend with full order payload for server-side persistence safety
             try {
               await fetch(`${sbsApiUrl}/api/payment/verify-payment`, {
                 method: 'POST',
@@ -448,6 +448,24 @@ export const CheckoutModal: React.FC = () => {
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
                   sbsOrderId: order.id,
+                  orderData: {
+                    id: order.id,
+                    order_number: order.orderNumber,
+                    user_id: order.userId || null,
+                    customer_email: (order.shippingAddress as any)?.email || user?.email || null,
+                    status: order.status,
+                    items: order.items,
+                    subtotal: order.subtotal,
+                    discount: order.discount,
+                    delivery_charge: order.deliveryCharge,
+                    total: order.total,
+                    shipping_address: order.shippingAddress,
+                    payment_method: order.paymentMethod,
+                    payment_status: 'PAYMENT_VERIFIED',
+                    payment_confirmed_at: order.paymentConfirmedAt || new Date().toISOString(),
+                    tracking_number: order.trackingNumber,
+                    estimated_delivery: order.estimatedDelivery,
+                  }
                 }),
               });
             } catch (vErr) {
@@ -490,7 +508,7 @@ export const CheckoutModal: React.FC = () => {
         setIsProcessingOrder(false);
       } else if (selectedPayment === 'UPI') {
         // Manual UPI flow fallback
-        const order = placeOrder('UPI (GPay / PhonePe)', targetAddress, {
+        const order = await placeOrder('UPI (GPay / PhonePe)', targetAddress, {
           paymentStatus: 'PENDING',
           keepCart: true,
           ...checkoutOptions,
@@ -500,7 +518,7 @@ export const CheckoutModal: React.FC = () => {
         setCheckoutStep('UPI_PAYMENT');
       } else {
         // COD
-        const order = placeOrder(selectedPayment, targetAddress, checkoutOptions);
+        const order = await placeOrder(selectedPayment, targetAddress, checkoutOptions);
         clearCart();
         setIsProcessingOrder(false);
         setIsCheckoutOpen(false);

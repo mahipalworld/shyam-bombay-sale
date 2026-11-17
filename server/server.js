@@ -758,9 +758,10 @@ app.post('/api/payment/verify-payment', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Payment verification failed: Invalid signature.' });
     }
 
-    // If SBS Order ID provided, update Supabase order record and trigger confirmation email
+    // If SBS Order ID provided, update Supabase order record (or insert if not yet synced) and trigger confirmation email
     if (supabase && sbsOrderId) {
       try {
+        let orderToNotify = null;
         const { data: updatedOrder, error: updateErr } = await supabase
           .from('orders')
           .update({
@@ -772,7 +773,24 @@ app.post('/api/payment/verify-payment', async (req, res) => {
           .single();
 
         if (!updateErr && updatedOrder) {
-          let orderToNotify = { ...updatedOrder };
+          orderToNotify = { ...updatedOrder };
+        } else if (req.body.orderData) {
+          // If the order wasn't found in DB yet (e.g. client insert in-flight or failed), insert it now via service role
+          console.log(`[VerifyPayment] Order ${sbsOrderId} not found in DB during update. Creating via server service role...`);
+          const { data: insertedOrder, error: insertErr } = await supabase
+            .from('orders')
+            .insert(req.body.orderData)
+            .select()
+            .single();
+
+          if (!insertErr && insertedOrder) {
+            orderToNotify = { ...insertedOrder };
+          } else if (insertErr) {
+            console.error('[VerifyPayment] Server fallback order insert failed:', insertErr.message);
+          }
+        }
+
+        if (orderToNotify) {
           if (!orderToNotify.customer_email && !orderToNotify.shipping_address?.email && orderToNotify.user_id && supabaseAdmin) {
             try {
               const { data: userData } = await supabaseAdmin.auth.admin.getUserById(orderToNotify.user_id);

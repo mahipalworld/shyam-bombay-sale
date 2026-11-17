@@ -87,6 +87,7 @@ create table if not exists public.orders (
   id text primary key default uuid_generate_v4()::text,
   order_number text unique not null,
   user_id uuid references auth.users on delete set null,
+  customer_email text,
   status text not null default 'Processing',
   items jsonb not null,
   subtotal numeric(10,2) not null,
@@ -95,6 +96,9 @@ create table if not exists public.orders (
   total numeric(10,2) not null,
   shipping_address jsonb not null,
   payment_method text not null,
+  payment_status text default 'PENDING',
+  payment_confirmed_at timestamp with time zone,
+  whatsapp_confirmed_at timestamp with time zone,
   tracking_number text,
   estimated_delivery text,
   created_at timestamp with time zone default timezone('utc'::text, now())
